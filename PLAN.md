@@ -2,6 +2,8 @@
 
 Phased plan toward the MVP described in `WORKFLOW_ENGINE_INTENT.md`. Open questions and their suggested defaults live in `BACKLOG.md`; happy path step numbers below refer to the happy path defined there.
 
+Each checklist item is delivered through a spec in `specs/` (see `specs/README.md`); `specs/STATUS.md` shows progress.
+
 | Phase | Goal | Status |
 | --- | --- | --- |
 | 0. Spikes and scaffolding | Answer the unknowns, confirm the MVP decisions, and stand up empty but connected components | Not started |
@@ -17,7 +19,7 @@ Mostly learning and wiring. No workflow logic beyond stubs.
 
 ### Spikes
 
-Each spike ends with a short write-up in `docs/spikes/` and updates to the affected `BACKLOG.md` items. They are listed in the order to run them; the details, waves, and dependencies are in `BACKLOG.md`.
+Each spike is a spike spec in `specs/`, whose findings and recommendation are its write-up, and ends with updates to the affected `BACKLOG.md` items. They are listed in the order to run them; the details, waves, and dependencies are in `BACKLOG.md`.
 
 - [ ] **1. Concepts: what a workflow is**
 - [ ] **2. Test bed: target repository and task set**
