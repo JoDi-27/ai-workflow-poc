@@ -43,11 +43,12 @@ MVP items come with a suggested default to confirm or replace. Everything else s
 - [ ] **UI technology:** *Suggested:* whatever is fastest to build. Pages refresh by polling.
 - [ ] **Hooks to engine:** *Suggested:* hooks call the engine's HTTP API with a small script. No dedicated CLI yet.
 - [ ] **Result delivery to the driver:** *Suggested:* polling `checkpoint_status`.
-- [ ] **Runs and repositories:** *Suggested:* one run per branch; shipping means merging that branch.
+- [ ] **Runs and repositories:** *Suggested:* one active run per workflow and subject key; the SDLC driver kit uses repository + branch as the subject (spike 001, Q1). Shipping means merging that branch.
 - [ ] **Evidence:** *Suggested:* the driver submits small inline payloads, such as test summaries and commit SHAs, marked driver-reported.
 - [ ] **Activity recording:** *Suggested:* a post-tool-use hook sends tool name and outcome. No transcripts yet.
 - [ ] **Evaluator subagent:** *Suggested:* read-only tools; evidence is included inline in the evaluation task.
 - [ ] **Scoring:** *Suggested:* linear raw-to-points mapping; one per-workflow deduction for failed attempts and one for rework loops; councils limited to an odd number of members.
+- [x] **Stage tasks:** *Decided (spike 001):* each non-terminal stage has a stage task (templated task, acceptance criteria, tests) with provider-neutral limits (iterations, wall time per visit, consecutive failed completion checks). The driver kit enforces the limits and the engine records each iteration. Exhaustion always escalates to the owner in the UI; other stops only pause. See `specs/001-concepts-what-a-workflow-is/`.
 - [ ] **Reference workflow:** *Suggested:* `requirements → implementation → verification → release → complete`, with one major checkpoint before `release`, one rework edge, and the merge as the protected action.
 
 ### Laya
@@ -89,7 +90,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 
 ### Wave 1: Foundations
 
-- [ ] **1. Concepts: what a workflow is.** Turn the Concepts list in the intent doc into a precise domain model, so that every later spike uses the same terms. Questions to answer:
+- [x] **1. Concepts: what a workflow is.** *Done:* `specs/001-concepts-what-a-workflow-is/`, with the model in `docs/concepts/`. Turn the Concepts list in the intent doc into a precise domain model, so that every later spike uses the same terms. Questions to answer:
   - Workflow, workflow definition, definition version, and run: what each one is, and how they relate. What a run is attached to (task, branch, repository) and who owns it.
   - What a workflow's shape can be: a stage graph with rework edges. Can it have parallel stages, sub-workflows, or several entry and terminal stages? Decide what is outside the model for the MVP.
   - Stage, transition, checkpoint, evaluation step, executor, evidence, protected action, typed decision, driver session, lease, and evaluation task: a definition for each, and how they relate (an entity-relationship sketch).
@@ -106,7 +107,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 
 ### Wave 2: Unknowns
 
-- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow.
+- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override.
 - [ ] **4. Claude Code driver feasibility.** Confirm that the driver design works with Claude Code on a subscription:
   - Claude Code connects to a remote MCP server written with the MCP Java SDK.
   - A session-start hook can register the session ID with the engine.
@@ -115,7 +116,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - All of it can be packaged as a plugin.
   - A full run, including evaluator subagents, fits within subscription usage limits.
 
-  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, Evaluator subagent.
+  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, Evaluator subagent. Input from spike 1: prototype a stage task driven by a Stop hook (does the 8-block cap fire despite progress; does Stop fire on Esc), an `http` Stop hook against a stub (block continues, failure lets Claude stop), and `/goal` with a turn limit in its condition. Known constraint: a plugin cannot raise the 8-block cap.
 - [ ] **5. Claude Code telemetry.** Find out what Claude Code's OpenTelemetry export actually contains: metrics and events, session ID, tokens, cost, tool results, and how it is configured from a plugin or environment. Deliverable: a write-up listing what the quality view can and cannot show. Depends on: nothing; shares a prototype with 4. Settles: Telemetry pipeline, Session correlation.
 - [ ] **6. Laya/Jev role in the workflow.** Work out where typed decision models actually add value, before the Laya MVP items are settled; their suggested defaults are placeholders until then. Questions to answer:
   - What Laya and Jev are in practice: inputs, outputs, confidence semantics, input limits, runtime and hardware needs, licensing, and availability (local or hosted).
@@ -136,14 +137,14 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Trust boundaries and auth: what the agent on the laptop can reach, how driver tokens and UI sessions are kept apart, and which risks the MVP accepts.
   - Where provider-neutrality and SDLC-neutrality are enforced in the module structure.
 
-  Deliverable: an architecture document with component and sequence diagrams, plus a short decision record for each key choice. Depends on: 1, 3, 4, 5, 6. Settles: State and events, Auth, Result delivery to the driver, Runs and repositories, Evidence.
+  Deliverable: an architecture document with component and sequence diagrams, plus a short decision record for each key choice. Depends on: 1, 3, 4, 5, 6. Settles: State and events, Auth, Result delivery to the driver, Runs and repositories, Evidence. Input from spike 1: how an open checkpoint attempt progresses while the driver waits on a human; how exhaustion escalations reach the owner, and what "owner directs a rework" does mechanically.
 - [ ] **8. Driver API contract.** *(Suggested addition; can be folded into 7 if it stays small.)* Define the provider-neutral boundary that every driver kit is written against. Questions to answer:
   - The input and output schemas of each MCP operation, and which ones the MVP needs.
   - The HTTP equivalents that hooks call, and how they are authenticated.
   - The format of denial messages, idempotency keys, and the evaluation task packet (step, rendered rubric, evidence references).
   - Which driver capabilities a session declares, and how the engine checks them.
 
-  Deliverable: the operation list with draft schemas, and one happy path run written as a sequence of calls. Depends on: 3, 4, 7.
+  Deliverable: the operation list with draft schemas, and one happy path run written as a sequence of calls. Depends on: 3, 4, 7. Input from spike 1: who computes the subject key, and how iterations and exhaustion escalations are reported.
 
 ### Wave 4: Tools
 
@@ -182,7 +183,9 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 - [ ] **Step-level deduction overrides.**
 - [ ] **Richer feedback loop:** investigation across representative runs, predicted cost and regressions, revert flow.
 - [ ] **Score validity:** outcome sources (defects, acceptance) and human spot-check sampling.
-- [ ] **Non-SDLC toy workflow**, to catch SDLC assumptions in the engine.
+- [ ] **Non-SDLC toy workflow**, to catch SDLC assumptions in the engine. A paper sketch (article publication) is in `docs/concepts/model.md`.
+- [ ] **Reuse of step results** across checkpoint attempts when their input revisions are unchanged (spike 001, Q7).
+- [ ] **Maximum attempts per checkpoint**, ending the run when reached (spike 001, Q4).
 
 ## On record: not a priority
 
@@ -202,3 +205,4 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 - [ ] Laya bounded control.
 - [ ] Jev and other DecisionEngine providers.
 - [ ] A second driver provider after Claude Code.
+- [ ] Parallel stages (fork and join) and sub-workflows in the definition model (spike 001, Q2).

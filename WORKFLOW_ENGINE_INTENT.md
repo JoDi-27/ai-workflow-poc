@@ -56,15 +56,22 @@ The engine never invokes a driver's model. The driver changes engine state only 
 
 ## Concepts
 
-- **Workflow definition:** a versioned, reviewable specification of stages, transitions (including rework edges), evidence types, checkpoints, typed decisions, protected actions, and the scoring formula. It is authored and published through the UI and can be exported and imported as text for review and diffing.
-- **Run:** one execution of a pinned definition version, with an owner, current stage, accepted evidence, step results, pending approvals, decision records, an event sequence, and a final score.
-- **Evidence:** a typed, referenced item with provenance, revision identifier, timestamp, and trust level.
+The full domain model (glossary, entity relationships, and lifecycles) is in `docs/concepts/`, from spike 001.
+
+- **Workflow:** the stable identity that groups the versions of one definition. It has exactly one current published version, and new runs always start on it.
+- **Workflow definition (version):** a versioned, reviewable specification of stages and their stage tasks, transitions (including rework edges), evidence types, checkpoints, typed decisions, protected actions, and the scoring formula. Rubrics, scoring, and decision questions are versioned only as part of it. It is authored and published through the UI and can be exported and imported as text for review and diffing.
+- **Stage:** a node of the workflow graph. A definition has one entry stage and one or more terminal stages, each marked success or failure; a run is in exactly one stage at a time. Parallel stages and sub-workflows are outside the MVP model.
+- **Stage task:** the self-contained, validated piece of work a non-terminal stage asks for: a task, acceptance criteria, tests, and provider-neutral limits, configured per workflow from framework templates. The driver does the work, typically by iterating, and enforces the limits; the engine records it. It does not replace checkpoints; its test results become evidence.
+- **Transition:** a permitted move between stages, with zero or one checkpoint. A *rework edge* is a transition explicitly flagged `rework`.
+- **Run:** one execution of a pinned definition version on a *subject*, which the engine knows only as an opaque subject key (at most one active run per workflow and subject key). It has a fixed owner, a status (active, completed, failed, abandoned), a current stage, stage visits, evidence, step results, pending approvals, decision records, an event sequence, and a final score.
+- **Evidence:** a typed, referenced item submitted during a stage visit, with provenance, an opaque revision, timestamp, and trust level.
 - **Checkpoint:** an ordered sequence of evaluation steps attached to a transition. Major checkpoints sit at consequential boundaries; stage checks are optional checkpoints on any other transition. Both follow the same rules.
+- **Checkpoint attempt:** one evaluation of a checkpoint for a transition request. Steps run strictly in order and fail fast; every attempt re-runs all steps. A run has at most one open attempt.
 - **Evaluation step:** one unit of a checkpoint with an executor, a required or optional role, a maximum number of points, a pass condition, and, for reasoning steps, a scale and rubric.
 - **Executor:** what performs a step: deterministic code, a fresh-context agent evaluator, a human in the UI, or a DecisionEngine provider.
-- **Run score:** the engine's computation of points earned over points possible across the run's applicable steps, normalized to 100.
+- **Run score:** the engine's computation of points earned over points possible across the run's applicable steps, normalized to 100. Its classification (scored, overridden, or excluded) is derived from the run status.
 - **Typed decision:** a question answered by a DecisionEngine with a bounded set of labels, in a declared mode (shadow, advisory, or bounded control).
-- **Protected action:** a driver-side action, such as merge, release, or deploy, that requires engine authorization at the moment it is taken.
+- **Protected action:** a driver-side action, such as merge, release, or deploy, that requires engine authorization at the moment it is taken, and is allowed only in the stages the definition lists.
 - **Driver contract:** the provider-neutral set of capabilities a coding agent must provide to drive runs, delivered per provider as a driver kit.
 - **Driver session:** a binding between an agent session and a run, used for leases, attribution, activity recording, and telemetry correlation.
 
@@ -152,7 +159,7 @@ rubric:
 - Steps run in their declared order and fail fast: a failed required step stops the checkpoint immediately, and every remaining step, required or optional, is recorded as *not evaluated* for that attempt.
 - Executors return a raw result only: a raw score, the chosen band, a justification citing evidence, and uncertainty. The engine applies pass conditions, maps raw scores to points, and computes totals.
 - Unless a definition specifies otherwise, a scored step earns `points × (raw − scale_min) / (scale_max − scale_min)`, and a pass/fail step earns full points on pass and zero on fail.
-- A failed checkpoint rejects the transition. The definition says what follows: a rework edge or ending the run as failed.
+- A failed checkpoint rejects the transition, and the run stays in its current stage. What follows is another attempt, a rework edge, or a transition to a failure terminal stage, which ends the run as failed.
 - A human may override a failed required step in the UI with a reason. The override is recorded, and the run's score is flagged as overridden.
 
 ### Run score
@@ -177,7 +184,7 @@ rubric:
 1. The driver asks for status and receives the current stage, objective, the checkpoint guarding each permitted transition, pending evaluation tasks, pending human steps, and any active transition recommendation.
 2. Work produces artifacts and results. The driver or an integrated system submits evidence; the engine records it with provenance and trust level.
 3. The driver requests a specific permitted transition with evidence references and an idempotency key. This is a proposal, never a state change.
-4. The engine runs the transition's checkpoint against the run's pinned definition version: it evaluates deterministic steps itself, issues evaluation tasks for reasoning steps, queues human steps in the UI, and requests typed decisions according to their modes.
+4. The engine runs the transition's checkpoint against the run's pinned definition version, one step at a time in declared order: it evaluates a deterministic step itself, issues evaluation tasks when it reaches a reasoning step, queues a human step in the UI when it reaches one, and requests typed decisions according to their modes. A step starts only after the previous one has a result.
 5. Once every required step has a result, the engine accepts and commits the transition atomically, or rejects it, listing the failed steps with reasons and the permitted rework path. The driver tracks progress through `checkpoint_status`.
 
 At minimum, record `RUN_STARTED`, `DRIVER_SESSION_BOUND`, `LEASE_ACQUIRED`, `LEASE_RELEASED`, `STAGE_ENTERED`, `EVIDENCE_SUBMITTED`, `DRIVER_ACTIVITY_RECORDED`, `TRANSITION_REQUESTED`, `CHECKPOINT_STARTED`, `EVALUATION_TASK_ISSUED`, `STEP_EVALUATED`, `DECISION_REQUESTED`, `DECISION_RECORDED`, `HUMAN_STEP_REQUESTED`, `HUMAN_STEP_DECIDED`, `CHECKPOINT_COMPLETED`, `TRANSITION_REJECTED`, `TRANSITION_ACCEPTED`, `STAGE_EXITED`, `PROTECTED_ACTION_AUTHORIZED`, `PROTECTED_ACTION_DENIED`, `POLICY_OVERRIDE`, `RUN_COMPLETED`, `RUN_SCORED`, and `DEFINITION_PUBLISHED`. Each event includes actor, actor type, timestamp, run ID, definition version, correlation ID, driver session ID where applicable, evidence references, and reason. Events are append-only in normal operation, tamper-evident (for example, hash-chained), and sufficient to replay a run's state and recompute its score.
@@ -299,7 +306,7 @@ This document describes the target framework. Delivery starts with a PoC/MVP: a 
 - The engine alone applies thresholds and computes points; evaluators only report raw results.
 - A reasoning step's evaluator never sees the working conversation, never wrote the work, and never receives advisory outputs that could anchor it.
 - Keep human approval identity outside the model's control; driver credentials never carry approval scopes; override rights are explicit.
-- Version independently: workflow definitions, rubrics, scoring formulas, decision questions, driver kit and prompts.
+- Version independently: workflow definitions, driver kit, and prompts. Rubrics, scoring formulas, and decision questions are versioned as part of the definition version; a rubric's version is the definition version where it last changed.
 - Keep SDLC concepts out of the engine; they live only in workflow definitions. Keep provider concepts out of the engine; they live only in driver kits.
 - Treat the developer's machine as trust-only: do not rely on enforcing isolation there, but record everything the driver does so it can be audited.
 - Retain enough provenance to audit decisions while redacting secrets and limiting access to sensitive code and prompts.

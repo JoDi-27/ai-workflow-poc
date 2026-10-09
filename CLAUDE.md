@@ -70,7 +70,7 @@ The full list is in `specs/constitution.md`. The ones most easily broken while c
 
 ## Glossary
 
-- **Run:** one execution of a pinned workflow definition version, in the MVP one per branch.
+- **Run:** one execution of a pinned workflow definition version on a subject; at most one active run per workflow and subject key. The SDLC driver kit uses repository + branch as the subject.
 - **Checkpoint:** an ordered sequence of steps (deterministic, reasoning, or human) that gates a transition and earns points.
 - **Evidence:** data a driver submits for a step, with its provenance (in the MVP, *driver-reported*).
 - **Protected action:** an action, such as the merge, that a driver hook must get the engine to authorize.

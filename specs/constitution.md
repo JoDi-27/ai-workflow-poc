@@ -9,7 +9,7 @@ The non-negotiable rules every spec and plan is checked against. Each plan has a
 1. **The engine is the sole authority.** Only the engine commits state, applies pass conditions, computes scores, and writes to persistence. The UI and drivers are API clients and never touch storage.
 2. **Humans decide human steps.** Human decisions and definition approvals are accepted only from human-authenticated UI sessions. Driver credentials never carry approval scopes. A model output (driver agent or Laya) may inform a human step but never satisfies or removes one.
 3. **The engine is neutral.** No SDLC concepts and no driver-provider concepts in engine code. They live in workflow definitions and driver kits.
-4. **Drivers stay subscription-compatible.** Nothing depends on API-key orchestration, unattended model invocation, or the engine invoking a driver's model. Engine-side intelligence comes only from DecisionEngine providers and deterministic code.
+4. **Drivers stay subscription-compatible.** Nothing depends on API-key orchestration, unattended model invocation, or the engine invoking a driver's model. Engine-side intelligence comes only from DecisionEngine providers and deterministic code. Inside a session a human started, a driver may continue on its own up to its stage task's iteration limit; that is not unattended model invocation.
 5. **Fail closed.** An unreachable engine, stale state, or an unavailable evaluator or decision provider never lets a protected action or a required step pass.
 6. **Evidence over prose.** Deterministic steps are checked by code against evidence with recorded provenance. Reasoning steps are scored by a fresh-context evaluator against the step's rubric. Evaluators report raw results; the engine alone applies thresholds and computes points.
 7. **Pinned and replayable.** Every run is pinned to a definition version. State changes and their events are written in the same transaction. *Not evaluated*, *failed*, and *passed* stay distinct, and so do *excluded* and *low-scoring* runs.
@@ -28,3 +28,4 @@ The non-negotiable rules every spec and plan is checked against. Each plan has a
 
 | Date | Article | Change | Why |
 | --- | --- | --- | --- |
+| 2026-10-08 | 4 | Allow in-session continuation up to a stage task's iteration limit | Spike 001, Q26: every in-session goal loop works this way; the limit keeps it bounded and recorded |
