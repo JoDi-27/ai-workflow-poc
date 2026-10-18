@@ -66,11 +66,11 @@ MVP items come with a suggested default to confirm or replace. Everything else s
 
 ### Feedback loop
 
-- [ ] **Detection:** *Suggested:* a simple rule over the last N runs, such as the step with the lowest average normalized score or the highest failure rate.
+- [ ] **Detection:** *Suggested:* a simple rule over the last N runs, such as the step with the lowest average normalized score or the highest failure rate. Input from spike 2: the v1 reference workflow has no planted weakness; if no weakest step stands out after the first seed runs, consider planting one before the v2 cycle.
 - [ ] **Proposal flow:** *Suggested:* a skill or slash command in the driver kit that fetches the analysis from the engine, has Claude draft a YAML diff with a hypothesis, and submits it as a draft version.
 - [ ] **Approval:** *Suggested:* a UI page showing the diff and hypothesis, with approve and reject; approval publishes the new version.
 - [ ] **Comparison:** *Suggested:* the quality view splits metrics by definition version. With few runs, show raw numbers and run counts rather than claim significance.
-- [ ] **Seed data:** *Suggested:* run the reference workflow on a handful of small tasks so the loop has results to work with.
+- [x] **Seed data:** *Decided (spike 002):* tasks T01–T12 in `sample-crm`, run in order, with T01, T03, T04, T05, T06, and T11 rerun on the new definition version. See `docs/test-bed.md`. Still to do once the `sample-crm` baseline exists: draft each task's record (expected result and hidden acceptance tests) in a session separate from any run, for the user to review, kept in `docs/`.
 
 ### Local setup
 
@@ -98,7 +98,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Which concepts the engine knows about and which exist only in definitions, so that SDLC terms stay out of the engine. Test this by sketching a non-SDLC toy workflow with the same concepts.
 
   Deliverable: a glossary, an entity-relationship sketch, and lifecycle diagrams, with the intent doc's Concepts section updated to match.
-- [ ] **2. Test bed: target repository and task set.** *(Suggested addition.)* Choose where runs do real work and which tasks they do, so that the other spikes, the seed data, and the Phase 4 validation all use the same cases. Questions to answer:
+- [x] **2. Test bed: target repository and task set.** *Done:* `specs/002-test-bed-target-repository-and-task-set/`, with the test bed in `docs/test-bed.md`. Choose where runs do real work and which tasks they do, so that the other spikes, the seed data, and the Phase 4 validation all use the same cases. Questions to answer:
   - Which sandbox repository to use, ideally one you own so that merging to it is harmless, and whether it needs CI for the later system-attested evidence.
   - Which 8–12 small tasks to use, with a mix of difficulty, including some that should fail a checkpoint or need rework, and the expected result for each.
   - Which of these become Laya's first labeled local cases.
@@ -107,7 +107,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 
 ### Wave 2: Unknowns
 
-- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override.
+- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override. Input from spike 2: test-bed tasks T05 (rework), T06 (failed checkpoint), and T07 (override) in `docs/test-bed.md` are ready-made cases for that run.
 - [ ] **4. Claude Code driver feasibility.** Confirm that the driver design works with Claude Code on a subscription:
   - Claude Code connects to a remote MCP server written with the MCP Java SDK.
   - A session-start hook can register the session ID with the engine.
@@ -116,7 +116,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - All of it can be packaged as a plugin.
   - A full run, including evaluator subagents, fits within subscription usage limits.
 
-  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, Evaluator subagent. Input from spike 1: prototype a stage task driven by a Stop hook (does the 8-block cap fire despite progress; does Stop fire on Esc), an `http` Stop hook against a stub (block continues, failure lets Claude stop), and `/goal` with a turn limit in its condition. Known constraint: a plugin cannot raise the 8-block cap.
+  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, Evaluator subagent. Input from spike 1: prototype a stage task driven by a Stop hook (does the 8-block cap fire despite progress; does Stop fire on Esc), an `http` Stop hook against a stub (block continues, failure lets Claude stop), and `/goal` with a turn limit in its condition. Known constraint: a plugin cannot raise the 8-block cap. Input from spike 2: pilot test-bed tasks T01, T05, and T06 in plain Claude Code to see whether the planted failures fire and how much usage each task takes (Max 5x).
 - [ ] **5. Claude Code telemetry.** Find out what Claude Code's OpenTelemetry export actually contains: metrics and events, session ID, tokens, cost, tool results, and how it is configured from a plugin or environment. Deliverable: a write-up listing what the quality view can and cannot show. Depends on: nothing; shares a prototype with 4. Settles: Telemetry pipeline, Session correlation.
 - [ ] **6. Laya/Jev role in the workflow.** Work out where typed decision models actually add value, before the Laya MVP items are settled; their suggested defaults are placeholders until then. Questions to answer:
   - What Laya and Jev are in practice: inputs, outputs, confidence semantics, input limits, runtime and hardware needs, licensing, and availability (local or hosted).
@@ -125,7 +125,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Which typed questions and label sets to start with, and how to label the first local cases.
   - Whether Laya and Jev overlap or complement each other.
 
-  Deliverable: a short write-up recommending Laya's MVP use and the order of later roles, tried on a few local cases from the test bed. Depends on: 1, 2. Settles: all Laya items.
+  Deliverable: a short write-up recommending Laya's MVP use and the order of later roles, tried on a few local cases from the test bed. Depends on: 1, 2. Settles: all Laya items. Input from spike 2: the first cases are hand-made good and flawed variants of T01, T03, T04, T06, and T11 (ten cases), labeled by the user blind to the Claude evaluator; real-run outputs come later as the held-out set. Token-count a case packet first, since `laya-typed-decisions` has a 1024-token context and the sandbox is Spring Boot.
 
 ### Wave 3: Shape
 
@@ -166,7 +166,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Bootstrapping: creating a user and driver token, loading the reference workflow, seeding data, and resetting to a clean state.
   - The development loop: running the engine and UI from the IDE with hot reload while the other components run in Compose.
 
-  Deliverable: a draft Compose file and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local setup.
+  Deliverable: a draft Compose file and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local setup. Input from spike 2: the `sample-crm` sandbox is tested with Testcontainers, so Docker must be available on the laptop and in CI.
 
 ## Next: improvements after the MVP
 
