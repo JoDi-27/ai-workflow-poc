@@ -10,8 +10,8 @@ MVP items come with a suggested default to confirm or replace. Everything else s
 
 1. The engine runs with the reference workflow loaded.
 2. A developer starts Claude Code with the driver kit and starts a run on a real repository.
-3. Claude works through the stages, writes the code, submits evidence, and requests transitions.
-4. The major checkpoint runs a deterministic step, a reasoning step scored by the evaluator subagent, and a human step approved in the UI.
+3. Claude works through the stages, writes the code, pushes the branch, submits evidence, and requests transitions.
+4. The major checkpoint runs a deterministic check in the runner at the pushed commit, a reasoning step scored by a fresh-context Claude evaluator in the runner, and a human step approved in the UI.
 5. Laya answers its typed question at that checkpoint, and the result is recorded next to the Claude evaluator's and the human's.
 6. Shipping (for example, merging to the main branch) is a protected action that the engine authorizes through a hook.
 7. The run completes, and the UI shows its score and breakdown.
@@ -37,19 +37,31 @@ MVP items come with a suggested default to confirm or replace. Everything else s
 - [ ] **Database:** *Suggested:* one relational database. Small evidence payloads and telemetry are stored in it directly, with no object storage yet.
 - [ ] **State and events:** *Suggested:* state tables plus an append-only event table, written in the same transaction.
 - [ ] **Definition format:** *Suggested:* YAML. The initial version is loaded from a file; later versions come from feedback-loop proposals approved in the UI. No general UI editor yet.
-- [ ] **Deterministic steps:** *Suggested:* a few built-in check types, such as "evidence of type X exists" and "field compares to a value". No expression language.
+- [ ] **Deterministic steps:** *Suggested:* a few built-in check types, such as "evidence of type X exists" and "field compares to a value", plus one runner check type: a command in a sandbox image that passes on exit code 0. No expression language.
 - [ ] **MCP server:** *Suggested:* MCP Java SDK over HTTP with a bearer token.
 - [ ] **Auth:** *Suggested:* one static driver token per user, and a simple UI login. Human decisions and definition approvals are accepted only from the UI login, even in the MVP.
 - [ ] **UI technology:** *Suggested:* whatever is fastest to build. Pages refresh by polling.
 - [ ] **Hooks to engine:** *Suggested:* hooks call the engine's HTTP API with a small script. No dedicated CLI yet.
 - [ ] **Result delivery to the driver:** *Suggested:* polling `checkpoint_status`.
 - [ ] **Runs and repositories:** *Suggested:* one active run per workflow and subject key; the SDLC driver kit uses repository + branch as the subject (spike 001, Q1). Shipping means merging that branch.
-- [ ] **Evidence:** *Suggested:* the driver submits small inline payloads, such as test summaries and commit SHAs, marked driver-reported.
+- [ ] **Evidence:** *Suggested:* the driver submits small inline payloads, such as design notes and the commit SHA, marked driver-reported. Runner checks produce engine-verified evidence, such as the test summary at that SHA.
 - [ ] **Activity recording:** *Suggested:* a post-tool-use hook sends tool name and outcome. No transcripts yet.
-- [ ] **Evaluator subagent:** *Suggested:* read-only tools; evidence is included inline in the evaluation task.
+- [x] **Evaluator location:** *Decided (intent review 2026-10-18):* reasoning steps run in the runner by default. Driver-side evaluation stays in the driver contract as an optional capability, but the MVP does not build the evaluator subagent (see Next).
 - [ ] **Scoring:** *Suggested:* linear raw-to-points mapping; one per-workflow deduction for failed attempts and one for rework loops; councils limited to an odd number of members.
 - [x] **Stage tasks:** *Decided (spike 001):* each non-terminal stage has a stage task (templated task, acceptance criteria, tests) with provider-neutral limits (iterations, wall time per visit, consecutive failed completion checks). The driver kit enforces the limits and the engine records each iteration. Exhaustion always escalates to the owner in the UI; other stops only pause. See `specs/001-concepts-what-a-workflow-is/`.
 - [ ] **Reference workflow:** *Suggested:* `requirements → implementation → verification → release → complete`, with one major checkpoint before `release`, one rework edge, and the merge as the protected action.
+
+### Runner
+
+Decided in the 2026-10-18 intent review (constitution amendment log): gate checks run server side, so the driver only builds.
+
+- [x] **Isolation:** *Decided:* a separate runner service next to the engine, called only by the engine, that starts a throwaway sandbox per job. Sandboxes hold no engine or database credentials.
+- [x] **Code source:** *Decided:* the driver pushes the branch and names the commit SHA in the transition request; the runner clones that SHA with a read-only token. Unpushed work is never evaluated.
+- [x] **Trust level:** *Decided:* runner results are engine-verified, with the runner, image, command, and SHA as provenance.
+- [x] **Model access:** *Decided:* the runner's Claude Code evaluator runs headless with the owner's subscription token (`claude setup-token`) while the owner is the only user. A second user needs per-user credentials or an API key first (see Next).
+- [x] **Unavailability:** *Decided:* a runner job that cannot run leaves its step not evaluated, failing closed. No automatic fallback to driver-side evaluation.
+- [ ] **Sandbox technology:** *Suggested:* the runner starts one Docker container per job from the image the step declares, with resource and time limits. Settled by spikes 9 and 10.
+- [ ] **Check environment in definitions:** *Suggested:* a runner check declares an image and a command; the image holds the subject's toolchain. Settled by spike 3.
 
 ### Laya
 
@@ -74,7 +86,7 @@ MVP items come with a suggested default to confirm or replace. Everything else s
 
 ### Local setup
 
-- [ ] *Suggested:* Docker Compose running the engine, UI, database, OTel Collector, and Laya inference service.
+- [ ] *Suggested:* Docker Compose running the engine, UI, database, runner, OTel Collector, and Laya inference service.
 
 ## Spikes
 
@@ -100,6 +112,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   Deliverable: a glossary, an entity-relationship sketch, and lifecycle diagrams, with the intent doc's Concepts section updated to match.
 - [ ] **2. Test bed: target repository and task set.** *(Suggested addition.)* Choose where runs do real work and which tasks they do, so that the other spikes, the seed data, and the Phase 4 validation all use the same cases. Questions to answer:
   - Which sandbox repository to use, ideally one you own so that merging to it is harmless, and whether it needs CI for the later system-attested evidence.
+  - Which toolchain the runner's sandbox image needs to build and test it.
   - Which 8–12 small tasks to use, with a mix of difficulty, including some that should fail a checkpoint or need rework, and the expected result for each.
   - Which of these become Laya's first labeled local cases.
 
@@ -107,16 +120,17 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 
 ### Wave 2: Unknowns
 
-- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override.
+- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override. Input from the intent review: where each step runs (engine, runner, driver) and how a runner check declares its image and command.
 - [ ] **4. Claude Code driver feasibility.** Confirm that the driver design works with Claude Code on a subscription:
   - Claude Code connects to a remote MCP server written with the MCP Java SDK.
   - A session-start hook can register the session ID with the engine.
   - A pre-tool-use hook can block a merge based on an engine response, and a post-tool-use hook can report activity.
-  - An evaluator subagent with a fresh context and read-only tools can fetch a task and submit its result through MCP without the main agent relaying it.
+  - Headless Claude Code runs in a Linux container as a runner-side evaluator: authenticated with a `claude setup-token` token, read-only tools, a fresh session per task, and the result as structured JSON output.
   - All of it can be packaged as a plugin.
-  - A full run, including evaluator subagents, fits within subscription usage limits.
+  - A full run, including runner evaluations alongside the developer's own session, fits within subscription usage limits.
+  - Lower priority, since the MVP does not need it: an evaluator subagent with a fresh context and read-only tools can fetch a task and submit its result through MCP without the main agent relaying it.
 
-  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, Evaluator subagent. Input from spike 1: prototype a stage task driven by a Stop hook (does the 8-block cap fire despite progress; does Stop fire on Esc), an `http` Stop hook against a stub (block continues, failure lets Claude stop), and `/goal` with a turn limit in its condition. Known constraint: a plugin cannot raise the 8-block cap.
+  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, and the runner evaluator's feasibility. Input from spike 1: prototype a stage task driven by a Stop hook (does the 8-block cap fire despite progress; does Stop fire on Esc), an `http` Stop hook against a stub (block continues, failure lets Claude stop), and `/goal` with a turn limit in its condition. Known constraint: a plugin cannot raise the 8-block cap.
 - [ ] **5. Claude Code telemetry.** Find out what Claude Code's OpenTelemetry export actually contains: metrics and events, session ID, tokens, cost, tool results, and how it is configured from a plugin or environment. Deliverable: a write-up listing what the quality view can and cannot show. Depends on: nothing; shares a prototype with 4. Settles: Telemetry pipeline, Session correlation.
 - [ ] **6. Laya/Jev role in the workflow.** Work out where typed decision models actually add value, before the Laya MVP items are settled; their suggested defaults are placeholders until then. Questions to answer:
   - What Laya and Jev are in practice: inputs, outputs, confidence semantics, input limits, runtime and hardware needs, licensing, and availability (local or hosted).
@@ -130,11 +144,12 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 ### Wave 3: Shape
 
 - [ ] **7. Target architecture.** Combine the results of waves 1 and 2 into the system's shape, marking clearly what the MVP builds and what is only the target. Questions to answer:
-  - Components and their boundaries: engine modules (definitions, runs and state, checkpoint execution, scoring, evaluation tasks, DecisionEngine adapters, telemetry ingestion, driver API, UI API), UI, Laya service, collector, database, and driver kit.
-  - Sequences for each happy path step: start and bind, submit evidence, request a transition, run a checkpoint with deterministic, reasoning, human, and Laya steps, authorize a protected action, correlate telemetry, and propose and publish a definition version.
+  - Components and their boundaries: engine modules (definitions, runs and state, checkpoint execution, scoring, evaluation tasks, runner dispatch, DecisionEngine adapters, telemetry ingestion, driver API, UI API), UI, runner (with its source and evaluator adapters), Laya service, collector, database, and driver kit.
+  - The runner interface: the job packet, how results come back, timeouts, and how the engine tells a runner job that failed to run from a check that failed.
+  - Sequences for each happy path step: start and bind, submit evidence, request a transition, run a checkpoint with runner checks, runner-side reasoning, human, and Laya steps, authorize a protected action, correlate telemetry, and propose and publish a definition version.
   - How long-running checkpoints progress: what moves a checkpoint forward while it waits hours for a human, and how the driver and UI learn about it.
   - Persistence: state tables, the event table, what can be replayed, and how requests on the same run are serialized and made idempotent.
-  - Trust boundaries and auth: what the agent on the laptop can reach, how driver tokens and UI sessions are kept apart, and which risks the MVP accepts.
+  - Trust boundaries and auth: what the agent on the laptop can reach, how driver tokens and UI sessions are kept apart, what the runner and its sandboxes can reach and which credentials they hold (repository read token, subscription token), and which risks the MVP accepts.
   - Where provider-neutrality and SDLC-neutrality are enforced in the module structure.
 
   Deliverable: an architecture document with component and sequence diagrams, plus a short decision record for each key choice. Depends on: 1, 3, 4, 5, 6. Settles: State and events, Auth, Result delivery to the driver, Runs and repositories, Evidence. Input from spike 1: how an open checkpoint attempt progresses while the driver waits on a human; how exhaustion escalations reach the owner, and what "owner directs a rework" does mechanically.
@@ -153,20 +168,22 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Database, migrations, and YAML parsing and validation for definitions.
   - UI: a single-page app or server-rendered pages, given that the UI is deployed separately and should be fast to build.
   - Laya serving: language and inference runtime, based on spike 6, and whether it can use the Apple GPU.
+  - Runner: language, and how it starts sandboxes (for example, the Docker API from inside a container, or a separate host daemon).
   - OTel Collector distribution, the hook script language (what is reliably installed on a developer laptop), and the test approach (for example, Testcontainers).
 
-  Deliverable: a stack table with the choice, the reason, and the alternative rejected for each component, plus a hello-world through the chosen framework and MCP SDK. Depends on: 6, 7 (and 8 for the MCP and HTTP layer). Settles: Engine framework, Database, UI technology, Laya runtime and serving.
+  Deliverable: a stack table with the choice, the reason, and the alternative rejected for each component, plus a hello-world through the chosen framework and MCP SDK. Depends on: 6, 7 (and 8 for the MCP and HTTP layer). Settles: Engine framework, Database, UI technology, Laya runtime and serving, Sandbox technology.
 
 ### Wave 5: Running it
 
 - [ ] **10. Local setup.** Design how the whole system runs on one laptop, for development and for the MVP. Questions to answer:
   - What runs in Docker Compose and what runs natively. Containers on macOS generally cannot use the Apple GPU, so the Laya service may need to run on the host.
+  - How the runner starts sandbox containers under Compose, and how it gets the repository read token and the `setup-token` subscription token without exposing them to sandboxes running subject code.
   - Networking: how Claude Code on the host reaches the engine's MCP endpoint and HTTP API, and how its telemetry exporter reaches the collector.
   - How to install the driver kit plugin from the local repository and configure its token.
   - Bootstrapping: creating a user and driver token, loading the reference workflow, seeding data, and resetting to a clean state.
   - The development loop: running the engine and UI from the IDE with hot reload while the other components run in Compose.
 
-  Deliverable: a draft Compose file and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local setup.
+  Deliverable: a draft Compose file and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local setup, Sandbox technology.
 
 ## Next: improvements after the MVP
 
@@ -176,7 +193,10 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 - [ ] **System-attested evidence** from one CI or git hosting integration.
 - [ ] **Real identity:** identity provider, roles, driver token expiry and revocation.
 - [ ] **Multi-user robustness:** driver leases with heartbeat and takeover.
-- [ ] **Evaluation tasks:** timeouts and retries when an evaluator never submits.
+- [ ] **Evaluation tasks and runner jobs:** timeouts and retries when an evaluator never submits or a runner job hangs.
+- [ ] **Runner performs protected actions:** the engine has the runner do the merge with write credentials the laptop never holds, making protection authoritative instead of hook-based.
+- [ ] **Runner model access for several users:** per-user subscription tokens or an API key, decided before a second user joins.
+- [ ] **Driver-side evaluator subagent:** the optional Evaluation capability in the Claude Code kit, for steps that declare driver-side evaluation.
 - [ ] **Transcripts:** upload, with secret redaction.
 - [ ] **Dedicated CLI:** for humans and hooks. Startup latency matters, so possibly a native image or a non-JVM client.
 - [ ] **Driver kit distribution and updates.**
