@@ -1,6 +1,6 @@
 # Domain model
 
-From spike 001 (`specs/001-concepts-what-a-workflow-is/`), where every point is decided in the Log. Terms are defined in `glossary.md`.
+From spike 001 (`specs/001-concepts-what-a-workflow-is/`), where every point is decided in the Log, updated by the 2026-10-18 intent review that added the runner. Terms are defined in `glossary.md`.
 
 ## Entities and relationships
 
@@ -41,6 +41,9 @@ erDiagram
   TRANSITION_REQUEST ||--o| CHECKPOINT_ATTEMPT : "runs (if guarded)"
   CHECKPOINT_ATTEMPT ||--|{ STEP_RESULT : "one per step"
   STEP_RESULT ||--o{ EVALUATION_TASK : "agent evaluator (council of N)"
+  STEP_RESULT ||--o{ RUNNER_JOB : "runner check or runner-side evaluation"
+  RUNNER_JOB ||--o| EVALUATION_TASK : "carries (runner-side)"
+  RUNNER_JOB ||--o{ EVIDENCE : "produces (engine-verified)"
   STEP_RESULT ||--o| HUMAN_STEP_REQUEST : "human executor"
   STEP_RESULT ||--o{ DECISION_RECORD : "DecisionEngine (any mode)"
   STEP_RESULT }o--o{ EVIDENCE : "used"
@@ -60,6 +63,7 @@ Rules the diagrams cannot show:
 - A run has at most one open checkpoint attempt. While it is open, the driver waits: it cannot withdraw the attempt or request another transition. It can still submit evidence. The open attempt ignores it unless its revision matches; it is there for the next request.
 - A transition with no checkpoint commits as soon as it is requested and validated.
 - A step reads evidence of its input types from the latest visit of the stage where that type was submitted. Evidence is validated at decision time against the revision in the transition request.
+- Runner jobs always run at the revision in the transition request, each in its own throwaway sandbox. Unpublished work on the laptop is never evaluated.
 
 ## Lifecycles
 
@@ -161,7 +165,8 @@ stateDiagram-v2
 stateDiagram-v2
   state "Evaluation task" as ET {
     [*] --> issued : step reached (N tasks for a council of N)
-    issued --> submitted : evaluator submits with the task ID
+    issued --> submitted : evaluator submits with the task ID (driver side) or the runner returns its result
+    issued --> failed_to_run : runner unavailable or model access exhausted (step not evaluated)
     issued --> cancelled : attempt ends first
   }
   state "Human step request" as HS {
@@ -174,7 +179,7 @@ stateDiagram-v2
   }
 ```
 
-When an attempt is cancelled (the run is abandoned), its open evaluation tasks and human step requests become `cancelled`, and late submissions are rejected. Nothing waits in the UI inbox for a dead attempt. Timeouts and retries of evaluation tasks, and human steps scored on a rubric band, are in BACKLOG "Next".
+When an attempt is cancelled (the run is abandoned), its open evaluation tasks, runner jobs, and human step requests become `cancelled`, and late submissions are rejected. A runner job that cannot run leaves its step *not evaluated*; there is no automatic fallback to a driver-side evaluator. Nothing waits in the UI inbox for a dead attempt. Timeouts and retries of evaluation tasks, and human steps scored on a rubric band, are in BACKLOG "Next".
 
 ## What the engine knows versus what definitions declare
 
@@ -182,19 +187,20 @@ When an attempt is cancelled (the run is abandoned), its open evaluation tasks a
 | --- | --- |
 | Workflow, definition version, stage, transition, rework flag, checkpoint, step, run, stage visit | Stage names, the graph, which transitions are rework |
 | Stage task template, iterations, limits (iterations, wall time, consecutive failed checks), exhaustion escalation | Each stage's task, acceptance criteria, tests, and limit values |
-| Executor kinds, step roles, pass conditions, scales, councils, deductions | Rubric text, bands, points, thresholds |
+| Executor kinds, where each runs (engine, runner, driver), step roles, pass conditions, scales, councils, deductions | Rubric text, bands, points, thresholds, runner check images and commands |
 | Evidence, trust levels, opaque revision, provenance | Evidence type names (`diff`, `test_summary`, `fact_check_report`) |
 | Run inputs as opaque data, subject key | Which inputs exist (repository, branch, document ID) |
 | Protected action, allowed stages, authorization | Action names (`merge`, `publish`) |
 | Typed question, labels, modes, DecisionEngine | Question wording and label sets |
 | Driver capabilities, sessions, leases, actor types, events | Which capabilities a workflow requires |
+| Runner, runner jobs, the source and evaluator provider names it is configured with | Nothing provider-specific; git and Claude Code live in runner adapters |
 
 SDLC terms found outside definitions, and their neutral form:
 
 - "Max turns": a provider term. Definitions use *iterations*; each driver kit maps them to its own turns or hooks.
 
 - "One run per branch" (BACKLOG, CLAUDE.md): one active run per workflow and subject key; the SDLC kit uses repository + branch as the subject.
-- Engine-verified evidence by "resolving a commit on the shared remote" (intent doc, Evidence and trust): post-MVP, through a verifier adapter outside the engine core. In the core, a revision is an opaque string.
+- Engine-verified evidence by "resolving a commit on the shared remote" (intent doc, Evidence and trust): in the MVP, through the runner's git source adapter, outside the engine core. In the core, a revision is an opaque string.
 
 ## Toy workflow: article publication
 

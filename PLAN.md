@@ -43,8 +43,9 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [ ] UI skeleton: separately deployed, logs in, and displays data from an engine endpoint.
 - [ ] Claude Code driver kit skeleton: plugin with the engine MCP configuration and a session-start hook that calls the engine.
 - [ ] Laya service stub: reachable from the engine through a stub DecisionEngine adapter.
+- [ ] Runner stub: on an engine request, starts a sandbox that clones a repository at a given SHA and runs a command.
 - [ ] OTel Collector receiving Claude Code telemetry.
-- [ ] Docker Compose bringing up engine, UI, database, collector, and Laya service.
+- [ ] Docker Compose bringing up engine, UI, database, runner, collector, and Laya service.
 - [ ] Build and test commands documented in the README.
 
 ### Exit criteria
@@ -54,6 +55,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - A Claude Code session with the driver kit calls the stub `status` through MCP, and its session-start hook reaches the engine.
 - Telemetry from that session arrives at the collector.
 - The engine gets a response from the Laya service.
+- The engine gets a check result from the runner for a pushed commit.
 
 ## Phase 1: Execution
 
@@ -62,11 +64,12 @@ Milestones 1–5 from the intent doc, happy path versions only.
 - [ ] Definition model and the reference workflow in YAML, with validation.
 - [ ] Engine core: runs, state and event tables, evidence, transition protocol, checkpoint execution, scoring with deductions.
 - [ ] Driver API over MCP and HTTP with driver-token auth.
-- [ ] Claude Code driver kit: instructions, session binding, activity hook, evaluator subagent, protected-action hook for the merge.
+- [ ] Runner: sandboxed check commands and a headless Claude Code evaluator at the pushed revision, returning engine-verified results.
+- [ ] Claude Code driver kit: instructions (including pushing before a transition request), session binding, activity hook, protected-action hook for the merge.
 - [ ] UI: run list, run detail with score breakdown, human step inbox, UI login for human decisions.
 - [ ] Laya: DecisionEngine interface, Laya adapter, the typed question chosen by the spike, in shadow mode.
 
-**Exit criteria:** happy path steps 1–7 work on a real repository. A run ends with a merged branch and a score whose breakdown includes the Claude evaluator, Laya, and the human.
+**Exit criteria:** happy path steps 1–7 work on a real repository. A run ends with a merged branch and a score whose breakdown includes the runner check, the Claude evaluator in the runner, Laya, and the human.
 
 ## Phase 2: Observability and quality monitoring
 
