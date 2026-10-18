@@ -1,10 +1,10 @@
 # ai-workflow-poc
 
-A PoC/MVP of a governed workflow engine for coding-agent drivers. The engine (Java) is the single authority for workflow definitions, runs, state, checkpoints, and scoring. A separately deployed UI handles human decisions and monitoring. Drivers are interactive coding agents on developer laptops (Claude Code first) that reach the engine through MCP and HTTP. Laya, a typed decision model, runs next to the engine. The SDLC reference workflow only exists to exercise the framework; the framework is the product.
+A PoC/MVP of a governed workflow engine for coding-agent drivers. The engine (Java) is the single authority for workflow definitions, runs, state, checkpoints, and scoring. A separately deployed UI handles human decisions and monitoring. Drivers are interactive coding agents on developer laptops (Claude Code first) that reach the engine through MCP and HTTP. A runner next to the engine validates gates: it runs checks and fresh-context evaluators in throwaway sandboxes against the revision the driver pushed, so the driver only builds. Laya, a typed decision model, also runs next to the engine. The SDLC reference workflow only exists to exercise the framework; the framework is the product.
 
 ## Current state
 
-Phase 0 (spikes and scaffolding), not started. There is no code yet: no build, no tests, no runnable components. The tech stack is open until spike 9 settles it; do not assume Spring Boot, a database, or a UI framework just because `BACKLOG.md` suggests one. When scaffolding lands, add the build, test, and run commands to this file.
+Phase 0 (spikes and scaffolding), not started. There is no code yet: no build, no tests, no runnable components. Server-side components run on Kubernetes: a local cluster for development and the MVP, and GCP (GKE) later (decided by the user, 2026-10-18). The rest of the tech stack is open until spike 9 settles it; do not assume Spring Boot, a database, or a UI framework just because `BACKLOG.md` suggests one. When scaffolding lands, add the build, test, and run commands to this file.
 
 ## Where things live
 
@@ -20,7 +20,7 @@ Phase 0 (spikes and scaffolding), not started. There is no code yet: no build, n
 | `.claude/skills/sdd-*` | The six spec-kit skills |
 | `.claude/agents/spike-researcher.md` | Prepares spike briefings and questions for the user |
 
-The planned repository layout (not created yet) is `engine/`, `ui/`, `driver-kits/claude-code/`, `laya-service/`, `definitions/`, `deploy/`, `docs/`.
+The planned repository layout (not created yet) is `engine/`, `ui/`, `runner/`, `driver-kits/claude-code/`, `laya-service/`, `definitions/`, `deploy/`, `docs/`.
 
 ## How work is done
 
@@ -54,8 +54,8 @@ The full list is in `specs/constitution.md`. The ones most easily broken while c
 - **The engine is the sole authority.** Only the engine writes state, applies pass conditions, and computes scores. The UI and drivers are API clients and never touch storage.
 - **Humans decide human steps.** Human decisions and definition approvals come only from human-authenticated UI sessions. Driver tokens never carry approval scopes. Model output (driver agent or Laya) can inform a human step but never satisfy it.
 - **The engine is neutral.** No SDLC concepts and no Claude Code concepts in engine code; those belong in workflow definitions and driver kits.
-- **Subscription-compatible drivers.** The engine never invokes a driver's model, and nothing relies on API-key orchestration.
-- **Fail closed.** If the engine, an evaluator, or a decision provider is unavailable, protected actions and required steps do not pass.
+- **Subscription-compatible drivers.** The engine core invokes models only through DecisionEngine adapters (Laya), and nothing relies on API-key orchestration. Only the runner runs unattended evaluations, and on the owner's subscription only while the owner is the only user.
+- **Fail closed.** If the engine, the runner, an evaluator, or a decision provider is unavailable, protected actions and required steps do not pass.
 - **Happy path first.** Build the simplest thing that advances a happy path step. Anything else goes to `BACKLOG.md` "Next", not into the current spec.
 - **Verify current docs.** Check the current documentation of any library, SDK, or tool before using it (Context7), and record the version in the plan.
 
@@ -72,7 +72,8 @@ The full list is in `specs/constitution.md`. The ones most easily broken while c
 
 - **Run:** one execution of a pinned workflow definition version on a subject; at most one active run per workflow and subject key. The SDLC driver kit uses repository + branch as the subject.
 - **Checkpoint:** an ordered sequence of steps (deterministic, reasoning, or human) that gates a transition and earns points.
-- **Evidence:** data a driver submits for a step, with its provenance (in the MVP, *driver-reported*).
+- **Evidence:** data a driver submits or a runner check produces for a step, with its provenance and trust level (driver submissions are *driver-reported*; runner results are *engine-verified*).
 - **Protected action:** an action, such as the merge, that a driver hook must get the engine to authorize.
-- **Driver kit:** the per-provider package (MCP config, hooks, instructions, evaluator subagent) that turns an agent into a driver.
+- **Driver kit:** the per-provider package (MCP config, hooks, instructions, optional evaluator subagent) that turns an agent into a driver.
+- **Runner:** the server-side component, called only by the engine, that runs gate checks and agent evaluators in throwaway sandboxes at a pushed revision. Provider and git specifics live in its adapters, not in the engine.
 - **DecisionEngine:** the engine-side interface for typed decision models. Laya is the first provider (shadow mode in the MVP); Jev may come later.

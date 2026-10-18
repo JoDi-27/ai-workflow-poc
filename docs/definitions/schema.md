@@ -2,6 +2,8 @@
 
 From spike 003 (`specs/003-definition-model-draft/`), where each choice is decided in the Log. Terms are defined in `docs/concepts/glossary.md`. The reference workflow written in this schema is `sdlc-reference.yaml`, and a hand-computed run is in `example-run.md`.
 
+> **Being revised.** This draft predates the runner added by the 2026-10-18 intent review. Where steps run, the runner check type, and trust levels are reopened in spike 003 (G7).
+
 This is a draft for milestone 1. The formal JSON Schema file and the validator are written there, with the library chosen in spike 9.
 
 ## Format and validation

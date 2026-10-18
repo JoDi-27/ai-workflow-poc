@@ -2,9 +2,9 @@
 id: 003
 title: "Definition model draft"
 type: spike
-status: done
+status: in-progress
 phase: 0
-depends_on: [001]
+depends_on: [001, 002]
 refs: ["PLAN Phase 0 / Spikes / 3. Definition model draft", "BACKLOG Spikes / Wave 2 / 3. Definition model draft", "BACKLOG MVP / Definition format", "BACKLOG MVP / Deterministic steps", "BACKLOG MVP / Scoring", "BACKLOG MVP / Reference workflow"]
 updated: 2026-10-18
 ---
@@ -22,6 +22,13 @@ Progress counts the checkboxes in Goal questions, Questions for you, and Deliver
 
 <!-- Drop notes, links, constraints, or decisions here at any time, in any form. The next /sdd-spike session moves them into the Log and Findings and clears this section. -->
 
+- 2026-10-18, from merging `main` (intent review "add the runner", PR #2; spike 002 closed). To process with `/sdd-spike 003`:
+  - Gate checks, deterministic and reasoning, run in a server-side runner at the pushed revision. Runner results are engine-verified. Reasoning steps run in the runner by default; driver-side evaluation is optional (INTENT, Checkpoints and Fresh-context evaluation; BACKLOG Runner; constitution Art. 4, 5, 8).
+  - BACKLOG Deterministic steps now suggests a runner check type: a command in a sandbox image, passing on exit code 0. BACKLOG Runner / Check environment in definitions is "settled by spike 3": a runner check declares an image and a command.
+  - INTENT's illustrative step adds `runs_in: runner`; the glossary Executor entry adds *runs in* (engine or runner for deterministic, runner by default or driver for agent evaluators).
+  - Spike 002 (G4): runner checks also declare service containers (PostgreSQL with a readiness probe); spike 3 decides how hidden acceptance tests get into the sandbox, and whether runs use `sample-crm`'s spec kit. T05 (rework), T06 (failed checkpoint), and T07 (override) in `docs/test-bed.md` are ready-made cases for the example run.
+  - Conflicts with earlier answers: Q19 (no `min_trust` key, only driver-reported evidence) no longer holds now that runner evidence is engine-verified. Q8's check list lacks the runner check. The draft requires the `evaluation` capability and uses a driver-reported `test_summary` for `tests_green`. Q13 (bootstrap two UI users) may conflict with constitution Art. 4: runner evaluations may use the owner's subscription "only while the owner is the only user".
+
 ## Why
 
 Milestone 1 (definition model and the reference workflow in YAML, with validation) needs a concrete schema. This spike writes the reference workflow in a draft YAML schema that expresses spike 001's domain model, and checks the scoring rules by computing one example run's score by hand.
@@ -33,11 +40,13 @@ It settles the `BACKLOG.md` MVP items Definition format, Deterministic steps, Sc
 <!-- What the spike must answer, from BACKLOG.md. Ticked once Findings answers it completely. -->
 
 - [x] **G1** The draft YAML schema's overall shape: workflow identity and version, stages, transitions with rework edges, and evidence types. Is YAML the format, and how is a definition validated?
-- [x] **G2** Checkpoints and their steps: which built-in deterministic check types exist (no expression language), how reasoning steps and their rubrics are written, how human steps and councils are written, and where Laya's typed question sits.
+- [ ] **G2** Checkpoints and their steps: which built-in deterministic check types exist (no expression language), how reasoning steps and their rubrics are written, how human steps and councils are written, and where Laya's typed question sits.
 - [x] **G3** Scoring: the raw-to-points mapping, the per-workflow deductions for failed attempts and rework loops, how overrides and not-evaluated steps count, and how the final run score is formed.
 - [x] **G4** Spike 001's decisions in the schema: stage tasks and their provider-neutral limits, and the protected action (the merge) and what authorizes it.
-- [x] **G5** The reference workflow: its stages, checkpoint placement, rework edge, and protected action, written in the draft schema.
-- [x] **G6** One example run walked by hand, with a failed checkpoint attempt, a rework loop, and an override, and its final score computed.
+- [ ] **G5** The reference workflow: its stages, checkpoint placement, rework edge, and protected action, written in the draft schema.
+- [ ] **G6** One example run walked by hand, with a failed checkpoint attempt, a rework loop, and an override, and its final score computed.
+- [ ] **G7** Where each step runs, after the 2026-10-18 intent review added the runner: how a step declares engine, runner, or driver; how a runner check declares its image, command, and service containers with readiness probes; how hidden acceptance tests get into the sandbox; and how runner-produced (engine-verified) evidence and minimum trust levels appear in the schema.
+- [ ] **G8** Whether the reference workflow uses `sample-crm`'s own spec kit inside runs (left to this spike by spike 002, `docs/test-bed.md`).
 
 ## Briefing
 
@@ -242,9 +251,9 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 
 ## Deliverables
 
-- [x] Every goal question answered, and the recommendation agreed with the user
-- [x] Draft schema and the reference workflow example in `docs/` (or `definitions/`), with the hand-computed example run
-- [x] BACKLOG.md items settled by this spike updated
+- [ ] Every goal question answered, and the recommendation agreed with the user
+- [ ] Draft schema and the reference workflow example in `docs/` (or `definitions/`), with the hand-computed example run
+- [ ] BACKLOG.md items settled by this spike updated
 
 ## Follow-ups
 
@@ -268,3 +277,4 @@ Done during the spike (from the briefing's "Things to try"): the reference workf
 - 2026-10-18 Q1–Q16 answered; draft schema, reference workflow, and example run written in `docs/definitions/`.
 - 2026-10-18 Q17–Q19 answered; all goal questions answered; recommendation agreed with the user.
 - 2026-10-18 Verified and closed: BACKLOG Definition format, Deterministic steps, Scoring, and Reference workflow decided; PLAN spike 3 ticked; follow-ups filed.
+- 2026-10-18 Reopened after merging `main`: the intent review added the runner and spike 002 handed over runner-check inputs. G2, G5, and G6 unticked; G7 and G8 added; inputs and conflicts in the Inbox. BACKLOG Deterministic steps and Reference workflow and PLAN spike 3 unticked; Definition format and Scoring stay decided.

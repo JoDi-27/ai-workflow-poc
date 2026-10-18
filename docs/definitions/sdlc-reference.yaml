@@ -1,6 +1,7 @@
 # Draft reference workflow, from spike 003 (specs/003-definition-model-draft/).
 # The schema is described in schema.md; a worked score is in example-run.md.
 # The engine assigns the version number when a human publishes this file.
+# Being revised: predates the runner (2026-10-18 intent review); see spike 003, G7.
 
 schema: ai-workflow/v0
 workflow: sdlc-reference
