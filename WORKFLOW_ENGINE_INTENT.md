@@ -26,14 +26,14 @@ The SDLC is not the product. A reference SDLC workflow exists to test the framew
 
 ## Runtimes and deployables
 
-There are two runtime sides: a shared server side and a driver side on each developer laptop. The server side consists of separately deployed components.
+There are two runtime sides: a shared server side and a driver side on each developer laptop. The server side consists of separately deployed components, which run on Kubernetes: a local cluster for development and the MVP, and GCP (GKE) later.
 
 | Component | Runs on | Technology direction | Role |
 | --- | --- | --- | --- |
 | Engine | Shared server side | Java; whether to use Spring is to be decided | Sole authority for definitions, runs, state, event log, checkpoint execution, scoring, and typed decisions. Owns all persistence. Integrates with Laya and Jev. Exposes the driver API (MCP and HTTP) and the UI API. |
 | UI | Shared server side, deployed separately from the engine | To be decided | Definition authoring and publishing, run monitoring, score breakdowns, human step inbox. Talks to the engine only through its API and holds no authoritative state. |
 | Decision model serving | Next to the engine, called only by the engine | Depends on the provider | Serves Laya inference, and later Jev or other providers. |
-| Runner | Next to the engine, called only by the engine | To be decided; container-based | Runs gate checks for the engine. For each job it starts a throwaway sandbox, fetches the subject at the requested revision (for the SDLC kit, clones the pushed commit), and either runs a check command or runs a fresh-context agent evaluator. It returns raw results and holds no engine credentials or state. Source and evaluator providers are adapters inside the runner. |
+| Runner | Next to the engine, called only by the engine | To be decided; each sandbox is a Kubernetes pod | Runs gate checks for the engine. For each job it starts a throwaway sandbox, fetches the subject at the requested revision (for the SDLC kit, clones the pushed commit), and either runs a check command or runs a fresh-context agent evaluator. It returns raw results and holds no engine credentials or state. Source and evaluator providers are adapters inside the runner. |
 | Driver | Developer laptop | Depends on the agent provider | An agent session (initially Claude Code) plus that provider's driver kit: engine MCP configuration, hooks, instructions, evaluator, CLI. |
 
 - **Authority:** only the engine commits state, computes scores, and writes to persistence. The UI and drivers are both clients of the engine API; neither accesses storage directly.

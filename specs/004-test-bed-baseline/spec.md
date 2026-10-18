@@ -64,7 +64,8 @@ Baseline:
 
 - **R1** The test bed baseline shall be `sample-crm` at a commit on `main` where its spec 001 is verified.
 - **R2** If a task in `docs/test-bed.md` asks for a behavior, then the baseline shall not already have that behavior.
-- **R3** The baseline's CI shall run every test on each push and pull request and report the result on the commit, identified by its SHA.
+- **R3** The baseline's CI shall run every test on each push and pull request with `./mvnw -B verify` against a PostgreSQL service container given by environment variables, and report the result on the commit, identified by its SHA.
+- **R13** Where a PostgreSQL is given by environment variables, the baseline's tests shall use it and start no Testcontainers database; otherwise they shall start PostgreSQL with Testcontainers.
 
 Planted defects and tests:
 
@@ -98,6 +99,7 @@ Baseline commit:
 - **AC-10** (R10) Given the baseline tests, when they are searched, then one test deletes a company and asserts that its contacts still exist with no company, and it passes.
 - **AC-11** (R11) Given `sample-crm` at the baseline tag, when its files and full git history (messages, branches, tags) are searched for the task IDs in their two-digit form (T01 to T12), the task titles, "planted", "defect", "off-by-one", "test bed", and this repository's name, then nothing is found. Recorded as a manual check with the search commands used.
 - **AC-12** (R12) Given the baseline verified, when `docs/test-bed.md` is read, then it names the baseline tag, the commit SHA, and that SHA as T01's base commit, and the SHA matches the tag in `sample-crm`.
+- **AC-13** (R13) Given the baseline and a running PostgreSQL given by environment variables, when `./mvnw -B verify` runs on a machine with no container runtime, then every test passes; and given no such variables on a machine with Docker, the same command passes using Testcontainers. Recorded as a manual check.
 
 ## Open questions
 
@@ -108,3 +110,4 @@ Baseline commit:
 
 - 2026-10-18 Created. `sample-crm` is developed with its own spec kit; its spec 001 holds the product behavior, and this spec holds what only the test bed needs (decided by the user, 2026-10-18).
 - 2026-10-18 Clarified R6 (six places) and the tag name.
+- 2026-10-18 From spike 002 G4: R3 now runs CI against a PostgreSQL service container; added R13 (external database switch) and AC-13. `sample-crm`'s spec 001 and draft plan need the matching neutral change.

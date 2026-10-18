@@ -35,6 +35,7 @@ It informs the `BACKLOG.md` items Feedback loop / Seed data and Laya / Model che
 - [x] **G1** Which sandbox repository to use, ideally one the user owns so that merging to it is harmless, and whether it needs CI for the later system-attested evidence.
 - [x] **G2** Which 8–12 small tasks to use, with a mix of difficulty, including some that should fail a checkpoint or need rework, and the expected result for each.
 - [x] **G3** Which of these tasks become Laya's first labeled local cases.
+- [x] **G4** Which toolchain the runner's sandbox image needs to build and test `sample-crm`, and how its Testcontainers-based tests get a Docker daemon (or a replacement) inside a runner sandbox, which is a Kubernetes pod on a local cluster now and on GKE later. (Added 2026-10-18, after the intent review and the Kubernetes decision.)
 
 ## Briefing
 
@@ -101,6 +102,35 @@ Assumes a small purpose-built sandbox app (~300 lines, fast tests, a fixed basel
 - Subscription limits are a rolling 5-hour session plus weekly caps, shared across claude.ai, Claude Code, and Desktop. Numbers come from third-party guides and change often; check Settings > Usage. ([Portkey](https://portkey.ai/blog/claude-code-limits), [chudi.dev](https://chudi.dev/blog/claude-usage-limits), checked 2026-10-18)
 - Inference: a task can be relied on to "fail" only if the failure is planted (a contradiction, a quality trap, a low limit). Strong agents often solve tasks that were only meant to be hard.
 
+### G4 · Runner sandbox toolchain and the database for tests
+
+Prepared 2026-10-18, after the intent review and the Kubernetes decision.
+
+- Known: one throwaway sandbox per runner job; it clones the pushed SHA with a read-only token and holds no engine or database credentials. A job that cannot run leaves its step *not evaluated* (fail closed), which must stay distinct from *failed*. Provenance records runner, image, command, and SHA. (BACKLOG Runner; constitution Art. 5, 7, 8)
+- Known: server-side components run on Kubernetes, a local cluster now and GKE later, with one set of manifests. (BACKLOG Infrastructure; INTENT, Runtimes and deployables)
+- Known: `sample-crm`'s tests run against a real PostgreSQL started by Testcontainers, never an in-memory substitute, with one build command on a laptop with Docker; CI runs every test on each push and PR. (sample-crm constitution Art. 4, `PRODUCT_INTENT.md`, spec 001 R21–R22; spec 004 R3)
+- Suggested (sample-crm draft plan on its branch `claude/first-spec-implementation-78a76a`, not merged): Java 25, Maven Wrapper (Maven 3.9.x), Spring Boot 4.1.1, Testcontainers 2.0.5, `postgres:18-alpine`, a `@ServiceConnection` container bean; CI runs `./mvnw -B verify` on GitHub's Ubuntu runner.
+- Suggested: one Kubernetes Job per runner job in a sandbox namespace with resource limits, a deadline, and a network policy; a runner check declares an image and a command. (BACKLOG Runner, spikes 3, 9, 10)
+- Inference: in-test provisioning (DinD, kubedock, Testcontainers Cloud) turns an infrastructure failure into a test failure with a non-zero exit, so the engine would see *failed* instead of *not evaluated*. A pod-level PostgreSQL sidecar gated by a startup probe keeps "could not run" separate.
+- Inference: mounting the node's Docker socket is ruled out: it is root on the node, and kind and GKE nodes run containerd anyway.
+- Unknown: how the pod provides PostgreSQL; whether `sample-crm` may change; parity with CI; GKE mode; sandbox egress and Maven dependencies; who builds the image; the time budget; whether hidden acceptance tests run in the same job.
+- Researcher's default: a PostgreSQL native sidecar in the sandbox pod, plus a small neutral `sample-crm` switch that skips the Testcontainers bean when an external database URL is given (laptop and CI keep Testcontainers), and a multi-arch `eclipse-temurin:25-jdk` image. Fallback if `sample-crm` must stay untouched: DinD inside GKE Sandbox (gVisor) on GKE, with privileged DinD as a local-only accepted risk.
+
+### Researched (G4, checked 2026-10-18)
+
+- Spring Boot 4.1 needs Java 17+ and supports up to Java 27; Maven 3.6.3+ or Gradle 8.14+/9.x. Service connections take precedence over `spring.datasource.*`, so the `@ServiceConnection` bean must not be created for an external database to be used; a URL alone does not override it. (Spring Boot v4.1.0 docs via Context7)
+- Testcontainers' JDBC URL (`jdbc:tc:postgresql:...`) still starts a container through a Docker API. Testcontainers actively tests only Docker on Linux and Docker Desktop; Podman, Colima, Rancher Desktop are best effort; Kubernetes and kubedock are not mentioned. ([Supported environments](https://java.testcontainers.org/supported_docker_environment/); Context7 testcontainers-java 2.0.x)
+- `docker:dind` requires `--privileged`, which gives full host access. ([docker-library docs](https://github.com/docker-library/docs/blob/master/docker/content.md))
+- Kubedock 0.23.0 implements the Docker API by creating pods; it needs a Role with pod create/get/list/delete/watch, `pods/exec`, `pods/log`, services, and configmaps, so a Kubernetes credential sits in or next to the sandbox. TCP only; volumes copied one way through configmaps. ([kubedock](https://github.com/joyrex2001/kubedock))
+- Testcontainers Cloud needs an agent at job start and a `TC_CLOUD_TOKEN` secret in the job; billed through Docker plans, free CI plan one session at a time. ([TC Cloud docs](https://testcontainers.com/cloud/docs/))
+- Sysbox's Kubernetes installer is tested only on Ubuntu node images (including GKE Ubuntu), Kubernetes 1.32–1.35; not COS, kind, or Autopilot. ([Sysbox install-k8s](https://github.com/nestybox/sysbox/blob/master/docs/user-guide/install-k8s.md))
+- Zonky embedded-postgres binaries 18.4.0 run real PostgreSQL without Docker, but would replace Testcontainers on the laptop and in CI too. ([Maven Central](https://central.sonatype.com/artifact/io.zonky.test.postgres/embedded-postgres-binaries-bom/))
+- GKE Autopilot rejects `privileged: true`; customer privileged workloads need GKE 1.35+, an org-policy allowlist, and eligibility from Cloud Customer Care. ([Autopilot privileged workloads](https://docs.cloud.google.com/kubernetes-engine/docs/concepts/about-autopilot-privileged-workloads), updated 2026-10-13)
+- Docker inside GKE Sandbox (gVisor) works without `privileged`: `runtimeClassName: gvisor`, `NET_ADMIN` and `SYS_ADMIN`, an `emptyDir` at `/var/lib/docker`; Docker 27 on Standard 1.29+ and Autopilot 1.33.2+; Autopilot needs `--workload-policies=allow-net-admin`; local clusters not covered. ([gVisor tutorial](https://gvisor.dev/docs/tutorials/docker-in-gke-sandbox)) Inference: those capabilities are outside Pod Security "baseline", so the namespace would be labeled privileged, with gVisor as the real boundary.
+- Native sidecars (init containers with `restartPolicy: Always`) are stable since Kubernetes 1.33, do not block Job completion, and later containers wait for a sidecar's `startupProbe`. ([Kubernetes sidecars](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/))
+- Docker Hub allows 100 unauthenticated pulls per 6 hours per IPv4; a throwaway DinD daemon re-pulls `postgres` every job, while a sidecar image is cached by the node. ([Docker Hub pull limits](https://docs.docker.com/docker-hub/usage/pulls/))
+- OrbStack's single-node Kubernetes shares OrbStack's container engine, so local images need no registry push. ([OrbStack Kubernetes](https://docs.orbstack.dev/kubernetes/)) Inference, to verify: local Mac cluster nodes run in a VM that typically shares `/Users`, so a privileged escape could reach `~/.claude` and SSH keys.
+
 ## Questions for you
 
 <!-- Prepared by the agent, highest impact first; each says which goal questions it serves, why it matters, the options, and a suggested answer. Ticked when answered or skipped. -->
@@ -121,6 +151,16 @@ Assumes a small purpose-built sandbox app (~300 lines, fast tests, a fixed basel
 - [x] **Q14** What does "fresh copy for reruns" mean? (G1, G2) *Why:* the subject key is repository + branch, and merges accumulate on `main`. A rerun on a new definition version must start from the same code as the original run. *Options:* a branch cut from the commit the original run started on, merged to a per-rerun target / a new clone or repository per version (a different subject) / a local clone reset to that commit, merging locally. *Suggested:* record each task's base commit; reruns branch from it.
 - [x] **Q15** Where does a rerun's merge go? (G1, G2) *Why:* a rerun branch cut from an old base commit re-applies a change `main` already has, so merging it to `main` conflicts or duplicates. The merge is the protected action, so a rerun should still merge somewhere. *Options:* a throwaway target branch created at the same base commit (e.g. `base/T03/v2`) / merge to `main` and resolve or revert / no merge on reruns (end before release). *Suggested:* a throwaway target branch at the base commit.
 - [x] **Q16** Which database for `sample-crm`? (G1, G2) *Why:* it sets test speed, CI setup, and whether Docker is needed on the laptop and in CI. *Options:* H2 in-memory (fast, no Docker) / PostgreSQL with Testcontainers (realistic, needs Docker, slower) / PostgreSQL in tests via H2 compatibility mode. *Suggested:* H2 in-memory, to keep each iteration cheap against usage limits.
+- [x] **Q17** May `sample-crm` gain a neutral test switch that uses an externally provided PostgreSQL instead of starting a Testcontainers one? (G4) *Why:* the main fork: yes allows the sidecar default everywhere; no forces a Docker API inside the sandbox (DinD, gVisor, kubedock) with privileges or credentials. *Options:* yes / no, run tests exactly as written / replace Testcontainers with embedded PostgreSQL everywhere. *Suggested:* yes; still real PostgreSQL, names no task or defect.
+- [x] **Q18** Must the runner's check command be identical to CI's, or only run the same tests? (G4) *Options:* identical command and database setup (CI uses a `services: postgres` container) / same command plus an environment variable in the runner only / no parity. *Suggested:* same `./mvnw -B verify`, with the database given by environment variables in both.
+- [x] **Q19** On the local cluster, is a privileged sandbox pod acceptable as an MVP risk? (G4) *Why:* subject code is agent-written; a privileged escape on a Mac cluster likely reaches the VM and shared `/Users`. *Options:* never / local only, accepted risk / everywhere. *Suggested:* never.
+- [x] **Q20** Which GKE mode do you expect later? (G4) *Why:* Autopilot rules out privileged DinD and Sysbox. *Options:* Autopilot / Standard / undecided. *Suggested:* undecided is fine with the sidecar default.
+- [x] **Q21** May sandbox pods reach the internet (Maven Central, Docker Hub) during a job? (G4) *Options:* open egress / Maven Central only / an in-cluster Maven proxy only / no egress. *Suggested:* in-cluster Maven proxy only.
+- [x] **Q22** Generic Java toolchain image, or a `sample-crm`-specific image with dependencies pre-fetched? (G4) *Options:* generic `temurin:25` + Maven / subject-specific per baseline / generic plus shared cache. *Suggested:* generic JDK 25 image plus the proxy from Q21.
+- [x] **Q23** Where does the runner image's Dockerfile live, and who rebuilds it? (G4) *Options:* this repo (`definitions/` or `deploy/`) / `sample-crm` / a separate images repo. *Suggested:* this repo, next to the reference definition, pinned by digest.
+- [x] **Q24** How long may a runner check take before the gate is too slow? (G4) *Options:* under 2 / 5 / 15 minutes. *Suggested:* under 5 minutes, with the Job deadline a little above it.
+- [x] **Q25** Settle here how hidden acceptance tests get into the sandbox, or leave it to spike 3? (G4) *Suggested:* leave to spike 3; the image needs nothing extra for it.
+- [x] **Q26** Which container runtime is on your Mac today (Docker Desktop, OrbStack, Colima, none)? (G4) *Why:* it runs `sample-crm`'s Testcontainers locally and likely hosts the local cluster. *Suggested:* answer with what you have; spike 10 picks the cluster.
 
 ## Log
 
@@ -148,6 +188,21 @@ Assumes a small purpose-built sandbox app (~300 lines, fast tests, a fixed basel
 - 2026-10-18 · note from the user · Agreed the task set T01–T12, the v2 rerun set, and the Laya case selection as proposed.
 - 2026-10-18 · note from the user · Agreed the recommendation and follow-ups; task list written to `docs/test-bed.md`.
 - 2026-10-18 · note from the user (via the baseline spec session, after close) · `sample-crm` is developed with its own copy of the spec kit (specs, sdd skills, spike-researcher) and its own PRODUCT_INTENT.md, PLAN.md, BACKLOG.md, constitution, and CLAUDE.md. That kit covers baseline and maintenance work only; work on `task/*` and `base/*` branches follows the run's instructions, and whether the reference workflow uses the kit inside runs is left to spike 003. Nothing in `sample-crm` names a planted defect or a task; the planted-defect requirements live only in this repository's spec 004. Deleting a company keeps its deals and clears their company, as for contacts. The baseline tag is `baseline`. T04's duplicated validation sits in each create and update of the three record types (six places).
+- 2026-10-18 · main (intent review, PR #2) · Added a question to this spike after it closed: "Which toolchain the runner's sandbox image needs to build and test it." Gate checks now run server side in a runner that starts a throwaway sandbox per job, with no engine or database credentials.
+- 2026-10-18 · note from the user · Infrastructure will be done using Kubernetes, both locally and eventually on GCP. Reopened this spike with G4: the runner sandbox toolchain for `sample-crm`, including how Testcontainers gets Docker inside a runner sandbox.
+- 2026-10-18 · research · G4 briefing by spike-researcher: Testcontainers backends on Kubernetes (DinD, gVisor DinD, kubedock, Sysbox, Testcontainers Cloud, embedded PostgreSQL), GKE Autopilot limits, native sidecars, Spring Boot service-connection precedence; Q17–Q26.
+- 2026-10-18 · answer to Q17 · Yes: `sample-crm` gets a neutral test switch that uses an externally provided PostgreSQL instead of starting a Testcontainers one.
+- 2026-10-18 · answer to Q18 · Same command, `./mvnw -B verify`, in the runner and CI, with the database given by environment variables in both; CI uses a `services: postgres` container.
+- 2026-10-18 · answer to Q19 · Never: no privileged sandbox pods, locally or on GKE.
+- 2026-10-18 · answer to Q20 · GKE mode undecided.
+- 2026-10-18 · answer to Q21 · Sandbox pods reach only an in-cluster Maven proxy; no other egress.
+- 2026-10-18 · answer to Q22 · A generic JDK 25 image (`eclipse-temurin:25-jdk`) with the Maven wrapper; dependencies come warm from the proxy.
+- 2026-10-18 · answer to Q23 · The image's Dockerfile lives in this repository, next to the reference definition, pinned by digest.
+- 2026-10-18 · answer to Q24 · A runner check may take up to 15 minutes before the gate is too slow.
+- 2026-10-18 · answer to Q25 · Leave how hidden acceptance tests get into the sandbox to spike 3.
+- 2026-10-18 · answer to Q26 · No container runtime on the Mac yet.
+- 2026-10-18 · G4 · Recommendation rows and follow-ups for G4 drafted for agreement.
+- 2026-10-18 · note from the user · Agreed the G4 recommendation and follow-ups.
 
 ## Findings
 
@@ -160,7 +215,7 @@ Assumes a small purpose-built sandbox app (~300 lines, fast tests, a fixed basel
 - **Decision** (Q2): Java.
 - **Decision** (Q4): public. **Fact** (GitHub docs): this gives free Actions minutes and free rulesets with required status checks, a server-side backstop for the merge.
 - **Decision** (Q13, Q16): the baseline is a Spring Boot REST service on PostgreSQL, tested with Testcontainers.
-- **Assumption**: Docker is available on the laptop and on the GitHub-hosted runner for Testcontainers; confirm when the CI workflow is written. Spike 10 (local setup) must allow for it.
+- **Assumption**: Docker is available on the laptop and on the GitHub-hosted runner for Testcontainers; confirm when the CI workflow is written. Inside a runner sandbox pod there is no Docker daemon: see G4.
 - **Assumption**: a Spring Boot build and test cycle is slower and its diffs wordier than plain Java, so each iteration costs more usage and tasks must stay small to fit Laya's ~1k-token packet (see G3). The Spring Boot version is to be checked against current docs when the baseline is written.
 - **Decision** (Q3, Q14): merges accumulate on `main`. Each task records the commit it started from; a rerun cuts a new branch from that commit in the same repository (e.g. `task/T03/v2`), so the code is identical and the subject key is new.
 - **Decision** (Q15): a rerun merges into a throwaway target branch created at the same base commit (e.g. `base/T03/v2`). `main` is untouched, and the protected action is still exercised.
@@ -205,6 +260,26 @@ Assumes a small purpose-built sandbox app (~300 lines, fast tests, a fixed basel
 - **Fact** (Laya README): `laya-typed-decisions` has a 1024-token context; base checkpoints are near chance zero-shot on typed decisions. **Assumption**: these five diffs stay within the packet when summarized; checked by the token-count follow-up.
 - **Fact** (BACKLOG spike 6): the typed question and the label set are settled in spike 6; until then the labels are provisional rubric bands.
 
+### G4
+
+- **Decision** (user, 2026-10-18): server-side components, the runner and its sandboxes included, run on Kubernetes: a local cluster now, GKE later.
+- **Fact** (BACKLOG Runner, intent review): the runner starts a throwaway sandbox per job, clones the pushed SHA with a read-only token, and holds no engine or database credentials; a runner check declares an image and a command.
+- **Fact** (spike 2, Q16): `sample-crm`'s tests use Testcontainers with PostgreSQL, which needs a Docker-compatible daemon.
+- **Decision** (Q17): `sample-crm` gets a neutral test switch: when an external PostgreSQL is given (by environment variables), the Testcontainers container bean is not created and the tests use that database. Without it, tests start PostgreSQL with Testcontainers as before. **Fact** (Spring Boot 4.1 docs): service connections take precedence over `spring.datasource.*`, so the bean must be skipped, not just overridden by a URL.
+- **Decision** (Q18): the runner and CI run the same command, `./mvnw -B verify`, with the database given by environment variables in both. CI provides it with a `services: postgres` container; the runner with a PostgreSQL native sidecar in the sandbox pod. Only the laptop uses Testcontainers.
+- **Decision** (Q19): sandbox pods are never privileged, locally or on GKE. This rules out plain DinD and Sysbox-style workarounds as fallbacks.
+- **Decision** (Q20): the GKE mode is undecided; the sidecar approach runs on both Standard and Autopilot, so G4 does not depend on it.
+- **Assumption**: with the database in a sidecar gated by a startup probe, a database that never starts means the job did not run, so the runner can report *not evaluated* instead of *failed*. To confirm in the sidecar trial (Follow-ups).
+- **Assumption**: the switch and the CI change must be described neutrally in `sample-crm` (spec 004 R11): a general way to run the tests against a given database, with no mention of the runner or the test bed.
+- **Decision** (Q21): sandbox pods reach only an in-cluster Maven proxy (a cache of Maven Central); a network policy blocks all other egress. A task that adds a dependency still works, through the proxy.
+- **Decision** (Q22): the runner check uses a generic JDK 25 image (`eclipse-temurin:25-jdk`, multi-arch) and `sample-crm`'s own Maven wrapper, with dependencies served warm by the proxy. The definition names a subject-neutral image. **Fact** (Spring Boot 4.1 docs): Java 25 is supported (17 to 27).
+- **Assumption**: the Maven wrapper's own distribution download also goes through the proxy; confirm in the sidecar trial.
+- **Decision** (Q23): the image's Dockerfile lives in this repository, next to the reference definition, and is pinned by digest, so provenance names an exact image. `sample-crm` stays unaware of the runner.
+- **Decision** (Q24): a runner check may take up to 15 minutes; the Job deadline is set a little above that.
+- **Decision** (Q25): how the hidden acceptance tests get into the sandbox is left to spike 3; the image needs nothing extra for it.
+- **Fact** (Q26): the Mac has no container runtime yet. The laptop needs a Docker-compatible one for `sample-crm`'s Testcontainers, and the same tool will likely host the local cluster; spike 10 picks it. **Fact** (Testcontainers docs): only Docker on Linux and Docker Desktop are actively tested; OrbStack, Colima, and Podman are best effort.
+- **Assumption**: a runner check must be able to declare a service container (here PostgreSQL, with a readiness probe) next to its image and command, so the definition model has to allow it. Input to spike 3.
+
 ## Recommendation and decisions
 
 <!-- Drafted when every goal question is answered, and agreed with the user. -->
@@ -221,6 +296,11 @@ Assumes a small purpose-built sandbox app (~300 lines, fast tests, a fixed basel
 | Task set | T01–T12 as in Findings G2; v2 rerun set T01, T03, T04, T05, T06, T11 | The researcher's task-list CLI draft | Covers every feature the intent doc requires the reference workflow to exercise |
 | Expected results and hidden tests | Claude drafts them in a separate session; the user reviews; kept in this repo under `docs/`, outside `sample-crm` | The user writes them; prose only | Faster, and still independent of the run and invisible to the driver |
 | Laya's first cases | Good and flawed hand-made variants of T01, T03, T04, T06, T11 (10 cases), labeled by the user blind to the evaluator; real-run outputs later as the held-out set | Hand-made only; real runs only | Spike 6 gets contrasting cases before the engine exists; blind labels avoid anchoring on the evaluator |
+| Runner sandbox database (G4) | A PostgreSQL native sidecar in the sandbox pod, gated by a startup probe; `sample-crm` gets a neutral switch to use an external PostgreSQL given by environment variables | Privileged DinD; gVisor DinD (GKE only); kubedock; Testcontainers Cloud; Sysbox; embedded PostgreSQL everywhere | Works on any local cluster and both GKE modes with no privileges or credentials in the sandbox, stays real PostgreSQL, and keeps "could not run" apart from "tests failed" |
+| Check command and CI parity (G4) | `./mvnw -B verify` in both the runner and CI, with the database from environment variables; CI uses a `services: postgres` container; only the laptop uses Testcontainers | Runner-only switch; no parity | One command proven in both places, so runner evidence and CI check runs are comparable |
+| Privileged sandboxes (G4) | Never, locally or on GKE | Local only as an accepted risk; everywhere | Subject code is agent-written; an escape on a Mac cluster could reach `/Users` |
+| Sandbox egress and image (G4) | Egress only to an in-cluster Maven proxy; a generic JDK 25 image (`eclipse-temurin:25-jdk`) with the subject's Maven wrapper; Dockerfile in this repository, pinned by digest | Open egress; Maven Central only; no egress; a `sample-crm`-specific image; an image in `sample-crm` | Narrow exfiltration paths, warm dependencies, a subject-neutral definition, and exact provenance |
+| Runner check budget (G4) | Up to 15 minutes, with the Job deadline a little above | 2 or 5 minutes | Tolerates cold Spring Boot builds without cache engineering in the MVP |
 
 ## Deliverables
 
@@ -241,7 +321,22 @@ Assumes a small purpose-built sandbox app (~300 lines, fast tests, a fixed basel
 
 Where each follow-up went (agreed 2026-10-18): the baseline is a new feature spec, being written in its own session (it includes the branch-merge-reset trial); task records go under BACKLOG Feedback loop / Seed data; revisiting Q8 goes under BACKLOG Feedback loop / Detection; the inputs for spikes 3, 6, and 10 and the T01, T05, and T06 pilot (spike 4) are "Input from spike 2" notes on those spike entries in BACKLOG.md.
 
+G4 follow-ups (agreed 2026-10-18; where each went: spec 004 R3 and R13 carry the `sample-crm` change, which its own spec 001 and plan must match; BACKLOG Runner / Check environment and spike 3 carry the definition inputs; spike 9 and spike 10 entries and Runner / Sandbox technology carry the rest):
+
+- `sample-crm`: amend its spec 001 (and draft plan) for the external-database switch and for CI using a `services: postgres` container with `./mvnw -B verify`, worded neutrally (spec 004 R11). Its own spec kit, in that repository.
+- Spike 3: a runner check declares an image, a command, and service containers with readiness probes; and how hidden acceptance tests get into the sandbox.
+- Spike 9: the runner creates Jobs with a native sidecar; Kubernetes 1.33+ needed for stable native sidecars.
+- Spike 10: pick the Mac container runtime and local cluster (none installed yet); the in-cluster Maven proxy and the sandbox network policy; where the runner image is built and pushed.
+- BACKLOG Runner / Sandbox technology and Check environment: record the sidecar pattern, the egress rule, and the 15-minute budget.
+
 Things to try (from research; not yet run):
+
+- (G4) On a local cluster, a Job with a `postgres:18-alpine` native sidecar (startup probe) and `eclipse-temurin:25-jdk` running `./mvnw -B verify` with the external-database switch; measure cold and warm times. (~2 h, after the baseline exists)
+- (G4) The same Job with a privileged `docker:dind` sidecar and unmodified tests, for comparison. (~1 h)
+- (G4) Kubedock as a sidecar with a namespace-scoped service account under Pod Security "restricted": does the PostgreSQL module work, and what can subject code create through it? (~2 h)
+- (G4) gVisor DinD on a short-lived GKE Autopilot cluster with unmodified tests. (~2 h plus GCP cost)
+- (G4) Measure the baseline's `~/.m2` size and whether `./mvnw -o verify` passes offline after pre-fetching. (~30 min)
+- (G4) Kill the database sidecar mid-job, and start a job whose database never becomes ready: can the runner report "could not run" rather than "tests failed"? (~1 h)
 
 - Pilot T01, T05, and T06 in plain Claude Code with no engine: do planted failures happen, and how much usage does each take? (~2 h)
 - Token-count a candidate Laya state packet (rendered rubric, diff, labels) for T04 and T06 with the ModernBERT tokenizer, to confirm it fits in 1024 tokens. (~1 h)
@@ -260,3 +355,9 @@ Things to try (from research; not yet run):
 - 2026-10-18 Recommendation agreed; `docs/test-bed.md` written; ready for /sdd-verify.
 - 2026-10-18 Verified and closed: BACKLOG Seed data settled, spike inputs added to spikes 3, 4, 6, 10 and Feedback loop / Detection; PLAN spike 2 ticked.
 - 2026-10-18 Logged the user's decisions from the baseline spec session (spec 004); `docs/test-bed.md` updated to match.
+- 2026-10-18 Reopened: G4 added for the runner sandbox toolchain on Kubernetes; status in-progress.
+- 2026-10-18 G4 briefing and questions Q17–Q26 prepared.
+- 2026-10-18 Q17–Q20 answered (external-DB switch, same command with env database in CI and runner, never privileged, GKE mode undecided).
+- 2026-10-18 Q21–Q24 answered (Maven proxy only, generic JDK 25 image, Dockerfile in this repo, 15-minute budget).
+- 2026-10-18 Q25–Q26 answered; G4 answered; G4 recommendation rows and follow-ups drafted.
+- 2026-10-18 G4 recommendation agreed; BACKLOG, `docs/test-bed.md`, and spec 004 updated; verified and closed again.

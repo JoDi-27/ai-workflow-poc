@@ -5,10 +5,21 @@ From spike 002 (`specs/002-test-bed-target-repository-and-task-set/`), where eve
 ## Repository
 
 - **Repository:** `sample-crm`, at `github.com/JoDi-27/sample-crm`, cloned locally at `/Users/jodi/repos/personal/sample-crm`. It is public and owned by the user, so merging to it is harmless.
-- **Stack:** a Java Spring Boot REST service for contacts, companies, and deals, on PostgreSQL, tested with Testcontainers. Docker is needed on the laptop and in CI.
-- **CI:** a minimal GitHub Actions workflow that runs the tests. In the MVP, it is only used to spot-check driver-reported results. Its check runs carry the commit SHA, so it can later provide system-attested evidence.
+- **Stack:** a Java Spring Boot REST service for contacts, companies, and deals, on PostgreSQL, on Java 25 with the Maven wrapper. On the laptop, tests start PostgreSQL with Testcontainers, so the laptop needs a Docker-compatible runtime. When a PostgreSQL is given by environment variables, the tests use it instead.
+- **CI:** a minimal GitHub Actions workflow that runs `./mvnw -B verify` against a `services: postgres` container, given to the tests by environment variables. In the MVP, it is only used to spot-check driver-reported results. Its check runs carry the commit SHA, so it can later provide system-attested evidence.
 - **Baseline:** specified, not built yet. `sample-crm` has its own copy of the spec kit, and its spec 001 (`specs/001-crm-service-baseline/`) describes the service as a normal product. The planted defects and existing tests that T02, T04, T06, and T07 rely on are specified only here, in spec 004 (`specs/004-test-bed-baseline/`), so a driver reading `sample-crm` finds nothing that gives them away. The baseline gets the tag `baseline`.
 - **Process inside `sample-crm`:** its spec kit covers baseline and maintenance work only. Work on `task/*` and `base/*` branches follows the run's instructions; whether the reference workflow uses the kit inside runs is left to spike 3.
+
+## Runner checks
+
+From spike 002, G4. The runner runs `sample-crm`'s tests in a throwaway Kubernetes pod, on a local cluster now and GKE later.
+
+- **Command:** `./mvnw -B verify`, the same as CI, with the database given by environment variables.
+- **Image:** a generic `eclipse-temurin:25-jdk` image. Its Dockerfile lives in this repository, next to the reference definition, pinned by digest.
+- **Database:** PostgreSQL as a native sidecar in the pod, gated by a startup probe. A database that never starts means the job did not run, so the step is *not evaluated* rather than *failed*.
+- **Isolation:** the pod is never privileged, and its only egress is an in-cluster Maven proxy.
+- **Budget:** a check may take up to 15 minutes.
+- How hidden acceptance tests get into the sandbox is decided in spike 3.
 
 ## Branches and reruns
 
