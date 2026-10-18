@@ -17,14 +17,14 @@ These are authored in a workflow definition. The engine knows the concept but no
 - **Transition:** a permitted move from one stage to another. It has zero or one checkpoint. A stage can have several outgoing transitions.
 - **Rework edge:** a transition marked with the `rework` flag. Each traversal counts as one rework loop for the deduction.
 - **Checkpoint:** an ordered list of steps attached to a transition, run when that transition is requested. *Major* is a label only; a major checkpoint and a *stage check* follow the same rules.
-- **Step (evaluation step):** one unit of a checkpoint. It declares an executor, a role (*required* or *optional*), points, a pass condition, inputs (evidence types and the minimum trust level), and, for reasoning and human steps, a scale and rubric. It can also declare a council size and deductions.
+- **Step (evaluation step):** one unit of a checkpoint. It declares an executor, a role (*required* or *optional*), points, a pass condition, inputs (evidence types and the minimum trust level), and, for reasoning steps, a scale and rubric. It can also declare a council size.
 - **Executor:** what performs a step: *deterministic* code in the engine, a fresh-context *agent evaluator* on the driver side, a *human* in the UI, or a *DecisionEngine* provider such as Laya (subject to its mode).
 - **Rubric:** a step's scale divided into bands, each with a descriptor and optional examples.
 - **Evidence type:** a named kind of evidence the definition declares, such as `diff`, `test_summary`, or `fact_check_report`.
 - **Run input:** a value the definition declares as needed to start a run, such as repository, branch, or task text. The engine stores it without interpreting it.
 - **Protected action:** a named driver-side action, such as `merge` or `publish`, that needs engine authorization at the moment it is taken. The definition lists the stages where it is allowed.
 - **Typed question:** a question with a bounded set of labels, answered by a DecisionEngine. Each use declares a *mode*: *shadow*, *advisory*, or *bounded control*.
-- **Deduction:** points subtracted per failed attempt of a required step and per rework loop. Each workflow sets a default, and a step can override it.
+- **Deduction:** points subtracted from the normalized run score per failed attempt of a required step and per rework loop. Each workflow sets both values; step-level deductions are in BACKLOG "Next" (spike 003, Q16).
 - **Driver capability:** something a driver kit declares it can do: *core*, *activity recording*, *evaluation*, *enforcement*, or *telemetry*. A definition can require some of them.
 
 ## Run-time concepts
