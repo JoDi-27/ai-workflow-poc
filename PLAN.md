@@ -22,7 +22,7 @@ Mostly learning and wiring. No workflow logic beyond stubs.
 Each spike is a spike spec in `specs/`, whose findings and recommendation are its write-up, and ends with updates to the affected `BACKLOG.md` items. They are listed in the order to run them; the details, waves, and dependencies are in `BACKLOG.md`.
 
 - [x] **1. Concepts: what a workflow is**
-- [ ] **2. Test bed: target repository and task set**
+- [x] **2. Test bed: target repository and task set**
 - [ ] **3. Definition model draft**
 - [ ] **4. Claude Code driver feasibility**
 - [ ] **5. Claude Code telemetry**
@@ -45,13 +45,13 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [ ] Laya service stub: reachable from the engine through a stub DecisionEngine adapter.
 - [ ] Runner stub: on an engine request, starts a sandbox that clones a repository at a given SHA and runs a command.
 - [ ] OTel Collector receiving Claude Code telemetry.
-- [ ] Docker Compose bringing up engine, UI, database, runner, collector, and Laya service.
+- [ ] Kubernetes manifests in `deploy/` bringing up engine, UI, database, runner, collector, and Laya service on a local cluster, written so that they can later target GKE.
 - [ ] Build and test commands documented in the README.
 
 ### Exit criteria
 
 - Every spike has a write-up, and every MVP item in `BACKLOG.md` has a decision.
-- `docker compose up` starts all server-side components.
+- One documented command deploys all server-side components to the local Kubernetes cluster.
 - A Claude Code session with the driver kit calls the stub `status` through MCP, and its session-start hook reaches the engine.
 - Telemetry from that session arrives at the collector.
 - The engine gets a response from the Laya service.

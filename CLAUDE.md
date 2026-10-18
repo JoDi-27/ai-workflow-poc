@@ -4,7 +4,7 @@ A PoC/MVP of a governed workflow engine for coding-agent drivers. The engine (Ja
 
 ## Current state
 
-Phase 0 (spikes and scaffolding), not started. There is no code yet: no build, no tests, no runnable components. The tech stack is open until spike 9 settles it; do not assume Spring Boot, a database, or a UI framework just because `BACKLOG.md` suggests one. When scaffolding lands, add the build, test, and run commands to this file.
+Phase 0 (spikes and scaffolding), not started. There is no code yet: no build, no tests, no runnable components. Server-side components run on Kubernetes: a local cluster for development and the MVP, and GCP (GKE) later (decided by the user, 2026-10-18). The rest of the tech stack is open until spike 9 settles it; do not assume Spring Boot, a database, or a UI framework just because `BACKLOG.md` suggests one. When scaffolding lands, add the build, test, and run commands to this file.
 
 ## Where things live
 

@@ -60,8 +60,8 @@ Decided in the 2026-10-18 intent review (constitution amendment log): gate check
 - [x] **Trust level:** *Decided:* runner results are engine-verified, with the runner, image, command, and SHA as provenance.
 - [x] **Model access:** *Decided:* the runner's Claude Code evaluator runs headless with the owner's subscription token (`claude setup-token`) while the owner is the only user. A second user needs per-user credentials or an API key first (see Next).
 - [x] **Unavailability:** *Decided:* a runner job that cannot run leaves its step not evaluated, failing closed. No automatic fallback to driver-side evaluation.
-- [ ] **Sandbox technology:** *Suggested:* the runner starts one Docker container per job from the image the step declares, with resource and time limits. Settled by spikes 9 and 10.
-- [ ] **Check environment in definitions:** *Suggested:* a runner check declares an image and a command; the image holds the subject's toolchain. Settled by spike 3.
+- [ ] **Sandbox technology:** *Suggested:* the runner creates one Kubernetes Job per runner job, from the image the step declares, with resource limits and a deadline, in a sandbox namespace that a network policy restricts. Settled by spikes 9 and 10. Input from spike 2 (G4): sandbox pods are never privileged; services such as a database run as native sidecars gated by a startup probe, so a service that never starts means the job did not run; egress is limited to an in-cluster Maven proxy; a check may take up to 15 minutes.
+- [ ] **Check environment in definitions:** *Suggested:* a runner check declares an image and a command; the image holds the subject's toolchain. Settled by spike 3. Input from spike 2 (G4): a check must also be able to declare service containers with readiness probes (PostgreSQL for `sample-crm`); `sample-crm` uses a generic `eclipse-temurin:25-jdk` image whose Dockerfile lives in this repository, pinned by digest, and runs `./mvnw -B verify` with the database given by environment variables.
 
 ### Laya
 
@@ -78,15 +78,16 @@ Decided in the 2026-10-18 intent review (constitution amendment log): gate check
 
 ### Feedback loop
 
-- [ ] **Detection:** *Suggested:* a simple rule over the last N runs, such as the step with the lowest average normalized score or the highest failure rate.
+- [ ] **Detection:** *Suggested:* a simple rule over the last N runs, such as the step with the lowest average normalized score or the highest failure rate. Input from spike 2: the v1 reference workflow has no planted weakness; if no weakest step stands out after the first seed runs, consider planting one before the v2 cycle.
 - [ ] **Proposal flow:** *Suggested:* a skill or slash command in the driver kit that fetches the analysis from the engine, has Claude draft a YAML diff with a hypothesis, and submits it as a draft version.
 - [ ] **Approval:** *Suggested:* a UI page showing the diff and hypothesis, with approve and reject; approval publishes the new version.
 - [ ] **Comparison:** *Suggested:* the quality view splits metrics by definition version. With few runs, show raw numbers and run counts rather than claim significance.
-- [ ] **Seed data:** *Suggested:* run the reference workflow on a handful of small tasks so the loop has results to work with.
+- [x] **Seed data:** *Decided (spike 002):* tasks T01–T12 in `sample-crm`, run in order, with T01, T03, T04, T05, T06, and T11 rerun on the new definition version. See `docs/test-bed.md`. Still to do once the `sample-crm` baseline exists: draft each task's record (expected result and hidden acceptance tests) in a session separate from any run, for the user to review, kept in `docs/`.
 
 ### Local setup
 
-- [ ] *Suggested:* Docker Compose running the engine, UI, database, runner, OTel Collector, and Laya inference service.
+- [x] **Infrastructure:** *Decided (user, 2026-10-18):* server-side components run on Kubernetes: a local cluster for development and the MVP, and GCP (GKE) later. The same manifests should serve both.
+- [ ] **Local cluster:** *Suggested:* a local Kubernetes cluster running the engine, UI, database, runner, OTel Collector, and Laya inference service, with the Laya service possibly native on the host for the Apple GPU. Settled by spike 10.
 
 ## Spikes
 
@@ -110,9 +111,9 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Which concepts the engine knows about and which exist only in definitions, so that SDLC terms stay out of the engine. Test this by sketching a non-SDLC toy workflow with the same concepts.
 
   Deliverable: a glossary, an entity-relationship sketch, and lifecycle diagrams, with the intent doc's Concepts section updated to match.
-- [ ] **2. Test bed: target repository and task set.** *(Suggested addition.)* Choose where runs do real work and which tasks they do, so that the other spikes, the seed data, and the Phase 4 validation all use the same cases. Questions to answer:
+- [x] **2. Test bed: target repository and task set.** *Done:* `specs/002-test-bed-target-repository-and-task-set/`, with the test bed in `docs/test-bed.md` (reopened and closed again on 2026-10-18 for the runner sandbox toolchain, G4). Choose where runs do real work and which tasks they do, so that the other spikes, the seed data, and the Phase 4 validation all use the same cases. Questions to answer:
   - Which sandbox repository to use, ideally one you own so that merging to it is harmless, and whether it needs CI for the later system-attested evidence.
-  - Which toolchain the runner's sandbox image needs to build and test it.
+  - Which toolchain the runner's sandbox image needs to build and test it, and how its Testcontainers-based tests get a database inside a Kubernetes sandbox pod (spike 2, G4).
   - Which 8–12 small tasks to use, with a mix of difficulty, including some that should fail a checkpoint or need rework, and the expected result for each.
   - Which of these become Laya's first labeled local cases.
 
@@ -120,7 +121,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 
 ### Wave 2: Unknowns
 
-- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override. Input from the intent review: where each step runs (engine, runner, driver) and how a runner check declares its image and command.
+- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override. Input from the intent review: where each step runs (engine, runner, driver) and how a runner check declares its image and command. Input from spike 2 (G4): runner checks also declare service containers, and spike 3 decides how hidden acceptance tests get into the sandbox. Input from spike 2: test-bed tasks T05 (rework), T06 (failed checkpoint), and T07 (override) in `docs/test-bed.md` are ready-made cases for that run.
 - [ ] **4. Claude Code driver feasibility.** Confirm that the driver design works with Claude Code on a subscription:
   - Claude Code connects to a remote MCP server written with the MCP Java SDK.
   - A session-start hook can register the session ID with the engine.
@@ -130,7 +131,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - A full run, including runner evaluations alongside the developer's own session, fits within subscription usage limits.
   - Lower priority, since the MVP does not need it: an evaluator subagent with a fresh context and read-only tools can fetch a task and submit its result through MCP without the main agent relaying it.
 
-  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, and the runner evaluator's feasibility. Input from spike 1: prototype a stage task driven by a Stop hook (does the 8-block cap fire despite progress; does Stop fire on Esc), an `http` Stop hook against a stub (block continues, failure lets Claude stop), and `/goal` with a turn limit in its condition. Known constraint: a plugin cannot raise the 8-block cap.
+  Deliverable: a write-up of what works, what doesn't, and workarounds, with a throwaway prototype. Depends on: nothing; run it alongside 5, which can reuse the same prototype. Settles: MCP server, Hooks to engine, Activity recording, and the runner evaluator's feasibility. Input from spike 1: prototype a stage task driven by a Stop hook (does the 8-block cap fire despite progress; does Stop fire on Esc), an `http` Stop hook against a stub (block continues, failure lets Claude stop), and `/goal` with a turn limit in its condition. Known constraint: a plugin cannot raise the 8-block cap. Input from spike 2: pilot test-bed tasks T01, T05, and T06 in plain Claude Code to see whether the planted failures fire and how much usage each task takes (Max 5x).
 - [ ] **5. Claude Code telemetry.** Find out what Claude Code's OpenTelemetry export actually contains: metrics and events, session ID, tokens, cost, tool results, and how it is configured from a plugin or environment. Deliverable: a write-up listing what the quality view can and cannot show. Depends on: nothing; shares a prototype with 4. Settles: Telemetry pipeline, Session correlation.
 - [ ] **6. Laya/Jev role in the workflow.** Work out where typed decision models actually add value, before the Laya MVP items are settled; their suggested defaults are placeholders until then. Questions to answer:
   - What Laya and Jev are in practice: inputs, outputs, confidence semantics, input limits, runtime and hardware needs, licensing, and availability (local or hosted).
@@ -139,7 +140,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Which typed questions and label sets to start with, and how to label the first local cases.
   - Whether Laya and Jev overlap or complement each other.
 
-  Deliverable: a short write-up recommending Laya's MVP use and the order of later roles, tried on a few local cases from the test bed. Depends on: 1, 2. Settles: all Laya items.
+  Deliverable: a short write-up recommending Laya's MVP use and the order of later roles, tried on a few local cases from the test bed. Depends on: 1, 2. Settles: all Laya items. Input from spike 2: the first cases are hand-made good and flawed variants of T01, T03, T04, T06, and T11 (ten cases), labeled by the user blind to the Claude evaluator; real-run outputs come later as the held-out set. Token-count a case packet first, since `laya-typed-decisions` has a 1024-token context and the sandbox is Spring Boot.
 
 ### Wave 3: Shape
 
@@ -168,22 +169,23 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Database, migrations, and YAML parsing and validation for definitions.
   - UI: a single-page app or server-rendered pages, given that the UI is deployed separately and should be fast to build.
   - Laya serving: language and inference runtime, based on spike 6, and whether it can use the Apple GPU.
-  - Runner: language, and how it starts sandboxes (for example, the Docker API from inside a container, or a separate host daemon).
+  - Runner: language, and how it starts sandboxes as Kubernetes Jobs or pods (client library, and a service account allowed only in the sandbox namespace). Input from spike 2 (G4): Jobs carry native sidecars for services, which needs Kubernetes 1.33 or later.
   - OTel Collector distribution, the hook script language (what is reliably installed on a developer laptop), and the test approach (for example, Testcontainers).
 
   Deliverable: a stack table with the choice, the reason, and the alternative rejected for each component, plus a hello-world through the chosen framework and MCP SDK. Depends on: 6, 7 (and 8 for the MCP and HTTP layer). Settles: Engine framework, Database, UI technology, Laya runtime and serving, Sandbox technology.
 
 ### Wave 5: Running it
 
-- [ ] **10. Local setup.** Design how the whole system runs on one laptop, for development and for the MVP. Questions to answer:
-  - What runs in Docker Compose and what runs natively. Containers on macOS generally cannot use the Apple GPU, so the Laya service may need to run on the host.
-  - How the runner starts sandbox containers under Compose, and how it gets the repository read token and the `setup-token` subscription token without exposing them to sandboxes running subject code.
-  - Networking: how Claude Code on the host reaches the engine's MCP endpoint and HTTP API, and how its telemetry exporter reaches the collector.
+- [ ] **10. Local setup.** Design how the whole system runs on a local Kubernetes cluster on one laptop, for development and for the MVP, in a way that carries over to GKE later. Questions to answer:
+  - Which local cluster (for example kind, k3d, minikube, or the cluster built into Docker Desktop or OrbStack), and how manifests are packaged (plain manifests, Kustomize, or Helm) so that one set serves the local cluster and GKE.
+  - What runs in the cluster and what runs natively. Containers on macOS generally cannot use the Apple GPU, so the Laya service may need to run on the host.
+  - How the runner starts sandbox pods (namespaces, RBAC, network policy, resource limits), and how it gets the repository read token and the `setup-token` subscription token as Kubernetes secrets without exposing them to sandboxes running subject code.
+  - Networking: how Claude Code on the host reaches the engine's MCP endpoint and HTTP API (ingress or port forwarding), and how its telemetry exporter reaches the collector.
   - How to install the driver kit plugin from the local repository and configure its token.
   - Bootstrapping: creating a user and driver token, loading the reference workflow, seeding data, and resetting to a clean state.
-  - The development loop: running the engine and UI from the IDE with hot reload while the other components run in Compose.
+  - The development loop: running the engine and UI from the IDE with hot reload while the other components run in the cluster, or a tool that syncs code into the cluster.
 
-  Deliverable: a draft Compose file and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local setup, Sandbox technology.
+  Deliverable: draft Kubernetes manifests and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local cluster, Sandbox technology. Input from spike 2 (G4): the Mac has no container runtime yet, so pick one together with the cluster (Testcontainers actively supports only Docker Desktop and Docker on Linux); run an in-cluster Maven proxy as the sandboxes' only egress; decide where the runner image is built and pushed.
 
 ## Next: improvements after the MVP
 
@@ -195,6 +197,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 - [ ] **Multi-user robustness:** driver leases with heartbeat and takeover.
 - [ ] **Evaluation tasks and runner jobs:** timeouts and retries when an evaluator never submits or a runner job hangs.
 - [ ] **Runner performs protected actions:** the engine has the runner do the merge with write credentials the laptop never holds, making protection authoritative instead of hook-based.
+- [ ] **GCP deployment:** run the same manifests on GKE, and choose the GCP pieces: cluster mode (Standard or Autopilot), managed database, secrets, ingress, and where Laya runs without the Apple GPU.
 - [ ] **Runner model access for several users:** per-user subscription tokens or an API key, decided before a second user joins.
 - [ ] **Driver-side evaluator subagent:** the optional Evaluation capability in the Claude Code kit, for steps that declare driver-side evaluation.
 - [ ] **Transcripts:** upload, with secret redaction.
