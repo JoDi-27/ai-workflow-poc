@@ -8,7 +8,7 @@ From spike 002 (`specs/002-test-bed-target-repository-and-task-set/`), where eve
 - **Stack:** a Java Spring Boot REST service for contacts, companies, and deals, on PostgreSQL, on Java 25 with the Maven wrapper. On the laptop, tests start PostgreSQL with Testcontainers, so the laptop needs a Docker-compatible runtime. When a PostgreSQL is given by environment variables, the tests use it instead.
 - **CI:** a minimal GitHub Actions workflow that runs `./mvnw -B verify` against a `services: postgres` container, given to the tests by environment variables. In the MVP, it is only used to spot-check driver-reported results. Its check runs carry the commit SHA, so it can later provide system-attested evidence.
 - **Baseline:** specified, not built yet. `sample-crm` has its own copy of the spec kit, and its spec 001 (`specs/001-crm-service-baseline/`) describes the service as a normal product. The planted defects and existing tests that T02, T04, T06, and T07 rely on are specified only here, in spec 004 (`specs/004-test-bed-baseline/`), so a driver reading `sample-crm` finds nothing that gives them away. The baseline gets the tag `baseline`.
-- **Process inside `sample-crm`:** its spec kit covers baseline and maintenance work only. Work on `task/*` and `base/*` branches follows the run's instructions; whether the reference workflow uses the kit inside runs is left to spike 3.
+- **Process inside `sample-crm`:** its spec kit covers baseline and maintenance work only. Work on `task/*` and `base/*` branches follows the run's instructions; the reference workflow does not use the kit inside runs in v1; using it is a candidate v2 change for the feedback loop (spike 003, Q29).
 
 ## Runner checks
 
@@ -19,7 +19,7 @@ From spike 002, G4. The runner runs `sample-crm`'s tests in a throwaway Kubernet
 - **Database:** PostgreSQL as a native sidecar in the pod, gated by a startup probe. A database that never starts means the job did not run, so the step is *not evaluated* rather than *failed*.
 - **Isolation:** the pod is never privileged, and its only egress is an in-cluster Maven proxy.
 - **Budget:** a check may take up to 15 minutes.
-- How hidden acceptance tests get into the sandbox is decided in spike 3.
+- Hidden acceptance tests never enter the gate sandbox: they are an outcome measured outside the run score and compared with it (spike 003, Q21).
 
 ## Branches and reruns
 
@@ -44,9 +44,9 @@ From spike 002, G4. The runner runs `sample-crm`'s tests in a throwaway Kubernet
 | T02 | Easy bug fix | "Page 2 of `/contacts` repeats the last contact of page 1" | Off-by-one in pagination; no failing test | Fixed with a regression test; high score | Driver writes the test |
 | T03 | Medium feature | Deal stages `LEAD → QUALIFIED → WON / LOST`; invalid transitions return 409 | — | Completes; likely one failed deterministic attempt | Failed attempt; concurrent users |
 | T04 | Refactor | Move duplicated request validation from controllers into one validator, with no behavior change | Duplicated validation | Tests unchanged and green; the code-quality step decides the score | Reasoning step |
-| T05 | Ambiguous | "Make contact search better" | Vague requirement | Human step rejects at requirements; rework, then completes | Rework loop; human reject |
+| T05 | Ambiguous | "Make contact search better" | Vague requirement | Human step rejects at `release_approval`; rework, then completes | Rework loop; human reject |
 | T06 | Quality trap | Reject duplicate contacts by email on create | Visible tests use exact-match emails only | Visible tests pass with a naive check; the reasoning step lands low (case and whitespace not normalized); checkpoint fails; rework | Failed checkpoint; rework |
-| T07 | Contradiction | "Deleting a company deletes its contacts" | An existing test asserts contacts survive with the company unset | Deterministic step fails on the old test; owner overrides with a reason | Override |
+| T07 | Contradiction | "Deleting a company deletes its contacts" | An existing test asserts contacts survive with the company unset | Deterministic step fails on the old test; the approver account overrides with a reason (separation of duties binds overrides) | Override |
 | T08 | Too big | CSV import and export for contacts, companies, and deals, with a validation report | A low iteration limit | Limit exhausted; escalates to the owner; owner extends and it completes | Exhaustion escalation |
 | T09 | Impossible | "Sync contacts with the Acme CRM API" | No such API, no credentials | Driver cannot proceed; owner ends the run; score excluded | Excluded run |
 | T10 | Protected action | Add OpenAPI descriptions to the deal endpoints | A scripted early-merge attempt | Merge denied before the checkpoint passes, allowed after | Protected action |

@@ -36,20 +36,20 @@ MVP items come with a suggested default to confirm or replace. Everything else s
 - [ ] **Engine framework:** Spring Boot or something lighter. *Suggested:* Spring Boot, for speed of setup.
 - [ ] **Database:** *Suggested:* one relational database. Small evidence payloads and telemetry are stored in it directly, with no object storage yet.
 - [ ] **State and events:** *Suggested:* state tables plus an append-only event table, written in the same transaction.
-- [ ] **Definition format:** *Suggested:* YAML. The initial version is loaded from a file; later versions come from feedback-loop proposals approved in the UI. No general UI editor yet.
-- [ ] **Deterministic steps:** *Suggested:* a few built-in check types, such as "evidence of type X exists" and "field compares to a value", plus one runner check type: a command in a sandbox image that passes on exit code 0. No expression language.
+- [x] **Definition format:** *Decided (spike 003):* one self-contained YAML file per definition version, carrying `schema: ai-workflow/v0` and the workflow ID; the engine numbers versions when a human publishes them. Validated in two layers: a published JSON Schema 2020-12 for structure, and semantic rules in the engine. Evidence types may embed a JSON Schema for their payload. The initial version is loaded from a file; later versions come from feedback-loop proposals approved in the UI. No general UI editor yet. See `docs/definitions/schema.md` and `specs/003-definition-model-draft/`.
+- [x] **Deterministic steps:** *Decided (spike 003):* three built-in check types that run in the engine over evidence, `evidence_exists`, `field_compare` (eq, ne, lt, lte, gt, gte against a literal), and `min_items`; and one runner check type, `command`, a command in a sandbox image that passes on exit code 0. One check per step, and each step states `runs_in`. No expression language. See `docs/definitions/schema.md`.
 - [ ] **MCP server:** *Suggested:* MCP Java SDK over HTTP with a bearer token.
 - [ ] **Auth:** *Suggested:* one static driver token per user, and a simple UI login. Human decisions and definition approvals are accepted only from the UI login, even in the MVP.
 - [ ] **UI technology:** *Suggested:* whatever is fastest to build. Pages refresh by polling.
 - [ ] **Hooks to engine:** *Suggested:* hooks call the engine's HTTP API with a small script. No dedicated CLI yet.
 - [ ] **Result delivery to the driver:** *Suggested:* polling `checkpoint_status`.
 - [ ] **Runs and repositories:** *Suggested:* one active run per workflow and subject key; the SDLC driver kit uses repository + branch as the subject (spike 001, Q1). Shipping means merging that branch.
-- [ ] **Evidence:** *Suggested:* the driver submits small inline payloads, such as design notes and the commit SHA, marked driver-reported. Runner checks produce engine-verified evidence, such as the test summary at that SHA.
+- [ ] **Evidence:** *Suggested:* the driver submits small inline payloads, such as design notes and the commit SHA, marked driver-reported. Runner checks produce engine-verified evidence, such as the test summary at that SHA. *Partly decided (spike 003):* runner checks produce no evidence in the MVP; their log, runner, image, command, and revision are provenance only, and built-in checks read only driver-submitted evidence (see Next).
 - [ ] **Activity recording:** *Suggested:* a post-tool-use hook sends tool name and outcome. No transcripts yet.
 - [x] **Evaluator location:** *Decided (intent review 2026-10-18):* reasoning steps run in the runner by default. Driver-side evaluation stays in the driver contract as an optional capability, but the MVP does not build the evaluator subagent (see Next).
-- [ ] **Scoring:** *Suggested:* linear raw-to-points mapping; one per-workflow deduction for failed attempts and one for rework loops; councils limited to an odd number of members.
+- [x] **Scoring:** *Decided (spike 003):* linear raw-to-points mapping; councils of an odd size, aggregated by median. Workflow-level deductions only, subtracted from the normalized 0–100 score: one per failed attempt of a required step (even if overridden) and one per rework traversal, both paid when they coincide (5 points each in the reference workflow). An attempt that fails only because a required step was *not evaluated* costs nothing. An overridden step earns the points its raw score maps to; a human rejection cannot be overridden. A worked run is in `docs/definitions/example-run.md`.
 - [x] **Stage tasks:** *Decided (spike 001):* each non-terminal stage has a stage task (templated task, acceptance criteria, tests) with provider-neutral limits (iterations, wall time per visit, consecutive failed completion checks). The driver kit enforces the limits and the engine records each iteration. Exhaustion always escalates to the owner in the UI; other stops only pause. See `specs/001-concepts-what-a-workflow-is/`.
-- [ ] **Reference workflow:** *Suggested:* `requirements → implementation → verification → release → complete`, with one major checkpoint before `release`, one rework edge, and the merge as the protected action.
+- [x] **Reference workflow:** *Decided (spike 003):* `requirements → implementation → verification → release → complete`, with a failure terminal `discarded` and one rework edge `verification → implementation`. The major checkpoint before `release` has `diff_present` (engine), `tests_green` (a runner `command` check), `code_quality` (a runner evaluator with a council of 3, shadowed by Laya), an optional runner evaluator, and a human step with separation of duties; a stage check before `complete`. The `verification` stage task runs the tests locally for feedback only. The merge is the protected action, authorized only at the revision the checkpoint reviewed. See `docs/definitions/sdlc-reference.yaml`.
 
 ### Runner
 
@@ -58,10 +58,10 @@ Decided in the 2026-10-18 intent review (constitution amendment log): gate check
 - [x] **Isolation:** *Decided:* a separate runner service next to the engine, called only by the engine, that starts a throwaway sandbox per job. Sandboxes hold no engine or database credentials.
 - [x] **Code source:** *Decided:* the driver pushes the branch and names the commit SHA in the transition request; the runner clones that SHA with a read-only token. Unpushed work is never evaluated.
 - [x] **Trust level:** *Decided:* runner results are engine-verified, with the runner, image, command, and SHA as provenance.
-- [x] **Model access:** *Decided:* the runner's Claude Code evaluator runs headless with the owner's subscription token (`claude setup-token`) while the owner is the only user. A second user needs per-user credentials or an API key first (see Next).
+- [x] **Model access:** *Decided:* the runner's Claude Code evaluator runs headless with the owner's subscription token (`claude setup-token`) while the owner is the only person using the deployment (one person's several UI accounts count as one). A second user needs per-user credentials or an API key first (see Next).
 - [x] **Unavailability:** *Decided:* a runner job that cannot run leaves its step not evaluated, failing closed. No automatic fallback to driver-side evaluation.
 - [ ] **Sandbox technology:** *Suggested:* the runner creates one Kubernetes Job per runner job, from the image the step declares, with resource limits and a deadline, in a sandbox namespace that a network policy restricts. Settled by spikes 9 and 10. Input from spike 2 (G4): sandbox pods are never privileged; services such as a database run as native sidecars gated by a startup probe, so a service that never starts means the job did not run; egress is limited to an in-cluster Maven proxy; a check may take up to 15 minutes.
-- [ ] **Check environment in definitions:** *Suggested:* a runner check declares an image and a command; the image holds the subject's toolchain. Settled by spike 3. Input from spike 2 (G4): a check must also be able to declare service containers with readiness probes (PostgreSQL for `sample-crm`); `sample-crm` uses a generic `eclipse-temurin:25-jdk` image whose Dockerfile lives in this repository, pinned by digest, and runs `./mvnw -B verify` with the database given by environment variables.
+- [x] **Check environment in definitions:** *Decided (spike 003):* a `command` check declares its image inline, pinned by digest; `run` as an argument list; literal `env` (no secrets); `services`, each with a `ready` command, reached at `localhost`; and a required `timeout` covering the whole job. Running past the timeout fails the check; a job that cannot run (runner down, revision not fetchable, sandbox or service never ready) leaves it *not evaluated*. See `docs/definitions/schema.md`.
 
 ### Laya
 
@@ -74,7 +74,7 @@ Decided in the 2026-10-18 intent review (constitution amendment log): gate check
 
 - [ ] **Telemetry pipeline:** *Suggested:* an OpenTelemetry Collector that forwards to the engine, which stores only what it needs (tokens, cost, duration, tool results, errors) keyed by session ID. A Grafana-style stack is the alternative if raw exploration is needed.
 - [ ] **Session correlation:** *Suggested:* the session-start hook registers the Claude Code session ID with the run; confirm that this ID is present in the telemetry.
-- [ ] **Quality view:** *Suggested:* one UI page with score trends per step and per definition version, failure and rework rates, tokens and duration per run, and evaluator agreement.
+- [ ] **Quality view:** *Suggested:* one UI page with score trends per step and per definition version, failure and rework rates, tokens and duration per run, and evaluator agreement. Input from spike 3: show each test-bed task's hidden acceptance tests as an outcome measured after the run, next to its score, never part of it.
 
 ### Feedback loop
 
@@ -121,7 +121,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 
 ### Wave 2: Unknowns
 
-- [ ] **3. Definition model draft.** Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override. Input from the intent review: where each step runs (engine, runner, driver) and how a runner check declares its image and command. Input from spike 2 (G4): runner checks also declare service containers, and spike 3 decides how hidden acceptance tests get into the sandbox. Input from spike 2: test-bed tasks T05 (rework), T06 (failed checkpoint), and T07 (override) in `docs/test-bed.md` are ready-made cases for that run.
+- [x] **3. Definition model draft.** *Done:* `specs/003-definition-model-draft/`, with the schema, reference workflow, and example run in `docs/definitions/`, including the runner inputs below. Write the reference workflow in a draft YAML schema with stages, transitions, evidence, checkpoints, rubrics, scoring, deductions, Laya's typed question, and the protected action. Compute one example run's score by hand. Deliverable: the draft schema and example, ready to become milestone 1. Depends on: 1. Settles: Definition format, Deterministic steps, Scoring, Reference workflow. Input from spike 1: express its decisions in the schema, including stage tasks and their limits, and walk one run with a failed attempt, a rework loop, and an override. Input from the intent review: where each step runs (engine, runner, driver) and how a runner check declares its image and command. Input from spike 2 (G4): runner checks also declare service containers, and spike 3 decides how hidden acceptance tests get into the sandbox. Input from spike 2: test-bed tasks T05 (rework), T06 (failed checkpoint), and T07 (override) in `docs/test-bed.md` are ready-made cases for that run.
 - [ ] **4. Claude Code driver feasibility.** Confirm that the driver design works with Claude Code on a subscription:
   - Claude Code connects to a remote MCP server written with the MCP Java SDK.
   - A session-start hook can register the session ID with the engine.
@@ -140,7 +140,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Which typed questions and label sets to start with, and how to label the first local cases.
   - Whether Laya and Jev overlap or complement each other.
 
-  Deliverable: a short write-up recommending Laya's MVP use and the order of later roles, tried on a few local cases from the test bed. Depends on: 1, 2. Settles: all Laya items. Input from spike 2: the first cases are hand-made good and flawed variants of T01, T03, T04, T06, and T11 (ten cases), labeled by the user blind to the Claude evaluator; real-run outputs come later as the held-out set. Token-count a case packet first, since `laya-typed-decisions` has a 1024-token context and the sandbox is Spring Boot.
+  Deliverable: a short write-up recommending Laya's MVP use and the order of later roles, tried on a few local cases from the test bed. Depends on: 1, 2. Settles: all Laya items. Input from spike 2: the first cases are hand-made good and flawed variants of T01, T03, T04, T06, and T11 (ten cases), labeled by the user blind to the Claude evaluator; real-run outputs come later as the held-out set. Token-count a case packet first, since `laya-typed-decisions` has a 1024-token context and the sandbox is Spring Boot. Input from spike 3: the reference workflow has one shadow-mode typed question, `code_quality_band`, attached to the `code_quality` step, with that step's rubric band IDs as labels; change it here if this spike decides otherwise.
 
 ### Wave 3: Shape
 
@@ -153,14 +153,14 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Trust boundaries and auth: what the agent on the laptop can reach, how driver tokens and UI sessions are kept apart, what the runner and its sandboxes can reach and which credentials they hold (repository read token, subscription token), and which risks the MVP accepts.
   - Where provider-neutrality and SDLC-neutrality are enforced in the module structure.
 
-  Deliverable: an architecture document with component and sequence diagrams, plus a short decision record for each key choice. Depends on: 1, 3, 4, 5, 6. Settles: State and events, Auth, Result delivery to the driver, Runs and repositories, Evidence. Input from spike 1: how an open checkpoint attempt progresses while the driver waits on a human; how exhaustion escalations reach the owner, and what "owner directs a rework" does mechanically.
+  Deliverable: an architecture document with component and sequence diagrams, plus a short decision record for each key choice. Depends on: 1, 3, 4, 5, 6. Settles: State and events, Auth, Result delivery to the driver, Runs and repositories, Evidence. Input from spike 1: how an open checkpoint attempt progresses while the driver waits on a human; how exhaustion escalations reach the owner, and what "owner directs a rework" does mechanically. Input from spike 3: what a council does when one member's runner job cannot run, and how the runner reports "could not run" (step *not evaluated*) apart from "failed" (non-zero exit or timeout).
 - [ ] **8. Driver API contract.** *(Suggested addition; can be folded into 7 if it stays small.)* Define the provider-neutral boundary that every driver kit is written against. Questions to answer:
   - The input and output schemas of each MCP operation, and which ones the MVP needs.
   - The HTTP equivalents that hooks call, and how they are authenticated.
   - The format of denial messages, idempotency keys, and the evaluation task packet (step, rendered rubric, evidence references).
   - Which driver capabilities a session declares, and how the engine checks them.
 
-  Deliverable: the operation list with draft schemas, and one happy path run written as a sequence of calls. Depends on: 3, 4, 7. Input from spike 1: who computes the subject key, and how iterations and exhaustion escalations are reported.
+  Deliverable: the operation list with draft schemas, and one happy path run written as a sequence of calls. Depends on: 3, 4, 7. Input from spike 1: who computes the subject key, and how iterations and exhaustion escalations are reported. Input from spike 3: how the subject key is derived from the definition's `run_inputs`, and the evaluation task packet built from a step's `instructions`, rubric, and inputs, including whether a runner evaluator reads the driver's `diff` or diffs its own clone.
 
 ### Wave 4: Tools
 
@@ -185,7 +185,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - Bootstrapping: creating a user and driver token, loading the reference workflow, seeding data, and resetting to a clean state.
   - The development loop: running the engine and UI from the IDE with hot reload while the other components run in the cluster, or a tool that syncs code into the cluster.
 
-  Deliverable: draft Kubernetes manifests and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local cluster, Sandbox technology. Input from spike 2 (G4): the Mac has no container runtime yet, so pick one together with the cluster (Testcontainers actively supports only Docker Desktop and Docker on Linux); run an in-cluster Maven proxy as the sandboxes' only egress; decide where the runner image is built and pushed.
+  Deliverable: draft Kubernetes manifests and a README section that takes a fresh clone to a stub `status` call from Claude Code. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local cluster, Sandbox technology. Input from spike 2 (G4): the Mac has no container runtime yet, so pick one together with the cluster (Testcontainers actively supports only Docker Desktop and Docker on Linux); run an in-cluster Maven proxy as the sandboxes' only egress; decide where the runner image is built and pushed. Input from spike 3: bootstrapping creates two human UI users, an owner and an approver, because the reference workflow's human step requires separation of duties. Also: build the `sample-crm` check image and set its digest and the PostgreSQL image digest in `docs/definitions/sdlc-reference.yaml`; its database variables (`SPRING_DATASOURCE_URL`, `_USERNAME`, `_PASSWORD`) must match what spec 004's plan reads.
 
 ## Next: improvements after the MVP
 
@@ -193,6 +193,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 - [ ] **Human step scoring:** the approver picks a rubric band in the UI.
 - [ ] **Definition authoring** in the UI, beyond feedback-loop proposals.
 - [ ] **System-attested evidence** from one CI or git hosting integration.
+- [ ] **Runner-produced evidence:** runner checks produce engine-verified evidence (such as a test summary at the SHA) that built-in checks can read, with a `min_trust` key on step inputs or a source on each evidence type so a driver cannot supply it (spike 003, Q23, Q24).
 - [ ] **Real identity:** identity provider, roles, driver token expiry and revocation.
 - [ ] **Multi-user robustness:** driver leases with heartbeat and takeover.
 - [ ] **Evaluation tasks and runner jobs:** timeouts and retries when an evaluator never submits or a runner job hangs.
@@ -204,9 +205,9 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 - [ ] **Dedicated CLI:** for humans and hooks. Startup latency matters, so possibly a native image or a non-JVM client.
 - [ ] **Driver kit distribution and updates.**
 - [ ] **Step-level deduction overrides.**
-- [ ] **Richer feedback loop:** investigation across representative runs, predicted cost and regressions, revert flow.
+- [ ] **Richer feedback loop:** investigation across representative runs, predicted cost and regressions, revert flow. A first candidate change: have runs use `sample-crm`'s own spec kit in the requirements stage (spike 003, Q29).
 - [ ] **Score validity:** outcome sources (defects, acceptance) and human spot-check sampling.
-- [ ] **Non-SDLC toy workflow**, to catch SDLC assumptions in the engine. A paper sketch (article publication) is in `docs/concepts/model.md`.
+- [ ] **Non-SDLC toy workflow**, to catch SDLC assumptions in the engine. A paper sketch (article publication) is in `docs/concepts/model.md`; write it in the draft schema from spike 003 (`docs/definitions/schema.md`) including a runner `command` check, to check that no SDLC or Kubernetes term leaks into the schema.
 - [ ] **Reuse of step results** across checkpoint attempts when their input revisions are unchanged (spike 001, Q7).
 - [ ] **Maximum attempts per checkpoint**, ending the run when reached (spike 001, Q4).
 

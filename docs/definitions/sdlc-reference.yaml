@@ -1,0 +1,237 @@
+# Draft reference workflow, from spike 003 (specs/003-definition-model-draft/).
+# The schema is described in schema.md; a worked score is in example-run.md.
+# The engine assigns the version number when a human publishes this file.
+
+schema: ai-workflow/v0
+workflow: sdlc-reference
+title: SDLC reference workflow
+description: >
+  A small software change: write requirements, implement them, verify the change,
+  and merge it. Exists to exercise the framework, not to model a real process.
+
+required_capabilities: [core, activity_recording, enforcement]
+
+run_inputs:
+  repository: { description: Repository the change is made in. }
+  branch: { description: Branch the change is made on and merged from. }
+  task: { description: What to build, in the requester's words. }
+
+evidence_types:
+  requirements_doc:
+    description: Requirements written for the task.
+    schema:
+      type: object
+      required: [summary, acceptance_criteria]
+      properties:
+        summary: { type: string }
+        acceptance_criteria: { type: array, items: { type: string } }
+  diff:
+    description: The change against the base branch.
+    schema:
+      type: object
+      required: [base, head, files]
+      properties:
+        base: { type: string }
+        head: { type: string }
+        files: { type: array, items: { type: string } }
+  local_test_summary:
+    description: The driver's own run of the full test suite. Feedback only; no step gates on it.
+    schema:
+      type: object
+      required: [passed, failed, skipped]
+      properties:
+        passed: { type: integer, minimum: 0 }
+        failed: { type: integer, minimum: 0 }
+        skipped: { type: integer, minimum: 0 }
+  merge_receipt:
+    description: Proof that the branch was merged.
+    schema:
+      type: object
+      required: [target, merge_revision]
+      properties:
+        target: { type: string }
+        merge_revision: { type: string }
+
+typed_questions:
+  code_quality_band:
+    prompt: Which band of the code quality rubric does this change fall in?
+    labels: [poor, weak, good, exemplary]
+    inputs: [requirements_doc, diff]
+
+protected_actions:
+  merge:
+    description: Merge the run's branch into the target branch.
+    allowed_in: [release]
+
+scoring:
+  # Subtracted from the normalized 0-100 score, as separate line items.
+  deductions:
+    failed_attempt: 5   # per failed attempt of a required step, even if later overridden
+    rework_loop: 5      # per traversal of a rework edge
+
+stages:
+  requirements:
+    entry: true
+    task:
+      prompt: "Write requirements for this task in {{inputs.repository}}: {{inputs.task}}"
+      acceptance_criteria:
+        - Every requirement is testable.
+        - Each acceptance criterion is a single sentence.
+      produces: [requirements_doc]
+      limits: { iterations: 5, wall_time: 1h, failed_checks: 3 }
+
+  implementation:
+    task:
+      prompt: "Implement on branch {{inputs.branch}}: {{evidence.requirements_doc.summary}}"
+      acceptance_criteria:
+        - "Meets the acceptance criteria: {{evidence.requirements_doc.acceptance_criteria}}"
+        - The code builds and the tests touched by the change pass.
+      produces: [diff]
+      limits: { iterations: 12, wall_time: 3h, failed_checks: 3 }
+
+  verification:
+    task:
+      prompt: "Run the full test suite locally against the change, then push {{inputs.branch}} and name the revision. Do not change the code."
+      acceptance_criteria:
+        - The full test suite ran to the end locally.
+        - The branch is pushed, so the runner can fetch the revision.
+      produces: [local_test_summary]
+      limits: { iterations: 4, wall_time: 1h, failed_checks: 2 }
+
+  release:
+    task:
+      prompt: "Merge {{inputs.branch}} into the target branch and record the merge."
+      acceptance_criteria:
+        - The merge succeeded and the merge revision is recorded.
+      produces: [merge_receipt]
+      limits: { iterations: 3, wall_time: 30m, failed_checks: 2 }
+
+  complete:
+    terminal: success
+
+  discarded:
+    terminal: failure
+
+transitions:
+  - id: start_implementation
+    from: requirements
+    to: implementation
+
+  - id: verify
+    from: implementation
+    to: verification
+
+  - id: approve_release
+    from: verification
+    to: release
+    checkpoint:
+      label: major
+      steps:
+        - id: diff_present
+          executor: deterministic
+          runs_in: engine
+          role: required
+          points: 0
+          inputs: [diff]
+          check: { min_items: { field: diff.files, min: 1 } }
+
+        - id: tests_green
+          executor: deterministic
+          runs_in: runner
+          role: required
+          points: 10
+          check:
+            command:
+              # Built from the Dockerfile next to this file; digest set when the image is built.
+              image: "sample-crm-check@sha256:<digest>"
+              run: [./mvnw, -B, verify]
+              env:
+                SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/crm"
+                SPRING_DATASOURCE_USERNAME: crm
+                SPRING_DATASOURCE_PASSWORD: crm
+              services:
+                postgres:
+                  image: "postgres:18-alpine@sha256:<digest>"
+                  env:
+                    POSTGRES_DB: crm
+                    POSTGRES_USER: crm
+                    POSTGRES_PASSWORD: crm
+                  ready: { command: [pg_isready, -U, crm, -d, crm] }
+              timeout: 15m
+
+        - id: code_quality
+          executor: agent_evaluator
+          runs_in: runner
+          role: required
+          points: 20
+          council: 3
+          inputs: [requirements_doc, diff]
+          instructions: Judge the change against the requirements, not against your own design.
+          scale: [1, 10]
+          pass: { min_score: 6 }
+          rubric:
+            - id: poor
+              range: [1, 3]
+              descriptor: Does not meet the requirements, or is unreadable.
+            - id: weak
+              range: [4, 5]
+              descriptor: Meets most requirements, with clear correctness or structure problems.
+            - id: good
+              range: [6, 8]
+              descriptor: Meets the requirements; readable, with minor issues only.
+            - id: exemplary
+              range: [9, 10]
+              descriptor: Meets the requirements; idiomatic, well-factored, and easy to extend.
+          typed_decisions:
+            - question: code_quality_band
+              provider: laya
+              mode: shadow
+
+        - id: docs_updated
+          executor: agent_evaluator
+          runs_in: runner
+          role: optional
+          points: 5
+          inputs: [requirements_doc, diff]
+          scale: [1, 5]
+          rubric:
+            - id: none
+              range: [1, 1]
+              descriptor: No documentation change where one was needed.
+            - id: partial
+              range: [2, 3]
+              descriptor: Some documentation updated; gaps remain.
+            - id: complete
+              range: [4, 5]
+              descriptor: Documentation matches the change, or none was needed.
+
+        - id: release_approval
+          executor: human
+          role: required
+          points: 0
+          separation_of_duties: true
+          inputs: [requirements_doc, diff, local_test_summary]
+          prompt: "Approve merging {{inputs.branch}} in {{inputs.repository}}?"
+
+  - id: rework
+    from: verification
+    to: implementation
+    rework: true
+
+  - id: discard
+    from: verification
+    to: discarded
+
+  - id: finish
+    from: release
+    to: complete
+    checkpoint:
+      label: stage check
+      steps:
+        - id: merge_recorded
+          executor: deterministic
+          runs_in: engine
+          role: required
+          points: 0
+          inputs: [merge_receipt]
+          check: { evidence_exists: merge_receipt }
