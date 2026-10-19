@@ -22,7 +22,7 @@ Mostly learning and wiring. No workflow logic beyond stubs.
 Each spike is a spike spec in `specs/`, whose findings and recommendation are its write-up, and ends with updates to the affected `BACKLOG.md` items. They are listed in the order to run them; the details, waves, and dependencies are in `BACKLOG.md`.
 
 - [x] **1. Concepts: what a workflow is**
-- [x] **2. Test bed: target repository and task set**
+- [x] **2. Test bed: target repository and task set** (baseline built and tagged by spec 004)
 - [x] **3. Definition model draft**
 - [ ] **4. Claude Code driver feasibility**
 - [ ] **5. Claude Code telemetry**

@@ -7,7 +7,7 @@ From spike 002 (`specs/002-test-bed-target-repository-and-task-set/`), where eve
 - **Repository:** `sample-crm`, at `github.com/JoDi-27/sample-crm`, cloned locally at `/Users/jodi/repos/personal/sample-crm`. It is public and owned by the user, so merging to it is harmless.
 - **Stack:** a Java Spring Boot REST service for contacts, companies, and deals, on PostgreSQL, on Java 25 with the Maven wrapper. On the laptop, tests start PostgreSQL with Testcontainers, so the laptop needs a Docker-compatible runtime. When a PostgreSQL is given by environment variables, the tests use it instead.
 - **CI:** a minimal GitHub Actions workflow that runs `./mvnw -B verify` against a `services: postgres` container, given to the tests by environment variables. In the MVP, it is only used to spot-check driver-reported results. Its check runs carry the commit SHA, so it can later provide system-attested evidence.
-- **Baseline:** specified, not built yet. `sample-crm` has its own copy of the spec kit, and its spec 001 (`specs/001-crm-service-baseline/`) describes the service as a normal product. The planted defects and existing tests that T02, T04, T06, and T07 rely on are specified only here, in spec 004 (`specs/004-test-bed-baseline/`), so a driver reading `sample-crm` finds nothing that gives them away. The baseline gets the tag `baseline`.
+- **Baseline:** the tag `baseline` in `sample-crm`, at commit `0916dbfcb9be0299f0e83acc1043d153331688cb` on `main` (2026-10-19, spec 004). It is T01's base commit. `sample-crm` has its own copy of the spec kit, and its spec 001 (`specs/001-crm-service-baseline/`) describes the service as a normal product. The planted defects and existing tests that T02, T04, T06, and T07 rely on are specified only here, in spec 004 (`specs/004-test-bed-baseline/`), so a driver reading `sample-crm` finds nothing that gives them away. `docs/test-bed/baseline-checks.sh` checks the planted page offset and email storage against a running baseline.
 - **Process inside `sample-crm`:** its spec kit covers baseline and maintenance work only. Work on `task/*` and `base/*` branches follows the run's instructions; the reference workflow does not use the kit inside runs in v1; using it is a candidate v2 change for the feedback loop (spike 003, Q29).
 
 ## Runner checks
@@ -24,7 +24,7 @@ From spike 002, G4. The runner runs `sample-crm`'s tests in a throwaway Kubernet
 ## Branches and reruns
 
 - Tasks are run in order, T01 to T12, and their merges accumulate on `main`.
-- Each task records its **base commit**: the commit on `main` that its run started from.
+- Each task records its **base commit**: the commit on `main` that its run started from. T01's is the `baseline` tag, `0916dbf`.
 - A run's branch is `task/Tnn/v1`. Its subject key is the repository and this branch.
 - A rerun on a new definition version branches `task/Tnn/vN` from the task's base commit, so it starts from identical code. It merges into a throwaway branch `base/Tnn/vN`, created at the same base commit. `main` is untouched, and the protected action is still exercised.
 

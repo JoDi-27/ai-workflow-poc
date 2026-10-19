@@ -82,7 +82,7 @@ Decided in the 2026-10-18 intent review (constitution amendment log): gate check
 - [ ] **Proposal flow:** *Suggested:* a skill or slash command in the driver kit that fetches the analysis from the engine, has Claude draft a YAML diff with a hypothesis, and submits it as a draft version.
 - [ ] **Approval:** *Suggested:* a UI page showing the diff and hypothesis, with approve and reject; approval publishes the new version.
 - [ ] **Comparison:** *Suggested:* the quality view splits metrics by definition version. With few runs, show raw numbers and run counts rather than claim significance.
-- [x] **Seed data:** *Decided (spike 002):* tasks T01–T12 in `sample-crm`, run in order, with T01, T03, T04, T05, T06, and T11 rerun on the new definition version. See `docs/test-bed.md`. Still to do once the `sample-crm` baseline exists: draft each task's record (expected result and hidden acceptance tests) in a session separate from any run, for the user to review, kept in `docs/`.
+- [x] **Seed data:** *Decided (spike 002):* tasks T01–T12 in `sample-crm`, run in order, with T01, T03, T04, T05, T06, and T11 rerun on the new definition version. See `docs/test-bed.md`. The baseline exists: tag `baseline` at `0916dbf` (spec 004). Still to do: draft each task's record (expected result and hidden acceptance tests) in a session separate from any run, for the user to review, kept in `docs/`.
 
 ### Local setup
 
