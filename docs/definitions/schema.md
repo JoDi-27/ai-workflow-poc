@@ -2,8 +2,6 @@
 
 From spike 003 (`specs/003-definition-model-draft/`), where each choice is decided in the Log. Terms are defined in `docs/concepts/glossary.md`. The reference workflow written in this schema is `sdlc-reference.yaml`, and a hand-computed run is in `example-run.md`.
 
-> **Being revised.** This draft predates the runner added by the 2026-10-18 intent review. Where steps run, the runner check type, and trust levels are reopened in spike 003 (G7).
-
 This is a draft for milestone 1. The formal JSON Schema file and the validator are written there, with the library chosen in spike 9.
 
 ## Format and validation
@@ -65,23 +63,48 @@ A checkpoint has an optional `label` (such as `major` or `stage check`, display 
 
 ## Steps
 
-Common keys: `id`, `executor`, `role` (`required` or `optional`), `points`, and `inputs` (evidence types). The executor decides the rest.
+Common keys: `id`, `executor`, `role` (`required` or `optional`), `points`, and `inputs` (evidence types). Deterministic and agent-evaluator steps must also state `runs_in`. The executor decides the rest.
 
-| Executor | Keys | Pass condition | Points earned |
-| --- | --- | --- | --- |
-| `deterministic` | `check` (exactly one) | The check holds | Full points on pass, 0 on fail |
-| `agent_evaluator` | `scale: [min, max]`, `rubric`, `pass: { min_score }` (required steps only), `council` (odd, default 1), `instructions` (optional), `typed_decisions` (optional) | Median raw score ≥ `min_score` | `points × (raw − min) / (max − min)` |
-| `human` | `prompt`, `separation_of_duties` (default false) | The human approves | Full points on approval, 0 on rejection |
+| Executor | `runs_in` | Keys | Pass condition | Points earned |
+| --- | --- | --- | --- | --- |
+| `deterministic` | `engine` for built-in checks, `runner` for a `command` check | `check` (exactly one) | The check holds | Full points on pass, 0 on fail |
+| `agent_evaluator` | `runner` (the MVP), or `driver` | `scale: [min, max]`, `rubric`, `pass: { min_score }` (required steps only), `council` (odd, default 1), `instructions` (optional), `typed_decisions` (optional) | Median raw score ≥ `min_score` | `points × (raw − min) / (max − min)` |
+| `human` | none (always the UI) | `prompt`, `separation_of_duties` (default false) | The human approves | Full points on approval, 0 on rejection |
 
-**Check types** for deterministic steps. A field is addressed as `<evidence type>.<field path>`, with dots between nested fields.
+A step in the runner runs at the transition request's revision, which the runner fetches itself, in a throwaway sandbox. Its result is engine-verified, with the runner, image, command, and revision as provenance. A `driver` evaluator's result is driver-reported, and a definition that uses one must require the `evaluation` capability.
+
+**Check types** for deterministic steps. The first three are built in and run in the engine over evidence; a field is addressed as `<evidence type>.<field path>`, with dots between nested fields. `command` runs in the runner.
 
 | Check | Form | Holds when |
 | --- | --- | --- |
 | `evidence_exists` | `{ evidence_exists: <type> }` | Evidence of that type exists at the request's revision |
 | `field_compare` | `{ field_compare: { field, op, value } }` with `op` one of `eq`, `ne`, `lt`, `lte`, `gt`, `gte` | The field compares true to the literal |
 | `min_items` | `{ min_items: { field, min } }` | The list field has at least `min` items |
+| `command` | `{ command: { image, run, env?, services?, timeout } }` | The command exits with code 0 |
 
 Several conditions mean several steps. There is no expression language.
+
+A `command` check, in detail:
+
+```yaml
+check:
+  command:
+    image: "sample-crm-check@sha256:<digest>"   # inline, pinned by digest
+    run: [./mvnw, -B, verify]                    # an argument list, not a shell string
+    env: { SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/crm" }
+    services:                                    # started before the command, reached at localhost
+      postgres:
+        image: "postgres:18-alpine@sha256:<digest>"
+        env: { POSTGRES_DB: crm }
+        ready: { command: [pg_isready, -U, crm, -d, crm] }   # required for every service
+    timeout: 15m                                 # the whole job, services included
+```
+
+- The runner fetches the subject at the request's revision into the sandbox and runs `run` in it. The engine passes the image, command, and environment on without reading them.
+- The check *fails* when the command exits non-zero or runs past `timeout`.
+- The step is *not evaluated*, failing closed, when the job cannot run: the runner is unavailable, the revision cannot be fetched, the sandbox does not start, or a service never becomes ready within `timeout`.
+- A `command` check has no `inputs` and produces no evidence. Its log is kept as provenance.
+- `env` values are literals. Secrets are not allowed in a definition; a throwaway service's own password is not a secret.
 
 **Rubric bands** each have an `id`, a `range: [low, high]`, and a `descriptor`, with optional `examples`. Band IDs are the labels a shadowing typed question uses.
 
@@ -96,14 +119,14 @@ typed_decisions:
 
 They run when that step runs, earn no points, and never delay or block the checkpoint. A provider failure records *not evaluated* for the decision only.
 
-**Not in the MVP schema:** step-level deductions, trust levels other than `driver_reported` (so there is no `min_trust` key yet), human steps scored on a band, and the `advisory` and `bounded_control` modes.
+**Not in the MVP schema:** step-level deductions; runner checks that produce evidence, and with them a `min_trust` key (built-in checks read only driver-submitted evidence); named check environments; human steps scored on a band; and the `advisory` and `bounded_control` modes.
 
 ## Scoring rules
 
 - A step on the path the run took counts its latest evaluation. Steps on transitions the run never took do not count toward possible points.
 - Run score = earned points ÷ possible points × 100, minus deductions, never below 0.
 - Deductions, as separate line items:
-  - `failed_attempt` for each checkpoint attempt in which a required step failed, including a failure that a human then overrode.
+  - `failed_attempt` for each checkpoint attempt in which a required step failed, including a failure that a human then overrode. An attempt that did not pass only because a required step was *not evaluated* costs nothing; it is recorded and can be retried.
   - `rework_loop` for each traversal of a `rework` edge. A failed attempt followed by rework pays both.
 - An overridden step keeps its raw result and earns the points mapped from it, which is 0 for a pass/fail step. The run is classified `overridden`.
 - Values are computed and stored unrounded and displayed to one decimal.
@@ -125,14 +148,16 @@ The engine rejects a definition when any of these fails.
 3. Every transition's `from` and `to` names a declared stage.
 4. Every stage is reachable from the entry, and a success terminal is reachable from every non-terminal stage.
 5. Every evidence type named in `produces`, `inputs`, a check, or a template is declared. Every field path names a field of that type's `schema`, when one is declared. `min_items` targets an array field, and a `field_compare` literal has the field's type.
-6. A check's evidence type is among its step's `inputs`.
+6. A built-in check's evidence type is among its step's `inputs`. A `command` check has no `inputs`.
 7. Every step input is produced by some stage task.
-8. A rubric's bands are contiguous, do not overlap, and cover the whole scale. `pass.min_score` lies within the scale. Optional steps have no `pass`.
-9. `council` is odd and at least 1, and appears only on `agent_evaluator` steps.
-10. A typed decision names a declared question and the declared provider `laya`, uses mode `shadow`, and sits on an `agent_evaluator` step. Its question's labels equal that step's band IDs.
-11. Every `{{inputs.x}}` names a declared run input. Every `{{evidence.t.f}}` names an evidence type produced by a stage that comes before this one on some path from the entry.
-12. Every `allowed_in` names a non-terminal stage. If any protected action is declared, `required_capabilities` includes `enforcement`.
-13. Limits are positive. Deductions and points are not negative.
+8. `runs_in` is present on every deterministic and agent-evaluator step and absent on human steps. Built-in checks run in the `engine`, `command` checks in the `runner`, and agent evaluators in the `runner` or on the `driver`. If any step runs on the `driver`, `required_capabilities` includes `evaluation`.
+9. Every image in a `command` check, and in its services, is pinned by digest (`@sha256:`). Every service has a `ready` command. `timeout` is a positive duration.
+10. A rubric's bands are contiguous, do not overlap, and cover the whole scale. `pass.min_score` lies within the scale. Optional steps have no `pass`.
+11. `council` is odd and at least 1, and appears only on `agent_evaluator` steps.
+12. A typed decision names a declared question and the declared provider `laya`, uses mode `shadow`, and sits on an `agent_evaluator` step. Its question's labels equal that step's band IDs.
+13. Every `{{inputs.x}}` names a declared run input. Every `{{evidence.t.f}}` names an evidence type produced by a stage that comes before this one on some path from the entry.
+14. Every `allowed_in` names a non-terminal stage. If any protected action is declared, `required_capabilities` includes `enforcement`.
+15. Limits are positive. Deductions and points are not negative.
 
 ## Invalid fixtures for milestone 1
 
@@ -141,8 +166,10 @@ One rule each, so the validator's error for each can be checked:
 - A transition to an undeclared stage (rule 3).
 - No success terminal stage (rule 2).
 - A stage nobody can reach (rule 4).
-- Rubric bands with a gap, such as `[1, 3]` and `[5, 10]` (rule 8).
-- `pass.min_score` outside the scale (rule 8).
-- A council of 2 (rule 9).
+- Rubric bands with a gap, such as `[1, 3]` and `[5, 10]` (rule 10).
+- `pass.min_score` outside the scale (rule 10).
+- A council of 2 (rule 11).
 - A typed question label written as unquoted `no` (structure layer).
 - A `field_compare` on a field missing from the evidence type's schema (rule 5).
+- A `field_compare` step with `runs_in: runner` (rule 8).
+- A `command` image given by tag only, such as `postgres:18-alpine` (rule 9).

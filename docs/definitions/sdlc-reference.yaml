@@ -1,7 +1,6 @@
 # Draft reference workflow, from spike 003 (specs/003-definition-model-draft/).
 # The schema is described in schema.md; a worked score is in example-run.md.
 # The engine assigns the version number when a human publishes this file.
-# Being revised: predates the runner (2026-10-18 intent review); see spike 003, G7.
 
 schema: ai-workflow/v0
 workflow: sdlc-reference
@@ -10,7 +9,7 @@ description: >
   A small software change: write requirements, implement them, verify the change,
   and merge it. Exists to exercise the framework, not to model a real process.
 
-required_capabilities: [core, activity_recording, evaluation, enforcement]
+required_capabilities: [core, activity_recording, enforcement]
 
 run_inputs:
   repository: { description: Repository the change is made in. }
@@ -35,8 +34,8 @@ evidence_types:
         base: { type: string }
         head: { type: string }
         files: { type: array, items: { type: string } }
-  test_summary:
-    description: Result of the full test suite.
+  local_test_summary:
+    description: The driver's own run of the full test suite. Feedback only; no step gates on it.
     schema:
       type: object
       required: [passed, failed, skipped]
@@ -92,10 +91,11 @@ stages:
 
   verification:
     task:
-      prompt: Run the full test suite against the change and report the result. Do not change the code.
+      prompt: "Run the full test suite locally against the change, then push {{inputs.branch}} and name the revision. Do not change the code."
       acceptance_criteria:
-        - The full test suite ran to the end.
-      produces: [test_summary]
+        - The full test suite ran to the end locally.
+        - The branch is pushed, so the runner can fetch the revision.
+      produces: [local_test_summary]
       limits: { iterations: 4, wall_time: 1h, failed_checks: 2 }
 
   release:
@@ -129,6 +129,7 @@ transitions:
       steps:
         - id: diff_present
           executor: deterministic
+          runs_in: engine
           role: required
           points: 0
           inputs: [diff]
@@ -136,13 +137,31 @@ transitions:
 
         - id: tests_green
           executor: deterministic
+          runs_in: runner
           role: required
           points: 10
-          inputs: [test_summary]
-          check: { field_compare: { field: test_summary.failed, op: eq, value: 0 } }
+          check:
+            command:
+              # Built from the Dockerfile next to this file; digest set when the image is built.
+              image: "sample-crm-check@sha256:<digest>"
+              run: [./mvnw, -B, verify]
+              env:
+                SPRING_DATASOURCE_URL: "jdbc:postgresql://localhost:5432/crm"
+                SPRING_DATASOURCE_USERNAME: crm
+                SPRING_DATASOURCE_PASSWORD: crm
+              services:
+                postgres:
+                  image: "postgres:18-alpine@sha256:<digest>"
+                  env:
+                    POSTGRES_DB: crm
+                    POSTGRES_USER: crm
+                    POSTGRES_PASSWORD: crm
+                  ready: { command: [pg_isready, -U, crm, -d, crm] }
+              timeout: 15m
 
         - id: code_quality
           executor: agent_evaluator
+          runs_in: runner
           role: required
           points: 20
           council: 3
@@ -170,6 +189,7 @@ transitions:
 
         - id: docs_updated
           executor: agent_evaluator
+          runs_in: runner
           role: optional
           points: 5
           inputs: [requirements_doc, diff]
@@ -190,7 +210,7 @@ transitions:
           role: required
           points: 0
           separation_of_duties: true
-          inputs: [requirements_doc, diff, test_summary]
+          inputs: [requirements_doc, diff, local_test_summary]
           prompt: "Approve merging {{inputs.branch}} in {{inputs.repository}}?"
 
   - id: rework
@@ -210,6 +230,7 @@ transitions:
       steps:
         - id: merge_recorded
           executor: deterministic
+          runs_in: engine
           role: required
           points: 0
           inputs: [merge_receipt]

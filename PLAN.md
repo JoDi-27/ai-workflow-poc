@@ -23,7 +23,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 
 - [x] **1. Concepts: what a workflow is**
 - [x] **2. Test bed: target repository and task set**
-- [ ] **3. Definition model draft**
+- [x] **3. Definition model draft**
 - [ ] **4. Claude Code driver feasibility**
 - [ ] **5. Claude Code telemetry**
 - [ ] **6. Laya/Jev role in the workflow**
@@ -61,7 +61,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 
 Milestones 1–5 from the intent doc, happy path versions only.
 
-- [ ] Definition model and the reference workflow in YAML, with validation. Start from spike 003's draft in `docs/definitions/`: write the formal JSON Schema, implement its 13 semantic rules, and test them with its 8 invalid fixtures.
+- [ ] Definition model and the reference workflow in YAML, with validation. Start from spike 003's draft in `docs/definitions/`: write the formal JSON Schema, implement its 15 semantic rules, and test them with its 10 invalid fixtures.
 - [ ] Engine core: runs, state and event tables, evidence, transition protocol, checkpoint execution, scoring with deductions.
 - [ ] Driver API over MCP and HTTP with driver-token auth.
 - [ ] Runner: sandboxed check commands and a headless Claude Code evaluator at the pushed revision, returning engine-verified results.

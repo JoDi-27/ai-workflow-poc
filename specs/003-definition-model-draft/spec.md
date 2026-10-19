@@ -2,7 +2,7 @@
 id: 003
 title: "Definition model draft"
 type: spike
-status: in-progress
+status: done
 phase: 0
 depends_on: [001, 002]
 refs: ["PLAN Phase 0 / Spikes / 3. Definition model draft", "BACKLOG Spikes / Wave 2 / 3. Definition model draft", "BACKLOG MVP / Definition format", "BACKLOG MVP / Deterministic steps", "BACKLOG MVP / Scoring", "BACKLOG MVP / Reference workflow"]
@@ -22,13 +22,6 @@ Progress counts the checkboxes in Goal questions, Questions for you, and Deliver
 
 <!-- Drop notes, links, constraints, or decisions here at any time, in any form. The next /sdd-spike session moves them into the Log and Findings and clears this section. -->
 
-- 2026-10-18, from merging `main` (intent review "add the runner", PR #2; spike 002 closed). To process with `/sdd-spike 003`:
-  - Gate checks, deterministic and reasoning, run in a server-side runner at the pushed revision. Runner results are engine-verified. Reasoning steps run in the runner by default; driver-side evaluation is optional (INTENT, Checkpoints and Fresh-context evaluation; BACKLOG Runner; constitution Art. 4, 5, 8).
-  - BACKLOG Deterministic steps now suggests a runner check type: a command in a sandbox image, passing on exit code 0. BACKLOG Runner / Check environment in definitions is "settled by spike 3": a runner check declares an image and a command.
-  - INTENT's illustrative step adds `runs_in: runner`; the glossary Executor entry adds *runs in* (engine or runner for deterministic, runner by default or driver for agent evaluators).
-  - Spike 002 (G4): runner checks also declare service containers (PostgreSQL with a readiness probe); spike 3 decides how hidden acceptance tests get into the sandbox, and whether runs use `sample-crm`'s spec kit. T05 (rework), T06 (failed checkpoint), and T07 (override) in `docs/test-bed.md` are ready-made cases for the example run.
-  - Conflicts with earlier answers: Q19 (no `min_trust` key, only driver-reported evidence) no longer holds now that runner evidence is engine-verified. Q8's check list lacks the runner check. The draft requires the `evaluation` capability and uses a driver-reported `test_summary` for `tests_green`. Q13 (bootstrap two UI users) may conflict with constitution Art. 4: runner evaluations may use the owner's subscription "only while the owner is the only user".
-
 ## Why
 
 Milestone 1 (definition model and the reference workflow in YAML, with validation) needs a concrete schema. This spike writes the reference workflow in a draft YAML schema that expresses spike 001's domain model, and checks the scoring rules by computing one example run's score by hand.
@@ -40,13 +33,13 @@ It settles the `BACKLOG.md` MVP items Definition format, Deterministic steps, Sc
 <!-- What the spike must answer, from BACKLOG.md. Ticked once Findings answers it completely. -->
 
 - [x] **G1** The draft YAML schema's overall shape: workflow identity and version, stages, transitions with rework edges, and evidence types. Is YAML the format, and how is a definition validated?
-- [ ] **G2** Checkpoints and their steps: which built-in deterministic check types exist (no expression language), how reasoning steps and their rubrics are written, how human steps and councils are written, and where Laya's typed question sits.
+- [x] **G2** Checkpoints and their steps: which built-in deterministic check types exist (no expression language), how reasoning steps and their rubrics are written, how human steps and councils are written, and where Laya's typed question sits.
 - [x] **G3** Scoring: the raw-to-points mapping, the per-workflow deductions for failed attempts and rework loops, how overrides and not-evaluated steps count, and how the final run score is formed.
 - [x] **G4** Spike 001's decisions in the schema: stage tasks and their provider-neutral limits, and the protected action (the merge) and what authorizes it.
-- [ ] **G5** The reference workflow: its stages, checkpoint placement, rework edge, and protected action, written in the draft schema.
-- [ ] **G6** One example run walked by hand, with a failed checkpoint attempt, a rework loop, and an override, and its final score computed.
-- [ ] **G7** Where each step runs, after the 2026-10-18 intent review added the runner: how a step declares engine, runner, or driver; how a runner check declares its image, command, and service containers with readiness probes; how hidden acceptance tests get into the sandbox; and how runner-produced (engine-verified) evidence and minimum trust levels appear in the schema.
-- [ ] **G8** Whether the reference workflow uses `sample-crm`'s own spec kit inside runs (left to this spike by spike 002, `docs/test-bed.md`).
+- [x] **G5** The reference workflow: its stages, checkpoint placement, rework edge, and protected action, written in the draft schema.
+- [x] **G6** One example run walked by hand, with a failed checkpoint attempt, a rework loop, and an override, and its final score computed.
+- [x] **G7** Where each step runs, after the 2026-10-18 intent review added the runner: how a step declares engine, runner, or driver; how a runner check declares its image, command, and service containers with readiness probes; how hidden acceptance tests get into the sandbox; and how runner-produced (engine-verified) evidence and minimum trust levels appear in the schema.
+- [x] **G8** Whether the reference workflow uses `sample-crm`'s own spec kit inside runs (left to this spike by spike 002, `docs/test-bed.md`).
 
 ## Briefing
 
@@ -124,6 +117,50 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 - Argo Workflows: approval is `suspend: {}`; an optional `duration` auto-resumes, the opposite of fail-closed. ([docs](https://argo-workflows.readthedocs.io/en/latest/walk-through/suspending/), checked 2026-10-18)
 - AWS Step Functions: `Retry` has `MaxAttempts` (default 3) with backoff; `Catch` routes to a named `Next` state, like our max attempts ("Next") and an explicit rework or failure edge. ([docs](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html), checked 2026-10-18)
 
+### Re-prepared 2026-10-18 for the runner (G7, G8, conflicts)
+
+Q1–Q19 stand except where the conflicts below say otherwise.
+
+#### G7 · Where steps run, runner checks, hidden tests, trust
+
+- Known: deterministic steps run in the engine (built-in checks over evidence) or the runner (a check command in a sandbox image); agent evaluators run in the runner by default or on the driver side; each step declares *runs in*. INTENT's example writes `runs_in: runner`. (INTENT Step definition; glossary Executor)
+- Known: runner jobs run at the transition request's revision, each in a throwaway pod; the runner fetches the SHA with a read-only token; unpushed work is never evaluated. Results are engine-verified, with runner, image, command, and SHA as provenance. A job that cannot run leaves its step *not evaluated*, with no driver fallback. (model.md; BACKLOG Runner)
+- Known: check images and commands are definition content the engine passes through; git and Claude Code live in runner adapters. (model.md neutrality table)
+- Known: the `sample-crm` check is `./mvnw -B verify` on `eclipse-temurin:25-jdk` (Dockerfile in this repo, pinned by digest), PostgreSQL as a native sidecar behind a startup probe, database via environment variables, never privileged, egress only to a Maven proxy, up to 15 minutes. (`docs/test-bed.md` Runner checks; 002 Q18–Q24)
+- Known: hidden acceptance tests are drafted by Claude in a separate session, reviewed by the user, kept in this repo under `docs/`, never in `sample-crm`; not written yet. (`docs/test-bed.md`; 002 Q10, Q25)
+- Known: the glossary Step entry, model.md ER (`inputs (min trust)`), and INTENT still describe a minimum trust level, which Q19 dropped.
+- Known: the MVP does not build the driver-side evaluator subagent; the runner evaluator is headless Claude Code on the owner's `setup-token`. (BACKLOG Evaluator location, Runner / Model access)
+- Suggested: one runner check type, a command in a sandbox image, passing on exit code 0; it also declares service containers with readiness probes; runner checks produce engine-verified evidence such as a test summary. (BACKLOG Deterministic steps, Check environment, Evidence; 002 G4)
+- Suggested (researcher's sketch): `check: { command: { image: <ref>@sha256:…, run: [./mvnw, -B, verify], env: {…}, services: { postgres: { image, env, ready: { command: [pg_isready, …] } } }, timeout: 15m } }`. Services are at `localhost` (one pod network namespace).
+- Unknown: hidden tests as gate or outcome; explicit `runs_in`; where the image is declared; timeouts as definition key or runner setting; whether runner checks produce evidence (and `min_trust`); whether a *not evaluated* required step costs a deduction; council behavior when one member cannot run (may go to spike 7); whether the runner evaluator reads the driver's `diff` or diffs the clone (spike 8 packet).
+
+#### G8 · `sample-crm`'s spec kit inside runs
+
+- Known: `sample-crm`'s kit covers baseline and maintenance only; `task/*` and `base/*` work follows the run's instructions. Planted defects are specified only in this repo (spec 004). (`docs/test-bed.md`)
+- Known: the kit is Claude Code skills that stop after each step for review; provider concepts belong in driver kits and runner adapters. (CLAUDE.md; INTENT Design guardrails)
+- Unknown: whether a stage task may name the repo's kit, and how its review stops fit checkpoints and in-session continuation (Art. 4).
+
+#### Conflicts in the current draft
+
+- Q8 lists engine checks only; a runner `command` check extends it and keeps one check per step.
+- Q19 (no `min_trust`) holds only if no engine check reads runner-produced evidence; it breaks once driver-reported and engine-verified items of one type can coexist (e.g. `test_summary`).
+- `required_capabilities` lists `evaluation`, which the MVP kit lacks; the engine refuses to bind a session missing a required capability. No step needs it once evaluators run in the runner. (`sdlc-reference.yaml`; INTENT Driver contract)
+- `tests_green` reads a driver-reported `test_summary`, the weak point the intent review set out to remove. The `verification` stage task duplicates the runner check, and semantic rule 7 ("every step input is produced by some stage task") fails for runner-produced evidence.
+- Q11 versus the runner's own fetch: no conflict; both use the request's revision. A force-push removing the SHA makes the job unable to run (*not evaluated*).
+- Council of 3: each attempt reaching `code_quality` costs 3 headless sessions plus 1 for `docs_updated`, about the same as the driver-side design; spike 4 measures whether it fits. Q1 stands.
+- Q13 versus Art. 4 (facts only): Art. 4 allows runner evaluations on the owner's subscription "only while the owner is the only user"; the amendment's reason is that Anthropic's terms allow subscription tokens for the owner's own scripted use "but not on behalf of other users". Neither text says whether "user" means a person or a UI account. In the test bed, one person controls both UI accounts (an accepted MVP risk), and the second account also drives runs (T03, T12: "one from each account"). Anthropic's wording is about people: no routing through Free, Pro, or Max credentials on behalf of one's users; each end user authenticates with their own credentials.
+- T07 versus Q13: the test bed says "owner overrides with a reason", but Q13 binds overrides to separation of duties.
+- T05 versus the draft: the test bed says "Human step rejects at requirements; rework", but the draft's only human step is `release_approval`.
+
+#### Researched
+
+- Kubernetes native sidecar: an init container with `restartPolicy: Always`; later containers start once its `startupProbe` succeeds; sidecars do not block Job completion. A sidecar whose startup probe never succeeds restarts until the Job's `activeDeadlineSeconds`, and the main container never starts; the runner must read that as "could not run". Probe handlers: exec, httpGet, tcpSocket, grpc. (kubernetes.io Sidecar containers, Probes, Jobs; Context7 `/websites/kubernetes_io`, checked 2026-10-18)
+- GitHub Actions `services`: map of label to `{image, env, ports, options}`; readiness via Docker health options (`--health-cmd pg_isready …`). ([docs](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers), checked 2026-10-18)
+- GitLab CI: job `image` plus `services` (`name`, `alias`, `entrypoint`, `command`); readiness waits on exposed ports and only warns on timeout, which is not fail-closed. ([docs](https://docs.gitlab.com/ci/services/), checked 2026-10-18)
+- Anthropic: Pro and Max follow the Consumer Terms; developers may not route requests through Free, Pro, or Max credentials on behalf of their users; a product hosting Claude Code must have each end user authenticate with their own key or subscription; limits assume ordinary, individual usage. ([legal-and-compliance](https://code.claude.com/docs/en/legal-and-compliance), checked 2026-10-18)
+- `claude setup-token`: a one-year OAuth token for CI pipelines and scripts, needs Pro, Max, Team, or Enterprise, model requests only. `--bare` mode does not read `CLAUDE_CODE_OAUTH_TOKEN`, so the runner evaluator must not use `--bare`. ([authentication](https://code.claude.com/docs/en/authentication), checked 2026-10-18)
+- Not checked today: Maven compiles tests only from `src/test/java` by default; a hidden-test overlay must copy there or add a test source.
+
 ## Questions for you
 
 <!-- Prepared by the agent, highest impact first; each says which goal questions it serves, why it matters, the options, and a suggested answer. Ticked when answered or skipped. -->
@@ -147,6 +184,19 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 - [x] **Q17** How large are the two deductions? (→ G3, G6) *Options:* 5 each / 10 each / 2–3. *Suggested:* 5 each.
 - [x] **Q18** Can a human step's rejection be overridden? (→ G2, G4) *Options:* no / yes. *Suggested:* no; a rejection is already a human decision.
 - [x] **Q19** Accept the draft's remaining choices (0-point gates and human step, required limits with no defaults, `wall_time` durations, plain-substitution templates, band IDs equal to Laya labels, evaluator `instructions`, no `min_trust` key)? (→ G1–G5) *Suggested:* accept all.
+- [x] **Q20** In Art. 4, does "the only user" mean the only person or the only UI account? (→ G5, G7, Q13 conflict) *Why:* decides whether runner evaluations may use your `setup-token` once the approver account exists. *Options:* a person (your own second account does not count; clarify Art. 4's wording) / an account (get an API key or second credentials for the runner before bootstrapping the approver) / one UI account and no separation of duties (reverses Q2 and Q13). *Suggested:* none; this is your reading of Anthropic's terms.
+- [x] **Q21** Are hidden acceptance tests a checkpoint step or an outcome measured outside the run score? (→ G7) *Why:* as a gate they need per-task files the driver must not see and change T06's expected path. *Options:* outcome only / a required gate step / an optional scored step. *Suggested:* outcome only in v1; INTENT uses objective outcomes to check the score.
+- [x] **Q22** If Q21 makes them a gate, how do they reach the sandbox? (→ G7) *Options:* the runner fetches a second read-only source (this repo at a pinned revision) and copies it into the checkout / a per-task image with the tests baked in (reverses 002 Q22) / a hidden run input set in the UI. *Suggested:* the second source. Secrecy stays trust-based (Art. 8), since the driver's laptop can read this repo. (skipped: not needed, since Q21 makes hidden tests an outcome only)
+- [x] **Q23** What does `tests_green` become? (→ G2, G5, G7) *Options:* a runner check that passes on exit code 0, job log as provenance only / the same plus `produces: test_summary` from a JSON file the command writes / a 0-point runner gate followed by `field_compare` on a runner-produced `test_summary`. *Suggested:* the first; `produces` goes to "Next", which differs from the BACKLOG Evidence suggestion.
+- [x] **Q24** If runner checks produce evidence, how does the schema stop a driver supplying it? (→ G7, Q19 conflict) *Options:* bring back `min_trust` on step inputs / each evidence type declares its source (`runner` or `driver`) and the engine rejects driver submissions of runner types / both. *Suggested:* source on the evidence type. (skipped: moot, since Q23 has runner checks produce no evidence in the MVP)
+- [x] **Q25** Must every deterministic and agent-evaluator step state `runs_in`? (→ G7) *Options:* required, checked against the check type / optional with defaults / no key, implied, with `runs_in: driver` only for driver-side evaluators. *Suggested:* required, so a reader sees who decides each step.
+- [x] **Q26** Where is a runner check's image declared? (→ G7) *Options:* inline in the check, by digest / named environments at the top of the definition / runner settings. *Suggested:* inline by digest; named environments when a second check shares one.
+- [x] **Q27** Does an attempt that fails only because a required runner step was *not evaluated* cost the failed-attempt deduction? (→ G3, G7) *Options:* no; recorded as not passed and retried / yes. *Suggested:* no; the deduction measures the work, and Art. 7 keeps *not evaluated* distinct from *failed*.
+- [x] **Q28** What does the `verification` stage task ask the driver to do now? (→ G5, G7) *Options:* run the tests locally as its completion check, producing a non-gating driver-reported `local_test_summary` / only publish the branch and name the revision / fold `verification` into `implementation` (reopens Q14). *Suggested:* the first, like local tests before CI.
+- [x] **Q29** Do runs use `sample-crm`'s own spec kit? (→ G8) *Options:* no; stage task prompts only / yes; the requirements task writes a spec with the kit / not in v1, kept as a candidate v2 change for the feedback loop. *Suggested:* the third.
+- [x] **Q30** Who overrides in T07, given Q13 binds overrides to separation of duties? (→ G5, G6) *Options:* the approver account; reword T07 / the owner, with an exception to Q13. *Suggested:* the approver; only the test-bed wording changes.
+- [x] **Q31** How does T05's "human rejects at requirements" fit a workflow with no human step there? (→ G5, G6) *Options:* add a human requirements review on `start_implementation` / rewrite T05 so the rejection happens at `release_approval`, followed by rework / drop T05 from the rework cases. *Suggested:* the second, low confidence.
+- [x] **Q32** Accept the runner details the draft fills in? `timeout` required on a `command` check and covering services; running past it fails the check, while a never-ready service, unfetchable revision, sandbox start failure, or unavailable runner leave it *not evaluated*; `run` as an argument list; `env` literals only, no secrets; services at `localhost` with a required `ready` command; placeholder digests until the image is built; `SPRING_DATASOURCE_*` variable names. (→ G7) *Suggested:* accept all.
 
 ## Log
 
@@ -175,6 +225,25 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 - 2026-10-18 · answer to Q18 · A human step's rejection cannot be overridden.
 - 2026-10-18 · answer to Q19 · The remaining draft choices are accepted as written.
 - 2026-10-18 · note from the user · Recommendation and follow-ups agreed as drafted.
+- 2026-10-18 · inbox (merge of `main`) · Intent review (PR #2): gate checks, deterministic and reasoning, run in a server-side runner at the pushed revision; runner results are engine-verified, with runner, image, command, and revision as provenance; reasoning steps run in the runner by default, driver-side evaluation is optional; a runner job that cannot run leaves its step not evaluated, with no fallback (INTENT Checkpoints, Evidence and trust, Fresh-context evaluation; constitution Art. 4, 5, 8; BACKLOG Runner).
+- 2026-10-18 · inbox (merge of `main`) · BACKLOG Deterministic steps suggests one runner check type, "a command in a sandbox image that passes on exit code 0"; BACKLOG Runner / Check environment in definitions, "settled by spike 3", suggests a runner check declares an image and a command. INTENT's illustrative step adds `runs_in: runner`; the glossary Executor entry adds *runs in*.
+- 2026-10-18 · inbox (merge of `main`) · Spike 002 (PR #1, G4): runner checks also declare service containers (PostgreSQL with a readiness probe); spike 3 decides how hidden acceptance tests get into the sandbox and whether runs use `sample-crm`'s spec kit; T05 (rework), T06 (failed checkpoint), and T07 (override) in `docs/test-bed.md` are ready-made cases for the example run. Infrastructure is now Kubernetes (local cluster), sandboxes are pods.
+- 2026-10-18 · inbox (merge of `main`) · Conflicts raised: Q19's "no `min_trust` key" assumed only driver-reported evidence; Q8's check list has no runner check; the draft requires the `evaluation` capability and feeds `tests_green` a driver-reported `test_summary`; Q13's two bootstrap UI users may conflict with constitution Art. 4, which allows runner evaluations on the owner's subscription "only while the owner is the only user".
+- 2026-10-18 · research · spike-researcher re-prepared G7, G8, and the conflicts (Kubernetes sidecars and probes, CI `services` prior art, Anthropic subscription terms, `setup-token`). Found two more test-bed conflicts: T07 (owner overrides) versus Q13, and T05 (human rejection at requirements) versus the draft. Q20–Q31 drafted.
+- 2026-10-18 · answer to Q20 · In Art. 4, "the only user" means the only person. The user's own second UI account does not count, so Q13's two accounts stand. Art. 4's wording is to be clarified.
+- 2026-10-18 · answer to Q21 · Hidden acceptance tests are an outcome only, measured outside the run score and compared with it; they are not a checkpoint step. Q22 skipped.
+- 2026-10-18 · answer to Q23 · `tests_green` becomes a runner check that passes on exit code 0; the job log is provenance only and runner checks produce no evidence in the MVP. Runner-produced evidence goes to BACKLOG "Next". Q24 skipped as moot; Q19 (no `min_trust` key) still holds.
+- 2026-10-18 · answer to Q25 · Every deterministic and agent-evaluator step must state `runs_in`, checked against its check type.
+- 2026-10-18 · answer to Q26 · A runner check declares its sandbox image inline, pinned by digest; named environments can come when a second check shares one.
+- 2026-10-18 · answer to Q27 · An attempt that does not pass only because a required runner step was *not evaluated* costs no failed-attempt deduction; it is recorded as not passed and retried.
+- 2026-10-18 · answer to Q28 · The `verification` stage task has the driver run the tests locally as its completion check, producing a driver-reported `local_test_summary` that never gates.
+- 2026-10-18 · answer to Q29 · Runs do not use `sample-crm`'s own spec kit in v1; using it is a candidate v2 change for the feedback loop.
+- 2026-10-18 · answer to Q30 · In T07 the approver account overrides; Q13 stands, and T07's wording in `docs/test-bed.md` changes.
+- 2026-10-18 · answer to Q31 · T05 is rewritten so the human rejects at `release_approval`, followed by rework; the workflow shape from Q1 stays.
+- 2026-10-18 · research · Draft revised for the runner (schema.md, sdlc-reference.yaml, example-run.md); `docs/test-bed.md` T05, T07, hidden tests, and spec-kit lines updated. Runner details filled in by the draft are recorded as assumptions; Q32 asks to confirm them.
+- 2026-10-18 · answer to Q32 · The runner details filled in by the draft are accepted as written.
+- 2026-10-18 · note from the user · Updated recommendation and follow-ups agreed.
+- 2026-10-18 · note from the user · At verify: amend Art. 4 now; file the other follow-ups as notes on existing items.
 
 ## Findings
 
@@ -199,6 +268,10 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 - **Decision** (Q19): rubric bands carry an `id`, and a shadowing typed question's labels must equal the shadowed step's band IDs.
 - **Decision** (Q19): an `agent_evaluator` step may add `instructions` beyond the rubric. A human step has a `prompt` and no scale in the MVP.
 - **Decision** (Q19): the MVP schema has no `min_trust` key, since only `driver_reported` evidence exists (Q1 left out other trust levels).
+- **Conflict** (merge of `main`): Q8 lists engine checks only; BACKLOG now suggests a runner check type. Q19's "no `min_trust` key" assumed driver-reported evidence only; runner results are engine-verified. To resolve in the new questions.
+- **Decision** (Q23): `tests_green` is a runner `command` check that passes on exit code 0. Runner checks produce no evidence in the MVP, so Q19 (no `min_trust` key) stands and the Q19/Q24 conflict is resolved.
+- **Decision** (Q25): every deterministic and agent-evaluator step states `runs_in` (`engine`, `runner`, or `driver`), and the validator checks it against the check type: built-in checks run in the engine, `command` checks in the runner.
+- **Fact**: the draft is revised (`docs/definitions/schema.md`): a fourth check type, `command`, runs in the runner; steps state `runs_in`; semantic rules are now 15 (new: `runs_in` matches the check type, images pinned by digest, every service has a `ready` command), with 10 invalid fixtures.
 
 ### G3
 
@@ -209,6 +282,7 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 - **Decision** (Q16): deductions are workflow-level only in the MVP. Steps carry no deduction field; step-level overrides stay in BACKLOG "Next".
 - **Decision** (Q17): both deductions are 5 points of the normalized score. Values are stored unrounded and shown to one decimal.
 - **Fact** (derived; corrects the briefing's assumption): in a completed run, *not evaluated* can appear only on an optional step whose executor was unavailable; it earns 0 and is flagged. A required step that is not evaluated fails closed, so its attempt does not pass (001 step result lifecycle; constitution, fail closed).
+- **Decision** (Q27): an attempt that does not pass only because a required runner step was *not evaluated* costs no failed-attempt deduction. It is recorded as not passed and can be retried.
 
 ### G4
 
@@ -226,10 +300,36 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 - **Decision** (Q14): one rework edge, `verification → implementation`, with no checkpoint. It is taken when the major checkpoint fails or the owner directs rework.
 - **Fact**: the reference workflow is drafted in `docs/definitions/sdlc-reference.yaml`: stages `requirements` (entry), `implementation`, `verification`, `release`, `complete` (success), `discarded` (failure). The major checkpoint on `verification → release` has `diff_present` (min_items), `tests_green` (field_compare), `code_quality` (council of 3, Laya shadow), optional `docs_updated`, and `release_approval` (human, separation of duties). The stage check on `release → complete` has `merge_recorded` (evidence_exists). Transitions with no checkpoint: `start_implementation`, `verify`, `rework`, `discard`.
 - **Decision** (Q19): `release_approval` and the deterministic gates other than `tests_green` earn 0 points, so possible points are 35.
+- **Conflict** (merge of `main`): Q13's second UI user versus constitution Art. 4 ("only while the owner is the only user") for runner evaluations on the owner's subscription. To resolve in the new questions.
+- **Decision** (Q20): in Art. 4, "the only user" means the only person. The owner's own second UI account does not count, so Q13 stands: bootstrap an owner and an approver account, and runner evaluations may use the owner's `setup-token`. The Q13/Art. 4 conflict is resolved; Art. 4's wording is to be clarified.
+- **Decision** (Q28): the `verification` stage task has the driver run the tests locally as its completion check and push the branch; it produces a driver-reported `local_test_summary` that no step gates on.
+- **Decision** (Q31): no human step is added at requirements; test-bed task T05 is rewritten so the human rejects at `release_approval`, followed by rework.
+- **Fact**: `docs/definitions/sdlc-reference.yaml` is revised: `required_capabilities` drops `evaluation`; `test_summary` becomes the driver's `local_test_summary`; `tests_green` is a runner `command` check (`./mvnw -B verify`, PostgreSQL service, 15 minutes); `code_quality` and `docs_updated` run in the runner. It parses as YAML (Ruby Psych, 2026-10-18). `docs/test-bed.md` T05 and T07 are reworded per Q30 and Q31.
 
 ### G6
 
 - **Fact**: the example run is walked in `docs/definitions/example-run.md`. Attempt 1 fails `tests_green` (−5), the rework edge is taken (−5), attempt 2 fails `code_quality` at median 5 and a second user overrides it (−5, mapped points 8.889 of 20), then the human approves and the merge is authorized at the reviewed revision. Earned 22.639 of 35, normalized 64.683, run score 49.683 (shown as 49.7), classification `overridden`.
+- **Fact** (spike 002): test-bed tasks T05, T06, and T07 (`docs/test-bed.md`) are ready-made cases for the example run; the run must be redone once G7 places `tests_green` and `code_quality`.
+- **Decision** (Q30): in test-bed task T07 the approver account overrides, not the owner, because separation of duties binds overrides (Q13).
+- **Fact**: `docs/definitions/example-run.md` is redone for the runner, with owner and approver accounts. The score is unchanged: earned 22.639 of 35, normalized 64.683, run score 49.683 (shown as 49.7), classification `overridden`. It notes that a never-ready database would make attempt 1 *not evaluated* with no deduction (Q27), and that attempt 2 uses four runner evaluations.
+
+### G7
+
+- **Fact** (INTENT; BACKLOG Runner): deterministic steps run in the engine (built-in checks over evidence) or in the runner (a check command in a sandbox image); agent evaluators run in the runner by default or on the driver side. Runner jobs run at the transition request's revision, each in a throwaway sandbox (a Kubernetes pod), and their results are engine-verified.
+- **Fact** (spike 002, G4): a runner check must be able to declare service containers with readiness probes; how hidden acceptance tests reach the sandbox is left to this spike.
+
+- **Fact** (INTENT Driver contract; BACKLOG Evaluator location): with evaluators in the runner, no reference-workflow step needs the `evaluation` capability, and the MVP kit lacks it; keeping it in `required_capabilities` would stop every session from binding. It must be removed from the draft.
+- **Decision** (Q21): hidden acceptance tests are an outcome measured outside the run score and compared with it, not a checkpoint step. The definition needs nothing for them; Q22 does not arise.
+- **Decision** (Q23): runner checks produce no evidence in the MVP; the job log and the runner, image, command, and revision are provenance only. This departs from the BACKLOG Evidence suggestion ("runner checks produce engine-verified evidence, such as the test summary"); runner-produced evidence goes to BACKLOG "Next".
+- **Decision** (Q25): `runs_in` is required on deterministic and agent-evaluator steps.
+- **Decision** (Q26): a runner check declares its sandbox image inline, pinned by digest. Named environments wait until a second check shares one.
+- **Decision** (Q32): `timeout` is a required key of the `command` check and covers the whole job, services included; running past it *fails* the check, while a service never becoming ready, an unfetchable revision, a sandbox that does not start, or an unavailable runner leave it *not evaluated*; `run` is an argument list, not a shell string; `env` holds literals only, with no secrets in definitions; services are reached at `localhost` and each needs a `ready` command; image digests are placeholders until the image is built; the database variables use Spring Boot names (`SPRING_DATASOURCE_*`), to match spec 004's plan.
+- **Fact** (research): what a council does when one member cannot run, and whether a runner evaluator reads the driver's `diff` or diffs the clone itself, are runner-interface and packet questions for spikes 7 and 8.
+
+### G8
+
+- **Fact** (`docs/test-bed.md`): `sample-crm` has its own spec kit for baseline and maintenance work; work on `task/*` and `base/*` branches follows the run's instructions; whether the reference workflow uses the kit inside runs is left to this spike.
+- **Decision** (Q29): runs do not use `sample-crm`'s own spec kit in v1; stage tasks follow their prompts only. Using the kit is a candidate v2 change for the feedback loop.
 
 ## Recommendation and decisions
 
@@ -240,20 +340,23 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 | Format | One self-contained YAML file per definition version, with `schema: ai-workflow/v0` and the workflow ID; the engine numbers versions on publish (Q10, Q12, Q15) | Code-only validation; rubric files or a directory per version; author-written semver | One reviewable diff per version; proposals never guess their number |
 | Validation | Two layers: published JSON Schema 2020-12 for structure, engine semantic rules for references and coverage (Q10) | Semantic checks in code only | JSON Schema cannot check cross-references; a published schema lets editors and the feedback-loop skill check drafts first |
 | Evidence types | Name plus an optional embedded JSON Schema for the payload (Q9) | Name only; simple field list | Field paths checked at load time, malformed evidence rejected on submit, one validator |
-| Deterministic checks | `evidence_exists`, `field_compare` (eq/ne/lt/lte/gt/gte), `min_items`; one check per step (Q8) | Two types only; pattern and any-of | Covers the reference and toy workflows with no expression language |
+| Deterministic checks | Built-in engine checks `evidence_exists`, `field_compare` (eq/ne/lt/lte/gt/gte), `min_items`, plus a runner `command` check; one check per step (Q8, Q23) | Two types only; pattern and any-of | Covers the reference and toy workflows with no expression language |
+| Where steps run | `runs_in` required on deterministic and agent-evaluator steps: built-in checks in the `engine`, `command` checks in the `runner`, evaluators in the `runner` (or `driver`, which then requires the `evaluation` capability) (Q25) | Optional with defaults; implied by check type | A reader sees who decides each step, as milestone 1 asks |
+| Runner check | `command`: image inline by digest, `run` as an argument list, literal `env`, `services` each with a `ready` command, required `timeout` covering the job; exit code 0 passes, a timeout fails, a job that cannot run is *not evaluated*; no evidence produced in the MVP, log kept as provenance (Q23, Q26, Q32) | `produces: test_summary`; named environments; images in runner settings | One check gives the gate with no extra parsing; runs stay pinned and replayable; fail closed on infrastructure |
+| Hidden acceptance tests | An outcome measured outside the run score and compared with it, never a gate (Q21) | A required gate; an optional scored step | Keeps the test-bed paths, and an objective outcome checks the score instead of feeding it |
 | Laya in a checkpoint | `typed_decisions` block on the shadowed step, mode `shadow`, labels equal its band IDs (Q7, Q19) | A separate shadow step | Never ordered, scored, or able to delay or block the checkpoint |
-| Deductions | Workflow-level only, 5 points each off the normalized score, per failed attempt (including overridden failures) and per rework traversal; both paid when they coincide (Q3, Q5, Q6, Q16, Q17) | Raw-point deductions; step-level overrides; 10 or 2–3 points | Same weight in every run; failure and rework rates stay honest |
+| Deductions | Workflow-level only, 5 points each off the normalized score, per failed attempt (including overridden failures) and per rework traversal; both paid when they coincide; none for an attempt that only had a *not evaluated* required step (Q3, Q5, Q6, Q16, Q17, Q27) | Raw-point deductions; step-level overrides; 10 or 2–3 points | Same weight in every run; failure and rework rates stay honest |
 | Overrides | An overridden step earns points mapped from its raw score; a human rejection cannot be overridden (Q4, Q18) | Zero or full points; overridable rejections | Score shows real quality, the flag shows the exception; a rejection is already a human decision |
-| Separation of duties | On for `release_approval` from v1, binding approvals and overrides; bootstrap creates two UI users (Q2, Q13) | Off in v1; overrides unbound; one person with two accounts | Exercises the guardrail from the start; nobody overrides a gate on a run they drove |
+| Separation of duties | On for `release_approval` from v1, binding approvals and overrides; bootstrap creates two UI accounts. Art. 4's "only user" means the only person, so one person's two accounts may use the owner's `setup-token` (Q2, Q13, Q20) | Off in v1; overrides unbound; one person with two accounts | Exercises the guardrail from the start; nobody overrides a gate on a run they drove |
 | Protected action | `merge` allowed in `release`; `authorize_action` requires the revision the passed checkpoint reviewed (Q11) | Latest evidence revision; any revision | A commit added after review cannot be merged without another attempt |
 | Stage tasks | Plain-substitution templates; limits required on every stage task, `wall_time` as `30m`/`3h` (Q19) | Template logic; workflow-level limit defaults | Readable and explicit; no expression language |
-| Reference workflow | `requirements → implementation → verification → release → complete`, failure terminal `discarded`, one rework edge `verification → implementation` with no checkpoint, major checkpoint before `release`, stage check before `complete` (Q1, Q14) | Happy-path-only; INTENT's full list; other rework targets | Covers happy path steps 4–6 plus cheap extras that milestone 1 validates anyway |
+| Reference workflow | `requirements → implementation → verification → release → complete`, failure terminal `discarded`, one rework edge `verification → implementation` with no checkpoint, major checkpoint before `release` (`tests_green` and both evaluators in the runner), stage check before `complete`; `verification` runs tests locally for feedback only; no `sample-crm` spec kit in v1; test-bed T05 rejects at `release_approval`, T07's override is by the approver (Q1, Q14, Q28–Q31) | Happy-path-only; INTENT's full list; other rework targets; a requirements review step | Covers happy path steps 4–6 plus cheap extras, keeps v1 provider-neutral |
 
 ## Deliverables
 
-- [ ] Every goal question answered, and the recommendation agreed with the user
-- [ ] Draft schema and the reference workflow example in `docs/` (or `definitions/`), with the hand-computed example run
-- [ ] BACKLOG.md items settled by this spike updated
+- [x] Every goal question answered, and the recommendation agreed with the user
+- [x] Draft schema and the reference workflow example in `docs/` (or `definitions/`), with the hand-computed example run
+- [x] BACKLOG.md items settled by this spike updated
 
 ## Follow-ups
 
@@ -265,6 +368,20 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 - Spike 10 (local setup): bootstrap two human UI users, an owner and an approver (Q13).
 - Optional: write the article-publication toy workflow (`docs/concepts/model.md`) in the same schema to check that no SDLC term leaks into it.
 - BACKLOG "Next": an `advisory` mode and `min_trust` key arrive with their features; step-level deductions stay in "Next". *(Dropped at verify: already covered by the existing "Laya beyond shadow mode", "System-attested evidence", and "Step-level deduction overrides" items.)*
+
+Added after reopening for the runner (2026-10-18):
+
+- Constitution Art. 4: clarify that "the only user" means the only person, so one person's second UI account does not count (Q20). Needs an amendment log entry.
+- BACKLOG Evidence: runner checks produce no evidence in the MVP (Q23); add a "Next" item for runner-produced evidence and the `min_trust` key that comes with it.
+- BACKLOG Runner / Check environment in definitions: settled by this spike (Q26, Q32).
+- Spike 7: what a council does when one member's runner job cannot run; how the runner reports "could not run" versus "failed" (Q32's split).
+- Spike 8: whether a runner evaluator reads the driver's `diff` or diffs the clone itself, in the evaluation task packet.
+- Spec 004 and spike 10: the check image and its digest; the database variable names (`SPRING_DATASOURCE_*`) must match spec 004's plan.
+- Quality monitoring: measure each test-bed task's hidden acceptance tests after the run, outside the score, and compare with it (Q21).
+- Feedback loop: using `sample-crm`'s spec kit in runs is a candidate v2 definition change (Q29).
+- Optional: write the runner-check form into the article toy workflow too, to check that no Kubernetes term leaks into the schema.
+
+Filed at the second verify (2026-10-18), as agreed with the user: Art. 4 amended (constitution amendment log), with matching wording in `WORKFLOW_ENGINE_INTENT.md` and BACKLOG Runner / Model access; BACKLOG Evidence annotated and a "Runner-produced evidence" item added to Next; Check environment ticked; spikes 7, 8, and 10 carry "Input from spike 3" notes (spike 10 covers spec 004's variable names); the Quality view, "Richer feedback loop", and "Non-SDLC toy workflow" items carry the rest.
 
 Filed at verify (2026-10-18), as agreed with the user: the milestone 1 item is a note on PLAN Phase 1 "Definition model"; the spike 6, 8, and 10 items are "Input from spike 3" notes on those BACKLOG spikes; the toy workflow extends the BACKLOG "Next" item.
 
@@ -278,3 +395,8 @@ Done during the spike (from the briefing's "Things to try"): the reference workf
 - 2026-10-18 Q17–Q19 answered; all goal questions answered; recommendation agreed with the user.
 - 2026-10-18 Verified and closed: BACKLOG Definition format, Deterministic steps, Scoring, and Reference workflow decided; PLAN spike 3 ticked; follow-ups filed.
 - 2026-10-18 Reopened after merging `main`: the intent review added the runner and spike 002 handed over runner-check inputs. G2, G5, and G6 unticked; G7 and G8 added; inputs and conflicts in the Inbox. BACKLOG Deterministic steps and Reference workflow and PLAN spike 3 unticked; Definition format and Scoring stay decided.
+- 2026-10-18 Inbox processed; briefing re-prepared for the runner; Q20–Q31 added.
+- 2026-10-18 Q20–Q31 answered; draft revised for the runner; T05 and T07 reworded in `docs/test-bed.md`; G8 answered.
+- 2026-10-18 Q32 answered; G2, G5, G6, G7 answered; recommendation and follow-ups updated for the runner.
+- 2026-10-18 Updated recommendation agreed with the user.
+- 2026-10-18 Verified and closed again: BACKLOG Deterministic steps, Reference workflow, and Runner / Check environment decided, Scoring and Evidence updated; Art. 4 amended; PLAN spike 3 ticked; follow-ups filed.
