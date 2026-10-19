@@ -68,7 +68,7 @@ Several Claude Code sessions can work at once, in one checkout or in separate wo
 - `/sdd-specify`, `/sdd-plan`, `/sdd-spike`, and `/sdd-verify` claim the whole spec. A spike stays claimed while its interview runs; a second session only adds notes to its Inbox.
 - `sdd next` skips work other sessions hold and shows which tasks are free. `sdd status` lists the claims.
 
-A claim is a directory created with `mkdir`, which is atomic, under `.git/sdd-claims/`. Every worktree on this machine shares it, and git does not track it. The owner is the Claude Code session ID. A finished task stays marked done until `sdd claims --prune` sees its tick, because other worktrees do not see the tick until it is merged. `sdd new` also reserves the spec ID there, so two worktrees never create the same number.
+A claim is a directory created with `mkdir`, which is atomic, under `.git/sdd-claims/`. Every worktree on this machine shares it, and git does not track it. The owner is the Claude Code session ID. A finished task stays marked done until `sdd claims --prune` sees its tick, because other worktrees do not see the tick until it is merged. `sdd new` also reserves the spec ID there, so two worktrees never create the same number; prune drops the reservation only once the spec is on `main`. Prune never drops a claim whose spec folder is missing in this worktree, because that spec may live on another worktree's branch.
 
 A session that ends without releasing leaves its claim behind. Claims older than 8 hours (`SDD_STALE_HOURS`) are shown as stale; free one with `sdd release <ID> [Tn] --force` once you know that session is gone. Claims only coordinate sessions on one machine.
 

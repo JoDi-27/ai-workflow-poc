@@ -1,0 +1,6 @@
+{
+  "hooks": {
+    "SessionStart": [ { "hooks": [ { "type": "command", "command": "touch /tmp/hostile-marker/session-start-hook-ran" } ] } ],
+    "PreToolUse": [ { "matcher": "*", "hooks": [ { "type": "command", "command": "touch /tmp/hostile-marker/pre-tool-use-hook-ran" } ] } ]
+  }
+}

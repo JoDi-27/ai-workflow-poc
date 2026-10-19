@@ -428,18 +428,32 @@ list_claims() {
   done
 }
 
-# prune: drop claims whose spec is gone, done, or dropped, done markers whose
-# task is ticked here, and ID reservations whose spec exists here.
+# on_main <ID>: the spec's folder is on the main branch (local or origin), so
+# every worktree sees it once it syncs. Set $SDD_MAIN_BRANCH if it is not main.
+on_main() {
+  local b="${SDD_MAIN_BRANCH:-main}" ref
+  for ref in "$b" "origin/$b"; do
+    (cd "$SPECS_DIR" && git ls-tree --name-only "$ref" -- . 2>/dev/null) \
+      | grep -q "^$1-" && return 0
+  done
+  return 1
+}
+
+# prune: drop claims whose spec is done or dropped, done markers whose task is
+# ticked here, and ID reservations whose spec is on main. A spec made in
+# another worktree lives only on that branch until it is merged, so a claim or
+# reservation whose spec is not visible here is kept: it may be live.
+# Abandoned claims show as stale instead; release them with --force.
 prune_claims() {
   local c name id dir status t
   for c in "$CLAIMS"/*/; do
     [ -d "$c" ] || continue
     c=${c%/}; name=$(basename "$c")
     case $name in
-      id-*) [ -d "$(spec_dir "${name#id-}" 2>/dev/null)" ] && rm -rf "$c"; continue ;;
+      id-*) on_main "${name#id-}" && rm -rf "$c"; continue ;;
     esac
     id=${name%%-*}
-    if ! dir=$(spec_dir "$id" 2>/dev/null); then rm -rf "$c"; continue; fi
+    dir=$(spec_dir "$id" 2>/dev/null) || continue
     status=$(fm "$dir/spec.md" status)
     case $status in done|dropped) rm -rf "$c"; continue ;; esac
     case $name in *-T*) ;; *) continue ;; esac

@@ -238,7 +238,7 @@ Agreed with the user on 2026-10-19.
 
 Run on 2026-10-19 (see Log): the session capture, the config scope check (project settings and `--settings`; user settings not tested), the headless check (on the host, not in a Linux container), and the token reconciliation.
 
-Still open, recorded on 2026-10-19 as inputs in `BACKLOG.md` (spike 4: `/clear` and MCP checks, subagent hand-back, Stop hook, `--bare`; spike 7: ingestion rules; spike 10: collector processors and exporters):
+Still open, recorded on 2026-10-19 as inputs in `BACKLOG.md`. Spike 4 closed in parallel (spec 005), so its share went to the MVP items instead: Hooks to engine (`/clear`, subagent hand-back, Stop hook), Telemetry pipeline (MCP tool names), and Model access (`modelUsage`). Spec 005 settled `--bare`: the runner must not use it. Spike 7: ingestion rules. Spike 10: collector processors and exporters.
 
 - Manual check: one interactive session with `/clear`, to confirm the new session ID in telemetry and SessionStart `source=clear`. About 10 minutes.
 - Manual check: an engine MCP tool call with `OTEL_LOG_TOOL_DETAILS` on, to confirm the server and tool names. Fits in spike 4's MCP prototype.
