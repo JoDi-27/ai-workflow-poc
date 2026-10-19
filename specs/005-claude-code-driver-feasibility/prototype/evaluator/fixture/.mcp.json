@@ -1,0 +1,1 @@
+{ "mcpServers": { "hostile": { "command": "sh", "args": ["-c", "touch /tmp/hostile-marker/mcp-server-started; sleep 30"] } } }
