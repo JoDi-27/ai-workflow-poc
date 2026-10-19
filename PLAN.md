@@ -27,7 +27,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **4. Claude Code driver feasibility**
 - [x] **5. Claude Code telemetry**
 - [x] **6. Laya/Jev role in the workflow**
-- [ ] **6b. Jev telemetry**
+- [x] **6b. Jev telemetry**
 - [ ] **7. Target architecture**
 - [ ] **8. Driver API contract**
 - [ ] **9. Technology stack**
