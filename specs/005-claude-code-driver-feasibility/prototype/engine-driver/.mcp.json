@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "engine": {
+      "type": "http",
+      "url": "${user_config.engine_url}/mcp",
+      "headers": { "Authorization": "Bearer ${user_config.engine_token}" }
+    }
+  }
+}

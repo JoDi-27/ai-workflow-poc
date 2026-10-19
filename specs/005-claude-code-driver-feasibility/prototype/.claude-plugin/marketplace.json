@@ -1,0 +1,5 @@
+{
+  "name": "spike005",
+  "owner": { "name": "spike 005" },
+  "plugins": [ { "name": "engine-driver", "source": "./engine-driver", "description": "Throwaway driver kit prototype" } ]
+}
