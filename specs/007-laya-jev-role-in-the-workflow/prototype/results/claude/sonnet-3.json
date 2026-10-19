@@ -1,0 +1,42 @@
+{
+ "case-01": {
+  "score": 8,
+  "reason": "Parameterized JdbcClient query with escaped LIKE wildcards meets every criterion, with good tests for literal matching, the 100 limit, ordering and the blank filter; raw SQL beside JPA is slightly unidiomatic."
+ },
+ "case-02": {
+  "score": 3,
+  "reason": "The DealStage enum allows LEAD to LOST, which AC-2 and AC-3 forbid, and the test list leaves out LEAD to LOST so the bug goes unnoticed."
+ },
+ "case-03": {
+  "score": 4,
+  "reason": "The count endpoint is implemented correctly, but tests only cover the unfiltered count, so the companyId filter (AC-2) and the empty or nonexistent company case (AC-3) are untested."
+ },
+ "case-04": {
+  "score": 9,
+  "reason": "The validator preserves the old rules, messages, error order and the create versus update company rule, and it removes the duplication cleanly with small helpers."
+ },
+ "case-05": {
+  "score": 3,
+  "reason": "existsByEmail is an exact match, so emails differing only in case or surrounding whitespace are not treated as duplicates (AC-2), and no test checks this."
+ },
+ "case-06": {
+  "score": 9,
+  "reason": "Complete and correct: filter and no-filter counts, an empty company, a nonexistent company id and a small clean implementation reusing the existing specification."
+ },
+ "case-07": {
+  "score": 1,
+  "reason": "The user-supplied filter is formatted straight into the SQL string, which is a SQL injection hole, and it breaks on apostrophes and treats wildcards as wildcards; the literal-matching tests were removed."
+ },
+ "case-08": {
+  "score": 8,
+  "reason": "A normalized lower(trim()) query meets all criteria, and the tests cover case, whitespace, an already-stored padded email and a different email; there is no unique constraint backstop, which is minor."
+ },
+ "case-09": {
+  "score": 9,
+  "reason": "Transitions match the spec exactly and the tests cover every valid and invalid pair, 400, 404 and that PUT /deals/{id} leaves the stage unchanged, with a migration and a clean enum."
+ },
+ "case-10": {
+  "score": 4,
+  "reason": "The refactor drops strip() before the email regex, so padded emails that used to be accepted are now rejected with 400, which breaks the no-behavior-change requirement."
+ }
+}

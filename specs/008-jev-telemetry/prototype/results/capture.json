@@ -1,0 +1,201 @@
+[
+ {
+  "case": "ok, jev-1.13.0",
+  "status": 200,
+  "ms": 271,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 12:54:45 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1543a8b7c7927a3cd8a3271f95d01",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4cfeee4ecf05816-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.13.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 1.0,
+     "probabilities": {
+      "billing": 1.0,
+      "technical": 0.0
+     }
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.99
+    }
+   },
+   "usage": {
+    "input_tokens": 330,
+    "output_tokens": 48
+   }
+  }
+ },
+ {
+  "case": "ok, jev-latest",
+  "status": 200,
+  "ms": 255,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 12:54:45 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1543a8c737bd89cf63345409eb892",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4cfeee68c6ca10f-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.13.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 1.0,
+     "probabilities": {
+      "billing": 1.0,
+      "technical": 0.0
+     }
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.99
+    }
+   },
+   "usage": {
+    "input_tokens": 330,
+    "output_tokens": 48
+   }
+  }
+ },
+ {
+  "case": "ok, client metadata fields + request-id header",
+  "status": 400,
+  "ms": 252,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 12:54:45 GMT",
+   "Content-Type": "application/json",
+   "Content-Length": "72",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1543a8d857cde8de35183e92fd780",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4cfeee8293dc4cc-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": {
+    "error_type": "api_usage_error",
+    "message": "Invalid request."
+   }
+  }
+ },
+ {
+  "case": "unknown model",
+  "status": 400,
+  "ms": 205,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 12:54:46 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1543a8e6075d2acb7dbca5aed6115",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4cfeee9ac297078-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": {
+    "error_type": "api_usage_error",
+    "message": "Unknown model: jev-0.0.0"
+   }
+  }
+ },
+ {
+  "case": "bad question",
+  "status": 422,
+  "ms": 210,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 12:54:46 GMT",
+   "Content-Type": "application/json",
+   "Content-Length": "150",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1543a8f317934b3b60344dd62b62b",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4cfeeeafa2f0c00-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": [
+    {
+     "type": "missing",
+     "loc": [
+      "body",
+      "questions",
+      "x",
+      "choice",
+      "criteria"
+     ],
+     "msg": "Field required",
+     "input": {
+      "type": "choice",
+      "instructions": "?"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "case": "no key",
+  "status": 403,
+  "ms": 207,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 12:54:46 GMT",
+   "Content-Type": "application/json",
+   "Content-Length": "118",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1543a8ffd77258094c3d77eb1c374",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4cfeeec4fa8f53d-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": {
+    "error_type": "authentication_error",
+    "message": "Must supply an API key! Check your request and try again."
+   }
+  }
+ },
+ {
+  "case": "bad key",
+  "status": 401,
+  "ms": 231,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 12:54:46 GMT",
+   "Content-Type": "application/json",
+   "Content-Length": "138",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1543a90d376b18e2fcd0afcf99419",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4cfeeed9b12765f-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": {
+    "error_type": "authentication_error",
+    "message": "Cannot authenticate with the server. Please check your API key and try again."
+   }
+  }
+ }
+]

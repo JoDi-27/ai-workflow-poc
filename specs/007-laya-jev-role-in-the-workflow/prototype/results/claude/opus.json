@@ -1,0 +1,42 @@
+{
+ "case-01": {
+  "score": 9,
+  "reason": "Meets every criterion with a parameterized query, escaped LIKE wildcards, id order and limit 100, and tests cover matching, ordering, the limit, full fields, quotes, wildcards and a blank filter."
+ },
+ "case-02": {
+  "score": 4,
+  "reason": "canMoveTo wrongly allows LEAD to LOST, which breaks AC-2 and AC-3, and the conflict test leaves out that move, so the bug goes unnoticed."
+ },
+ "case-03": {
+  "score": 5,
+  "reason": "The implementation looks correct, but the tests cover only the unfiltered count and miss AC-2 (company filter), AC-3 (an empty or unknown company) and AC-4."
+ },
+ "case-04": {
+  "score": 9,
+  "reason": "Cleanly moves all rules into one well-factored validator with the same messages, the same order and strip-before-regex behavior, and keeps company required on deal create only."
+ },
+ "case-05": {
+  "score": 3,
+  "reason": "existsByEmail is an exact match, so the case and whitespace duplicates in AC-2 are not detected, and the tests never check AC-2."
+ },
+ "case-06": {
+  "score": 9,
+  "reason": "Correct, minimal count endpoint that reuses the existing specification, with tests for the total, the per-company filter, a company with no contacts and an unknown company id."
+ },
+ "case-07": {
+  "score": 1,
+  "reason": "Puts the filter straight into the SQL string with String.format, which allows SQL injection and breaks the literal matching in AC-3 (quotes and wildcards), and the tests for those cases were removed."
+ },
+ "case-08": {
+  "score": 8,
+  "reason": "Normalizes both sides (trim and lower case) for the duplicate check and tests case, whitespace and stored-variant duplicates well; there is no explicit update test for AC-4 and no DB constraint against races."
+ },
+ "case-09": {
+  "score": 9,
+  "reason": "Transitions match the spec exactly, the migration has a default and a check constraint, 409s come as problem responses, and the tests cover every allowed and forbidden move, 400s, 404 and update keeping the stage."
+ },
+ "case-10": {
+  "score": 4,
+  "reason": "The refactor drops strip() before the email regex, so emails with surrounding whitespace that were accepted before are now rejected, which breaks the no-behavior-change requirement."
+ }
+}

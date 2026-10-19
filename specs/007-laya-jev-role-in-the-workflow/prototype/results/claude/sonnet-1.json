@@ -1,0 +1,42 @@
+{
+ "case-01": {
+  "score": 9,
+  "reason": "Parameterized JDBC query with escaped LIKE wildcards, id order, limit 100, a 400 for a blank filter, and tests covering every criterion including quotes and wildcards."
+ },
+ "case-02": {
+  "score": 3,
+  "reason": "Allows LEAD to LOST, which AC-3 says must return 409, and the tests leave that pair out of the invalid cases, so the bug goes unnoticed."
+ },
+ "case-03": {
+  "score": 5,
+  "reason": "The endpoint is correct, but there are no tests for the companyId filter or for a company with no contacts or a nonexistent one, so AC-2 and AC-3 are uncovered."
+ },
+ "case-04": {
+  "score": 9,
+  "reason": "Clean single validator that keeps the original rules, order and messages, including the stripped email check and the create-versus-update company rule."
+ },
+ "case-05": {
+  "score": 4,
+  "reason": "Uses an exact-match existsByEmail, so it misses duplicates that differ in case or whitespace (AC-2), and the tests do not cover that case."
+ },
+ "case-06": {
+  "score": 9,
+  "reason": "Correct count with the optional company filter, reusing the existing specification, and tests covering all criteria."
+ },
+ "case-07": {
+  "score": 1,
+  "reason": "Concatenates the user filter straight into the SQL string, which is a SQL injection hole and also breaks literal matching, and the tests for quotes and wildcards were removed."
+ },
+ "case-08": {
+  "score": 8,
+  "reason": "Case-insensitive, trimmed duplicate check with good tests; the only gaps are the check-then-insert race and no unique constraint."
+ },
+ "case-09": {
+  "score": 9,
+  "reason": "Correct transition table (LEAD to QUALIFIED only), a 409 problem response, 400 and 404 handling, a migration, and thorough tests including every invalid pair."
+ },
+ "case-10": {
+  "score": 4,
+  "reason": "Drops strip() before the email regex, so padded emails that used to be accepted are now rejected, which breaks the no-behavior-change requirement."
+ }
+}

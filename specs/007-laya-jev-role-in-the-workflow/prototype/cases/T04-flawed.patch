@@ -1,0 +1,363 @@
+diff --git a/src/main/java/com/example/samplecrm/company/CompanyController.java b/src/main/java/com/example/samplecrm/company/CompanyController.java
+index 16bec61..d271c3c 100644
+--- a/src/main/java/com/example/samplecrm/company/CompanyController.java
++++ b/src/main/java/com/example/samplecrm/company/CompanyController.java
+@@ -1,9 +1,7 @@
+ package com.example.samplecrm.company;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
++import com.example.samplecrm.validation.RequestValidator;
+ import java.net.URI;
+-import java.util.ArrayList;
+ import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+@@ -20,23 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class CompanyController {
+ 
+     private final CompanyService service;
++    private final RequestValidator validator;
+ 
+-    CompanyController(CompanyService service) {
++    CompanyController(CompanyService service, RequestValidator validator) {
+         this.service = service;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity<CompanyResponse> create(@RequestBody CompanyRequest request) {
+-        List<FieldErrorItem> errors = new ArrayList<>();
+-        if (request.name() == null || request.name().isBlank()) {
+-            errors.add(new FieldErrorItem("name", "must not be blank"));
+-        } else if (request.name().length() > 200) {
+-            errors.add(new FieldErrorItem("name", "must be at most 200 characters"));
+-        }
+-        if (request.website() != null && request.website().length() > 500) {
+-            errors.add(new FieldErrorItem("website", "must be at most 500 characters"));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         CompanyResponse created = service.create(request);
+         return ResponseEntity.created(URI.create("/companies/" + created.id())).body(created);
+@@ -54,16 +45,7 @@ class CompanyController {
+ 
+     @PutMapping("/{id}")
+     CompanyResponse update(@PathVariable long id, @RequestBody CompanyRequest request) {
+-        List<FieldErrorItem> errors = new ArrayList<>();
+-        if (request.name() == null || request.name().isBlank()) {
+-            errors.add(new FieldErrorItem("name", "must not be blank"));
+-        } else if (request.name().length() > 200) {
+-            errors.add(new FieldErrorItem("name", "must be at most 200 characters"));
+-        }
+-        if (request.website() != null && request.website().length() > 500) {
+-            errors.add(new FieldErrorItem("website", "must be at most 500 characters"));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..4dc5de7 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -1,14 +1,10 @@
+ package com.example.samplecrm.contact;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
+ import com.example.samplecrm.api.PageResponse;
+-import com.example.samplecrm.company.CompanyRepository;
++import com.example.samplecrm.validation.RequestValidator;
+ import jakarta.validation.constraints.Max;
+ import jakarta.validation.constraints.Min;
+ import java.net.URI;
+-import java.util.ArrayList;
+-import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+ import org.springframework.web.bind.annotation.GetMapping;
+@@ -25,40 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class ContactController {
+ 
+     private final ContactService service;
+-    private final CompanyRepository companies;
++    private final RequestValidator validator;
+ 
+-    ContactController(ContactService service, CompanyRepository companies) {
++    ContactController(ContactService service, RequestValidator validator) {
+         this.service = service;
+-        this.companies = companies;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity<ContactResponse> create(@RequestBody ContactRequest request) {
+-        List<FieldErrorItem> errors = new ArrayList<>();
+-        if (request.firstName() == null || request.firstName().isBlank()) {
+-            errors.add(new FieldErrorItem("firstName", "must not be blank"));
+-        } else if (request.firstName().length() > 100) {
+-            errors.add(new FieldErrorItem("firstName", "must be at most 100 characters"));
+-        }
+-        if (request.lastName() == null || request.lastName().isBlank()) {
+-            errors.add(new FieldErrorItem("lastName", "must not be blank"));
+-        } else if (request.lastName().length() > 100) {
+-            errors.add(new FieldErrorItem("lastName", "must be at most 100 characters"));
+-        }
+-        if (request.email() == null || request.email().isBlank()) {
+-            errors.add(new FieldErrorItem("email", "must not be blank"));
+-        } else if (request.email().length() > 254) {
+-            errors.add(new FieldErrorItem("email", "must be at most 254 characters"));
+-        } else if (!request.email().strip().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+-            errors.add(new FieldErrorItem("email", "must be a well-formed email address"));
+-        }
+-        if (request.phone() != null && request.phone().length() > 50) {
+-            errors.add(new FieldErrorItem("phone", "must be at most 50 characters"));
+-        }
+-        if (request.companyId() != null && !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem("companyId", "company " + request.companyId() + " does not exist"));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         ContactResponse created = service.create(request);
+         return ResponseEntity.created(URI.create("/contacts/" + created.id())).body(created);
+@@ -80,31 +52,7 @@ class ContactController {
+ 
+     @PutMapping("/{id}")
+     ContactResponse update(@PathVariable long id, @RequestBody ContactRequest request) {
+-        List<FieldErrorItem> errors = new ArrayList<>();
+-        if (request.firstName() == null || request.firstName().isBlank()) {
+-            errors.add(new FieldErrorItem("firstName", "must not be blank"));
+-        } else if (request.firstName().length() > 100) {
+-            errors.add(new FieldErrorItem("firstName", "must be at most 100 characters"));
+-        }
+-        if (request.lastName() == null || request.lastName().isBlank()) {
+-            errors.add(new FieldErrorItem("lastName", "must not be blank"));
+-        } else if (request.lastName().length() > 100) {
+-            errors.add(new FieldErrorItem("lastName", "must be at most 100 characters"));
+-        }
+-        if (request.email() == null || request.email().isBlank()) {
+-            errors.add(new FieldErrorItem("email", "must not be blank"));
+-        } else if (request.email().length() > 254) {
+-            errors.add(new FieldErrorItem("email", "must be at most 254 characters"));
+-        } else if (!request.email().strip().matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+-            errors.add(new FieldErrorItem("email", "must be a well-formed email address"));
+-        }
+-        if (request.phone() != null && request.phone().length() > 50) {
+-            errors.add(new FieldErrorItem("phone", "must be at most 50 characters"));
+-        }
+-        if (request.companyId() != null && !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem("companyId", "company " + request.companyId() + " does not exist"));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealController.java b/src/main/java/com/example/samplecrm/deal/DealController.java
+index 4315a16..cbcf6a0 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealController.java
++++ b/src/main/java/com/example/samplecrm/deal/DealController.java
+@@ -1,11 +1,7 @@
+ package com.example.samplecrm.deal;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
+-import com.example.samplecrm.company.CompanyRepository;
+-import com.example.samplecrm.contact.ContactRepository;
++import com.example.samplecrm.validation.RequestValidator;
+ import java.net.URI;
+-import java.util.ArrayList;
+ import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+@@ -23,39 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class DealController {
+ 
+     private final DealService service;
+-    private final CompanyRepository companies;
+-    private final ContactRepository contacts;
++    private final RequestValidator validator;
+ 
+-    DealController(DealService service, CompanyRepository companies, ContactRepository contacts) {
++    DealController(DealService service, RequestValidator validator) {
+         this.service = service;
+-        this.companies = companies;
+-        this.contacts = contacts;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity<DealResponse> create(@RequestBody DealRequest request) {
+-        List<FieldErrorItem> errors = new ArrayList<>();
+-        if (request.title() == null || request.title().isBlank()) {
+-            errors.add(new FieldErrorItem("title", "must not be blank"));
+-        } else if (request.title().length() > 200) {
+-            errors.add(new FieldErrorItem("title", "must be at most 200 characters"));
+-        }
+-        if (request.amount() == null) {
+-            errors.add(new FieldErrorItem("amount", "must not be null"));
+-        } else if (request.amount().signum() < 0) {
+-            errors.add(new FieldErrorItem("amount", "must be greater than or equal to 0"));
+-        } else if (request.amount().scale() > 2 || request.amount().precision() - request.amount().scale() > 13) {
+-            errors.add(new FieldErrorItem("amount", "must have at most 13 integer and 2 fraction digits"));
+-        }
+-        if (request.companyId() == null) {
+-            errors.add(new FieldErrorItem("companyId", "must not be null"));
+-        } else if (!companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem("companyId", "company " + request.companyId() + " does not exist"));
+-        }
+-        if (request.mainContactId() != null && !contacts.existsById(request.mainContactId())) {
+-            errors.add(new FieldErrorItem("mainContactId", "contact " + request.mainContactId() + " does not exist"));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validateNew(request);
+ 
+         DealResponse created = service.create(request);
+         return ResponseEntity.created(URI.create("/deals/" + created.id())).body(created);
+@@ -74,26 +47,7 @@ class DealController {
+     /** Replaces the deal's fields. Unlike create, the company may be left empty. */
+     @PutMapping("/{id}")
+     DealResponse update(@PathVariable long id, @RequestBody DealRequest request) {
+-        List<FieldErrorItem> errors = new ArrayList<>();
+-        if (request.title() == null || request.title().isBlank()) {
+-            errors.add(new FieldErrorItem("title", "must not be blank"));
+-        } else if (request.title().length() > 200) {
+-            errors.add(new FieldErrorItem("title", "must be at most 200 characters"));
+-        }
+-        if (request.amount() == null) {
+-            errors.add(new FieldErrorItem("amount", "must not be null"));
+-        } else if (request.amount().signum() < 0) {
+-            errors.add(new FieldErrorItem("amount", "must be greater than or equal to 0"));
+-        } else if (request.amount().scale() > 2 || request.amount().precision() - request.amount().scale() > 13) {
+-            errors.add(new FieldErrorItem("amount", "must have at most 13 integer and 2 fraction digits"));
+-        }
+-        if (request.companyId() != null && !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem("companyId", "company " + request.companyId() + " does not exist"));
+-        }
+-        if (request.mainContactId() != null && !contacts.existsById(request.mainContactId())) {
+-            errors.add(new FieldErrorItem("mainContactId", "contact " + request.mainContactId() + " does not exist"));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validateUpdate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/validation/RequestValidator.java b/src/main/java/com/example/samplecrm/validation/RequestValidator.java
+new file mode 100644
+index 0000000..af12b6a
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/validation/RequestValidator.java
+@@ -0,0 +1,109 @@
++package com.example.samplecrm.validation;
++
++import com.example.samplecrm.api.BadInputException;
++import com.example.samplecrm.api.FieldErrorItem;
++import com.example.samplecrm.company.CompanyRepository;
++import com.example.samplecrm.company.CompanyRequest;
++import com.example.samplecrm.contact.ContactRepository;
++import com.example.samplecrm.contact.ContactRequest;
++import com.example.samplecrm.deal.DealRequest;
++import java.math.BigDecimal;
++import java.util.ArrayList;
++import java.util.List;
++import org.springframework.stereotype.Component;
++
++/**
++ * The validation rules for create and update requests, in one place. Each method throws a
++ * {@link BadInputException} naming every wrong field, or returns when the request is valid.
++ */
++@Component
++public class RequestValidator {
++
++    private static final String EMAIL = "[^@\\s]+@[^@\\s]+\\.[^@\\s]+";
++
++    private final CompanyRepository companies;
++    private final ContactRepository contacts;
++
++    RequestValidator(CompanyRepository companies, ContactRepository contacts) {
++        this.companies = companies;
++        this.contacts = contacts;
++    }
++
++    public void validate(CompanyRequest request) {
++        List<FieldErrorItem> errors = new ArrayList<>();
++        requiredText(errors, "name", request.name(), 200);
++        optionalText(errors, "website", request.website(), 500);
++        BadInputException.throwIfAny(errors);
++    }
++
++    public void validate(ContactRequest request) {
++        List<FieldErrorItem> errors = new ArrayList<>();
++        requiredText(errors, "firstName", request.firstName(), 100);
++        requiredText(errors, "lastName", request.lastName(), 100);
++        if (requiredText(errors, "email", request.email(), 254) && !request.email().matches(EMAIL)) {
++            errors.add(new FieldErrorItem("email", "must be a well-formed email address"));
++        }
++        optionalText(errors, "phone", request.phone(), 50);
++        companyExists(errors, request.companyId());
++        BadInputException.throwIfAny(errors);
++    }
++
++    /** A new deal must name its company. */
++    public void validateNew(DealRequest request) {
++        validate(request, true);
++    }
++
++    /** An updated deal may leave its company empty. */
++    public void validateUpdate(DealRequest request) {
++        validate(request, false);
++    }
++
++    private void validate(DealRequest request, boolean companyRequired) {
++        List<FieldErrorItem> errors = new ArrayList<>();
++        requiredText(errors, "title", request.title(), 200);
++        amount(errors, request.amount());
++        if (companyRequired && request.companyId() == null) {
++            errors.add(new FieldErrorItem("companyId", "must not be null"));
++        }
++        companyExists(errors, request.companyId());
++        if (request.mainContactId() != null && !contacts.existsById(request.mainContactId())) {
++            errors.add(new FieldErrorItem("mainContactId", "contact " + request.mainContactId() + " does not exist"));
++        }
++        BadInputException.throwIfAny(errors);
++    }
++
++    /** Adds an error when {@code value} is blank or too long; returns whether it was valid. */
++    private static boolean requiredText(List<FieldErrorItem> errors, String field, String value, int maxLength) {
++        if (value == null || value.isBlank()) {
++            errors.add(new FieldErrorItem(field, "must not be blank"));
++            return false;
++        }
++        if (value.length() > maxLength) {
++            errors.add(new FieldErrorItem(field, "must be at most " + maxLength + " characters"));
++            return false;
++        }
++        return true;
++    }
++
++    private static void optionalText(List<FieldErrorItem> errors, String field, String value, int maxLength) {
++        if (value != null && value.length() > maxLength) {
++            errors.add(new FieldErrorItem(field, "must be at most " + maxLength + " characters"));
++        }
++    }
++
++    private static void amount(List<FieldErrorItem> errors, BigDecimal amount) {
++        if (amount == null) {
++            errors.add(new FieldErrorItem("amount", "must not be null"));
++        } else if (amount.signum() < 0) {
++            errors.add(new FieldErrorItem("amount", "must be greater than or equal to 0"));
++        } else if (amount.scale() > 2 || amount.precision() - amount.scale() > 13) {
++            errors.add(new FieldErrorItem("amount", "must have at most 13 integer and 2 fraction digits"));
++        }
++    }
++
++    private void companyExists(List<FieldErrorItem> errors, Long companyId) {
++        if (companyId != null && !companies.existsById(companyId)) {
++            errors.add(new FieldErrorItem("companyId", "company " + companyId + " does not exist"));
++        }
++    }
++}

@@ -1,0 +1,12 @@
+{
+ "case-01": "T11-good",
+ "case-02": "T03-flawed",
+ "case-03": "T01-flawed",
+ "case-04": "T04-good",
+ "case-05": "T06-flawed",
+ "case-06": "T01-good",
+ "case-07": "T11-flawed",
+ "case-08": "T06-good",
+ "case-09": "T03-good",
+ "case-10": "T04-flawed"
+}

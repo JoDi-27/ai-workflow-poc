@@ -1,0 +1,181 @@
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..8c6abe9 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -73,6 +73,15 @@ class ContactController {
+         return service.list(page, size, companyId, name);
+     }
+ 
++    /** Up to 100 contacts whose first name, last name, email, or phone contains {@code filter}, ignoring case. */
++    @GetMapping("/search")
++    List<ContactResponse> search(@RequestParam(defaultValue = "") String filter) {
++        if (filter.isBlank()) {
++            throw new BadInputException(List.of(new FieldErrorItem("filter", "must not be blank")));
++        }
++        return service.search(filter);
++    }
++
+     @GetMapping("/{id}")
+     ContactResponse get(@PathVariable long id) {
+         return service.get(id);
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..835838a 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -3,12 +3,15 @@ package com.example.samplecrm.contact;
+ import com.example.samplecrm.api.NotFoundException;
+ import com.example.samplecrm.api.PageResponse;
+ import jakarta.persistence.criteria.Predicate;
++import java.sql.ResultSet;
++import java.sql.SQLException;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Locale;
+ import org.springframework.data.domain.Page;
+ import org.springframework.data.domain.Sort;
+ import org.springframework.data.jpa.domain.Specification;
++import org.springframework.jdbc.core.simple.JdbcClient;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+@@ -16,10 +19,21 @@ import org.springframework.transaction.annotation.Transactional;
+ @Transactional
+ public class ContactService {
+ 
++    private static final String SEARCH = """
++            SELECT id, first_name, last_name, email, phone, company_id
++            FROM contacts
++            WHERE lower(first_name) LIKE %1$s OR lower(last_name) LIKE %1$s
++               OR lower(email) LIKE %1$s OR lower(phone) LIKE %1$s
++            ORDER BY id
++            LIMIT 100
++            """;
++
+     private final ContactRepository contacts;
++    private final JdbcClient jdbc;
+ 
+-    ContactService(ContactRepository contacts) {
++    ContactService(ContactRepository contacts, JdbcClient jdbc) {
+         this.contacts = contacts;
++        this.jdbc = jdbc;
+     }
+ 
+     public ContactResponse create(ContactRequest request) {
+@@ -41,6 +55,13 @@ public class ContactService {
+                 result.getTotalElements());
+     }
+ 
++    /** Up to 100 contacts, in id order, whose first name, last name, email, or phone contains {@code filter}. */
++    @Transactional(readOnly = true)
++    public List<ContactResponse> search(String filter) {
++        String pattern = "'%" + filter.toLowerCase(Locale.ROOT) + "%'";
++        return jdbc.sql(SEARCH.formatted(pattern)).query(ContactService::fromRow).list();
++    }
++
+     public ContactResponse update(long id, ContactRequest request) {
+         Contact contact = find(id);
+         contact.update(request);
+@@ -73,6 +94,11 @@ public class ContactService {
+         return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+     }
+ 
++    private static ContactResponse fromRow(ResultSet row, int rowNumber) throws SQLException {
++        return new ContactResponse(row.getLong("id"), row.getString("first_name"), row.getString("last_name"),
++                row.getString("email"), row.getString("phone"), row.getObject("company_id", Long.class));
++    }
++
+     private Contact find(long id) {
+         return contacts.findById(id).orElseThrow(() -> new NotFoundException("Contact", id));
+     }
+diff --git a/src/test/java/com/example/samplecrm/ContactSearchApiTest.java b/src/test/java/com/example/samplecrm/ContactSearchApiTest.java
+new file mode 100644
+index 0000000..2d69a83
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactSearchApiTest.java
+@@ -0,0 +1,86 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.springframework.core.ParameterizedTypeReference;
++import org.springframework.http.HttpMethod;
++import org.springframework.test.web.servlet.client.RestTestClient.ResponseSpec;
++
++class ContactSearchApiTest extends ApiTestBase {
++
++    private static final ParameterizedTypeReference<List<Map<String, Object>>> LIST =
++            new ParameterizedTypeReference<>() {};
++
++    private long acme;
++
++    @BeforeEach
++    void createContacts() {
++        acme = create("/companies", body("name", "Acme"));
++        create("/contacts", body("firstName", "Ana", "lastName", "Silva", "email", "ana@acme.example",
++                "phone", "+351 912 345 678", "companyId", acme));
++        create("/contacts", body("firstName", "Bruno", "lastName", "Costa", "email", "bruno@globex.example",
++                "phone", "+351 933 000 111"));
++        create("/contacts", body("firstName", "Carla", "lastName", "O'Brien", "email", "carla@initech.example"));
++    }
++
++    private ResponseSpec search(String filter) {
++        return client.get().uri("/contacts/search?filter={filter}", filter).exchange();
++    }
++
++    private List<String> firstNames(String filter) {
++        return search(filter).expectStatus().isOk().expectBody(LIST).returnResult().getResponseBody().stream()
++                .map(contact -> (String) contact.get("firstName")).toList();
++    }
++
++    @ParameterizedTest
++    @CsvSource({"ana, Ana", "COSTA, Bruno", "globex, Bruno", "912 345, Ana"})
++    void matchesAnyField(String filter, String firstName) {
++        assertThat(firstNames(filter)).containsExactly(firstName);
++    }
++
++    @Test
++    void returnsEveryMatchInIdOrder() {
++        assertThat(firstNames(".example")).containsExactly("Ana", "Bruno", "Carla");
++    }
++
++    @Test
++    void returnsWholeContacts() {
++        Map<String, Object> ana = getList("/contacts/search?filter=silva").getFirst();
++
++        assertThat(ana)
++                .containsEntry("firstName", "Ana")
++                .containsEntry("lastName", "Silva")
++                .containsEntry("email", "ana@acme.example")
++                .containsEntry("phone", "+351 912 345 678")
++                .containsEntry("companyId", (int) acme);
++    }
++
++    @Test
++    void returnsAtMostOneHundred() {
++        for (int i = 1; i <= 101; i++) {
++            create("/contacts", body("firstName", "Person" + i, "lastName", "Many", "email", "p" + i + "@many.example"));
++        }
++
++        List<String> found = firstNames("many");
++        assertThat(found).hasSize(100);
++        assertThat(found.getFirst()).isEqualTo("Person1");
++    }
++
++    @Test
++    void noMatch() {
++        assertThat(firstNames("zoe")).isEmpty();
++    }
++
++
++    @Test
++    void blankFilter() {
++        assertThat(badInputFields(search(" "))).containsExactly("filter");
++        assertThat(badInputFields(send(HttpMethod.GET, "/contacts/search", null))).containsExactly("filter");
++    }
++}

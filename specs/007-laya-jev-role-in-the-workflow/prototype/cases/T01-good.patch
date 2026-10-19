@@ -1,0 +1,99 @@
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..a110c67 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -73,6 +73,12 @@ class ContactController {
+         return service.list(page, size, companyId, name);
+     }
+ 
++    /** How many contacts there are, or how many belong to one company. */
++    @GetMapping("/count")
++    ContactCount count(@RequestParam(required = false) Long companyId) {
++        return new ContactCount(service.count(companyId));
++    }
++
+     @GetMapping("/{id}")
+     ContactResponse get(@PathVariable long id) {
+         return service.get(id);
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactCount.java b/src/main/java/com/example/samplecrm/contact/ContactCount.java
+new file mode 100644
+index 0000000..6125a75
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/contact/ContactCount.java
+@@ -0,0 +1,3 @@
++package com.example.samplecrm.contact;
++
++public record ContactCount(long count) {}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..b84133f 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -41,6 +41,12 @@ public class ContactService {
+                 result.getTotalElements());
+     }
+ 
++    /** The number of contacts, or of one company's contacts. */
++    @Transactional(readOnly = true)
++    public long count(Long companyId) {
++        return contacts.count(matching(companyId, null));
++    }
++
+     public ContactResponse update(long id, ContactRequest request) {
+         Contact contact = find(id);
+         contact.update(request);
+diff --git a/src/test/java/com/example/samplecrm/ContactCountApiTest.java b/src/test/java/com/example/samplecrm/ContactCountApiTest.java
+new file mode 100644
+index 0000000..b786019
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactCountApiTest.java
+@@ -0,0 +1,50 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import org.junit.jupiter.api.Test;
++
++class ContactCountApiTest extends ApiTestBase {
++
++    private void contact(String firstName, Long companyId) {
++        create("/contacts", body("firstName", firstName, "lastName", "Silva",
++                "email", firstName.toLowerCase() + "@example.org", "companyId", companyId));
++    }
++
++    @Test
++    void countsAllContacts() {
++        long acme = create("/companies", body("name", "Acme"));
++        contact("Ana", acme);
++        contact("Bruno", acme);
++        contact("Carla", null);
++
++        assertThat(get("/contacts/count")).containsEntry("count", 3);
++    }
++
++    @Test
++    void noContacts() {
++        assertThat(get("/contacts/count")).containsEntry("count", 0);
++    }
++
++    @Test
++    void countsOneCompanysContacts() {
++        long acme = create("/companies", body("name", "Acme"));
++        long globex = create("/companies", body("name", "Globex"));
++        contact("Ana", acme);
++        contact("Bruno", acme);
++        contact("Carla", globex);
++        contact("Diana", null);
++
++        assertThat(get("/contacts/count?companyId=" + acme)).containsEntry("count", 2);
++        assertThat(get("/contacts/count?companyId=" + globex)).containsEntry("count", 1);
++    }
++
++    @Test
++    void companyWithoutContacts() {
++        long acme = create("/companies", body("name", "Acme"));
++        contact("Ana", null);
++
++        assertThat(get("/contacts/count?companyId=" + acme)).containsEntry("count", 0);
++        assertThat(get("/contacts/count?companyId=999")).containsEntry("count", 0);
++    }
++}

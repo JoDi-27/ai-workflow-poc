@@ -115,9 +115,12 @@ typed_decisions:
   - question: code_quality_band
     provider: laya
     mode: shadow
+  - question: code_quality_band
+    provider: jev
+    mode: shadow
 ```
 
-They run when that step runs, earn no points, and never delay or block the checkpoint. A provider failure records *not evaluated* for the decision only.
+They run when that step runs, earn no points, and never delay or block the checkpoint. A provider failure, or an input the provider had to truncate, records *not evaluated* for that decision only. The same question may be asked of several providers, each recorded separately (spike 007).
 
 **Not in the MVP schema:** step-level deductions; runner checks that produce evidence, and with them a `min_trust` key (built-in checks read only driver-submitted evidence); named check environments; human steps scored on a band; and the `advisory` and `bounded_control` modes.
 
@@ -154,7 +157,7 @@ The engine rejects a definition when any of these fails.
 9. Every image in a `command` check, and in its services, is pinned by digest (`@sha256:`). Every service has a `ready` command. `timeout` is a positive duration.
 10. A rubric's bands are contiguous, do not overlap, and cover the whole scale. `pass.min_score` lies within the scale. Optional steps have no `pass`.
 11. `council` is odd and at least 1, and appears only on `agent_evaluator` steps.
-12. A typed decision names a declared question and the declared provider `laya`, uses mode `shadow`, and sits on an `agent_evaluator` step. Its question's labels equal that step's band IDs.
+12. A typed decision names a declared question and a provider, `laya` or `jev`, uses mode `shadow`, appears at most once per question and provider on a step, and sits on an `agent_evaluator` step. Its question's labels equal that step's band IDs.
 13. Every `{{inputs.x}}` names a declared run input. Every `{{evidence.t.f}}` names an evidence type produced by a stage that comes before this one on some path from the entry.
 14. Every `allowed_in` names a non-terminal stage. If any protected action is declared, `required_capabilities` includes `enforcement`.
 15. Limits are positive. Deductions and points are not negative.

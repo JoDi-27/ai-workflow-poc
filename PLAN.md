@@ -26,7 +26,8 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **3. Definition model draft**
 - [x] **4. Claude Code driver feasibility**
 - [x] **5. Claude Code telemetry**
-- [ ] **6. Laya/Jev role in the workflow**
+- [x] **6. Laya/Jev role in the workflow**
+- [ ] **6b. Jev telemetry**
 - [ ] **7. Target architecture**
 - [ ] **8. Driver API contract**
 - [ ] **9. Technology stack**
@@ -67,9 +68,9 @@ Milestones 1–5 from the intent doc, happy path versions only.
 - [ ] Runner: sandboxed check commands and a headless Claude Code evaluator at the pushed revision, returning engine-verified results.
 - [ ] Claude Code driver kit: instructions (including pushing before a transition request), session binding, activity hook, protected-action hook for the merge.
 - [ ] UI: run list, run detail with score breakdown, human step inbox, UI login for human decisions.
-- [ ] Laya: DecisionEngine interface, Laya adapter, the typed question chosen by the spike, in shadow mode.
+- [ ] Laya and Jev: DecisionEngine interface, one adapter for both providers over `/v1/systemone`, and `code_quality_band` in shadow mode on both (spike 007). A truncated input records *not evaluated*.
 
-**Exit criteria:** happy path steps 1–7 work on a real repository. A run ends with a merged branch and a score whose breakdown includes the runner check, the Claude evaluator in the runner, Laya, and the human.
+**Exit criteria:** happy path steps 1–7 work on a real repository. A run ends with a merged branch and a score whose breakdown includes the runner check, the Claude evaluator in the runner, Laya and Jev in shadow, and the human.
 
 ## Phase 2: Observability and quality monitoring
 
