@@ -25,7 +25,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **2. Test bed: target repository and task set**
 - [x] **3. Definition model draft**
 - [ ] **4. Claude Code driver feasibility**
-- [ ] **5. Claude Code telemetry**
+- [x] **5. Claude Code telemetry**
 - [ ] **6. Laya/Jev role in the workflow**
 - [ ] **7. Target architecture**
 - [ ] **8. Driver API contract**
