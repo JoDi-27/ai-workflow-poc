@@ -1,0 +1,20 @@
+{
+  "name": "engine-driver",
+  "version": "0.0.1",
+  "description": "Throwaway spike 005 prototype: turns a Claude Code session into a driver of the workflow engine.",
+  "author": { "name": "spike 005" },
+  "userConfig": {
+    "engine_url": {
+      "type": "string",
+      "title": "Engine URL",
+      "description": "Base URL of the workflow engine",
+      "default": "http://localhost:8787"
+    },
+    "engine_token": {
+      "type": "string",
+      "title": "Driver token",
+      "description": "Your driver token for the engine",
+      "sensitive": true
+    }
+  }
+}
