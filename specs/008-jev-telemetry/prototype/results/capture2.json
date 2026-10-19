@@ -1,0 +1,329 @@
+[
+ {
+  "case": "headers only: X-Request-Id + traceparent",
+  "status": 200,
+  "ms": 337,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:16 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b94cd7500bdf082fa397b2b46",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d0708d9854e3b1-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.13.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 1.0,
+     "probabilities": {
+      "billing": 1.0,
+      "technical": 0.0
+     }
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.99
+    }
+   },
+   "usage": {
+    "input_tokens": 330,
+    "output_tokens": 48
+   }
+  }
+ },
+ {
+  "case": "tokens, 1 question",
+  "status": 200,
+  "ms": 249,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:16 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b96127039aa70443186b2f3fd",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d0708f88a6f55c-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.13.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 1.0,
+     "probabilities": {
+      "billing": 1.0,
+      "technical": 0.0
+     }
+    }
+   },
+   "usage": {
+    "input_tokens": 318,
+    "output_tokens": 31
+   }
+  }
+ },
+ {
+  "case": "tokens, 2 questions",
+  "status": 200,
+  "ms": 268,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:16 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b97047bf6bc0cf6a2666d025e",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d0709119cce3d0-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.13.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 1.0,
+     "probabilities": {
+      "billing": 1.0,
+      "technical": 0.0
+     }
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.99
+    }
+   },
+   "usage": {
+    "input_tokens": 330,
+    "output_tokens": 48
+   }
+  }
+ },
+ {
+  "case": "tokens, 4 questions",
+  "status": 200,
+  "ms": 255,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:17 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b981070ffb9a491a84e43a250",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d07092be78ca94-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.13.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 1.0,
+     "probabilities": {
+      "billing": 1.0,
+      "technical": 0.0
+     }
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.99
+    },
+    "urgent": {
+     "type": "noul",
+     "noul": 0.52
+    },
+    "angry": {
+     "type": "noul",
+     "noul": 0.34
+    }
+   },
+   "usage": {
+    "input_tokens": 353,
+    "output_tokens": 81
+   }
+  }
+ },
+ {
+  "case": "over 32k per question (~40k tokens, 1 question)",
+  "status": 200,
+  "ms": 488,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:17 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b99477749a87e0d49e5aca194",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d070945857f368-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.13.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 0.94,
+     "probabilities": {
+      "billing": 0.97,
+      "technical": 0.03
+     }
+    }
+   },
+   "usage": {
+    "input_tokens": 30908,
+    "output_tokens": 31
+   }
+  }
+ },
+ {
+  "case": "over 64k per request (~70k tokens, 1 question)",
+  "status": 400,
+  "ms": 307,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:17 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b9b3877398e076557c75e5fd4",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d070976b8be3d0-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": {
+    "error_type": "max_tokens_exceeded"
+   }
+  }
+ },
+ {
+  "case": "client timeout 50 ms",
+  "status": null,
+  "ms": 86,
+  "error": "TimeoutError('The read operation timed out')"
+ },
+ {
+  "case": "jev-preview",
+  "status": 200,
+  "ms": 270,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:18 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b9c91781cb96dc903973dbc38",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d07099d9cbbc1d-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "model": "jev-1.14.0",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "confidence": 1.0,
+     "probabilities": {
+      "billing": 1.0,
+      "technical": 0.0
+     }
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.99
+    }
+   },
+   "usage": {
+    "input_tokens": 330,
+    "output_tokens": 48
+   }
+  }
+ },
+ {
+  "case": "GET /v1/models",
+  "status": 200,
+  "ms": 237,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:18 GMT",
+   "Content-Type": "application/json",
+   "Content-Length": "311",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548b9d9b7b1eb99929c4b28530a1",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d0709b8e299817-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "models": [
+    {
+     "name": "jev-latest",
+     "description": "The latest iteration of TypeSafe's System One Model: Jev",
+     "release_date": "2026-09-10T18:38:01.391457+00:00"
+    },
+    {
+     "name": "jev-preview",
+     "description": "A preview version of `jev-latest`: should be better in most ways",
+     "release_date": "2026-09-10T18:39:06.057655+00:00"
+    }
+   ]
+  }
+ },
+ {
+  "case": "over 32k per question (~37k tokens, 1 question)",
+  "status": 400,
+  "ms": 300,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:25 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548bb952788994f5e0f6668ee123",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d070c79b78e3b8-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": {
+    "error_type": "max_tokens_exceeded"
+   }
+  }
+ },
+ {
+  "case": "~37k tokens, 2 questions (each under 64k total?)",
+  "status": 400,
+  "ms": 298,
+  "headers": {
+   "Date": "Mon, 19 Oct 2026 14:23:25 GMT",
+   "Content-Type": "application/json",
+   "Transfer-Encoding": "chunked",
+   "Connection": "close",
+   "x-typesafe-request-id": "req_01a1548bba7e7eeebd980ff2d4d80aab",
+   "Server": "cloudflare",
+   "cf-cache-status": "DYNAMIC",
+   "CF-RAY": "a4d070c97f4fc156-LIS",
+   "alt-svc": "h3=\":443\"; ma=86400"
+  },
+  "body": {
+   "detail": {
+    "error_type": "max_tokens_exceeded"
+   }
+  }
+ }
+]
