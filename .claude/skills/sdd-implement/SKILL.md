@@ -29,7 +29,7 @@ Other sessions may be working on the same spec. Never pick a task by reading `ta
 
 Stop and ask the user when: a check fails and the fix is not obvious, the plan turns out wrong, a task needs a decision the plan does not cover, or something requires a human action. If you stop with the task unfinished, keep the claim only if this session will resume it; otherwise release it with `specs/_kit/sdd release <ID> <Tn>`.
 
-When reality disagrees with the documents, update them before the code (Article 12):
+When reality disagrees with the documents, update them before the code (Article 13):
 - Plan wrong: add a row to the plan's Deviations, and change the design or tasks.
 - Spec wrong (behavior, scope, or ACs change): stop, explain, and get the user's agreement before editing the spec and its changelog.
 - New work found: add a new task; never do untracked extra work.

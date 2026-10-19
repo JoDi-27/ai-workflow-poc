@@ -14,15 +14,16 @@ The non-negotiable rules every spec and plan is checked against. Each plan has a
 6. **Evidence over prose.** Deterministic steps are checked by code against evidence with recorded provenance. Reasoning steps are scored by a fresh-context evaluator against the step's rubric. Evaluators report raw results; the engine alone applies thresholds and computes points.
 7. **Pinned and replayable.** Every run is pinned to a definition version. State changes and their events are written in the same transaction. *Not evaluated*, *failed*, and *passed* stay distinct, and so do *excluded* and *low-scoring* runs.
 8. **Record what cannot be enforced; enforce gates off the laptop.** The developer's machine is trust-based: record what the driver does so it can be audited, rather than pretending to enforce it. Checks that a gate must be able to trust run in the runner, in a throwaway sandbox, against a revision the runner fetches itself.
+9. **Need no orchestrator.** No orchestrating agent or process assigns work to drivers, sequences them, or keeps a run moving. The engine is reactive: it changes a run only in response to a driver request, a human decision in the UI, evidence from an integrated system, or the result or deadline of work it dispatched itself. It never pushes work to a driver; drivers pull it through `status`. Workflow knowledge lives in the pinned definition, not in a coordinating agent or in driver kit instructions. Where the happy path seems to need an orchestrator, record why and amend this article instead of adding one silently.
 
 ## Engineering articles
 
-9. **Happy path first.** Build the simplest version that moves a `BACKLOG.md` happy path step forward. Anything else goes to `BACKLOG.md` "Next", not into the current spec.
-10. **Tests prove acceptance criteria.** Every acceptance criterion maps to an automated test or a recorded manual check. A task is done only when its check passes.
-11. **Small, traceable increments.** One spec is one reviewable slice (a few days at most; split it otherwise). One task is about one commit, and commit messages start with the spec and task ID, for example `[003] T2 Add run state table`.
-12. **Specs are living.** When implementation shows the spec or plan is wrong, update them first, then the code. Code never silently diverges from its spec.
-13. **Decisions are written down.** Every choice between real alternatives gets a row in the plan's Decisions table (or a spike's Recommendation). Choices that settle a `BACKLOG.md` item also update it in place.
-14. **Verify current docs.** Before using a library, SDK, or tool API, check its current documentation rather than relying on memory, and note the version in the plan.
+10. **Happy path first.** Build the simplest version that moves a `BACKLOG.md` happy path step forward. Anything else goes to `BACKLOG.md` "Next", not into the current spec.
+11. **Tests prove acceptance criteria.** Every acceptance criterion maps to an automated test or a recorded manual check. A task is done only when its check passes.
+12. **Small, traceable increments.** One spec is one reviewable slice (a few days at most; split it otherwise). One task is about one commit, and commit messages start with the spec and task ID, for example `[003] T2 Add run state table`.
+13. **Specs are living.** When implementation shows the spec or plan is wrong, update them first, then the code. Code never silently diverges from its spec.
+14. **Decisions are written down.** Every choice between real alternatives gets a row in the plan's Decisions table (or a spike's Recommendation). Choices that settle a `BACKLOG.md` item also update it in place.
+15. **Verify current docs.** Before using a library, SDK, or tool API, check its current documentation rather than relying on memory, and note the version in the plan.
 
 ## Amendments
 
@@ -31,3 +32,4 @@ The non-negotiable rules every spec and plan is checked against. Each plan has a
 | 2026-10-08 | 4 | Allow in-session continuation up to a stage task's iteration limit | Spike 001, Q26: every in-session goal loop works this way; the limit keeps it bounded and recorded |
 | 2026-10-18 | 4, 5, 8 | Add the runner: gate checks and agent evaluators run server side in throwaway sandboxes at a pushed revision; runner evaluations may use the owner's subscription only while single-user | Intent review: driver-reported gates and driver-side evaluator isolation were the weakest trust points. Anthropic's terms allow subscription tokens for the owner's own scripted use but not on behalf of other users |
 | 2026-10-18 | 4 | Clarify that "the only user" means the only person: one person's several UI accounts (such as owner and approver) count as one | Spike 003, Q20: separation of duties needs a second UI account, and Anthropic's terms are about other people, not one person's accounts |
+| 2026-10-19 | 9 (new); 9–14 renumbered to 10–15 | Add "Need no orchestrator": the engine is reactive, drivers pull work through `status`, and workflow knowledge stays in the definition | User: the engine should not need an orchestrating agent. The MVP tests this aim; any place the happy path needs one is recorded and amended, not added silently |

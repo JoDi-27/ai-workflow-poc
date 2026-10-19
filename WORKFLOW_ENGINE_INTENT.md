@@ -45,6 +45,7 @@ The engine core never invokes a model other than through DecisionEngine adapters
 ## Operating constraints
 
 - Drivers are interactive and subscription-compatible: a human starts the agent, and the agent calls engine tools while working. The design must not depend on API-key orchestration or a usage-based API budget. For the initial Claude Code driver, this means working on a Claude subscription. Engine-side intelligence comes only from DecisionEngine providers, deterministic code, and agent evaluators in the runner. Runner evaluations are the only unattended model use: one fresh-context evaluation per council member of a step the engine reached. They may use the owner's own subscription only while the owner is the only person using the deployment (one person's several UI accounts count as one), because subscription credentials may not be used on behalf of other users.
+- No orchestrator. The aim is that no orchestrating agent or process is needed: nothing outside the engine assigns work to drivers, sequences them, or keeps a run moving. The engine is reactive. It changes a run only in response to a driver request, a human decision in the UI, evidence from an integrated system, or the result or deadline of work it dispatched itself (runner jobs, evaluation tasks, typed decisions). It never pushes work to a driver; drivers pull it through `status`. The pinned workflow definition holds what an orchestrator would otherwise hold: each stage's task, the permitted transitions, and their checkpoints. The MVP tests this aim: where the reference workflow turns out to need an orchestrator, record why instead of adding one silently.
 - Only the engine commits state transitions, applies pass conditions, and computes scores. The driver may request a transition and submit evaluation results; the engine may recommend a transition.
 - Human steps are decided in the UI by an authenticated human, and the engine accepts human decisions only from human-authenticated UI sessions. Driver credentials (MCP and CLI tokens) never carry approval rights, so the agent, which can read files and run commands on the laptop, cannot approve a gate even with the developer's driver token.
 - A model output, whether from a driver agent or Laya, may inform a human step but can never satisfy one or silently remove one.
@@ -82,7 +83,7 @@ The full domain model (glossary, entity relationships, and lifecycles) is in `do
 
 | Component | Owns | Does not own |
 | --- | --- | --- |
-| Engine core | Definitions and versions, runs, permitted transitions, checkpoint execution, pass conditions, scoring, event log, replay, idempotency, leases | Coding or open-ended reasoning |
+| Engine core | Definitions and versions, runs, permitted transitions, checkpoint execution, pass conditions, scoring, event log, replay, idempotency, leases | Coding or open-ended reasoning, assigning work to drivers |
 | UI (separate deployable) | Definition authoring and publishing, run monitoring, score breakdowns, human step inbox, overrides, review and promotion of typed decisions | Authoritative state, direct storage access, or bypassing the engine's evaluator |
 | Engine API | Driver API (MCP and HTTP, also used by the CLI) and UI API, with stable operation schemas, scoped authentication, and actionable denial messages | Accepting human decisions from driver credentials |
 | Engine persistence | Configuration, run state and event log, evidence metadata and referenced artifacts | Access by anything other than the engine |
@@ -219,7 +220,7 @@ A workflow definition can require capabilities, for example an enforcement-capab
 
 The first kit ships as a versioned, one-step installable Claude Code plugin that bundles the MCP configuration, hooks, instructions, an optional evaluator subagent, and CLI.
 
-- Instructions make Claude consult the engine when starting or resuming work and at proposed stage boundaries, push the branch before requesting a transition, and launch the evaluator subagent for each pending driver-side evaluation task.
+- Instructions make Claude consult the engine when starting or resuming work and at proposed stage boundaries, push the branch before requesting a transition, and launch the evaluator subagent for each pending driver-side evaluation task. They stay generic: what a stage asks for and where the run may go next come from `status`, not from the kit, so a new or changed definition needs no new kit instructions.
 - The runner-side evaluator provider for Claude Code (a headless session with read-only tools and structured output) belongs to the runner, not to the driver kit, though both are Claude Code specifics kept out of the engine.
 - A session-start hook binds the Claude Code session to a run and loads current status.
 - Post-tool-use hooks report tool activity to the engine, and the session transcript is referenced when the session ends.
@@ -311,6 +312,7 @@ This document describes the target framework. Delivery starts with a PoC/MVP: a 
 - Prevent concurrent or repeated transition requests from double advancing a run: atomic state updates, idempotency keys, driver leases.
 - Validate evidence at decision time and record which revision and trust level were checked.
 - Fail closed: an unreachable engine or runner, stale state, or unavailable evaluator or decision provider never lets a protected action or required step pass.
+- Need no orchestrator: keep the engine reactive, let drivers pull their next work through `status`, and keep workflow knowledge in the definition rather than in a coordinating agent or the driver kit.
 - Distinguish a step that is *not evaluated* from one that *failed* or *passed*, and an *excluded* run from a low-scoring one.
 - The engine alone applies thresholds and computes points; evaluators only report raw results.
 - A reasoning step's evaluator never sees the working conversation, never wrote the work, and never receives advisory outputs that could anchor it.

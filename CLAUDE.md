@@ -31,7 +31,7 @@ All work goes through the spec-driven kit in `specs/`.
 - Spikes follow `/sdd-spike` → `/sdd-verify`: an interview with the user, prepared by the `spike-researcher` agent. Whenever the user shares information about an active spike, even outside the command, record it in that spike's Log and Findings.
 - Parallel sessions are fine: claim a spec or task with `specs/_kit/sdd claim` before working on it, and never pick work by reading the files. The skills do this.
 - Keep the spec's status, its task checkboxes, and `specs/STATUS.md` up to date whenever work moves (`specs/_kit/sdd status --write`).
-- When code and spec disagree, update the spec or plan first, then the code (Article 12).
+- When code and spec disagree, update the spec or plan first, then the code (Article 13).
 - `/sdd-status` or `specs/_kit/sdd next` shows what to work on next.
 - When a spec settles a `BACKLOG.md` item or finishes a `PLAN.md` checklist item, update those files in place.
 
@@ -55,6 +55,7 @@ The full list is in `specs/constitution.md`. The ones most easily broken while c
 - **Humans decide human steps.** Human decisions and definition approvals come only from human-authenticated UI sessions. Driver tokens never carry approval scopes. Model output (driver agent or Laya) can inform a human step but never satisfy it.
 - **The engine is neutral.** No SDLC concepts and no Claude Code concepts in engine code; those belong in workflow definitions and driver kits.
 - **Subscription-compatible drivers.** The engine core invokes models only through DecisionEngine adapters (Laya), and nothing relies on API-key orchestration. Only the runner runs unattended evaluations, and on the owner's subscription only while the owner is the only user.
+- **No orchestrator.** The engine is reactive and never pushes work to drivers; drivers pull it through `status`. Workflow knowledge stays in the definition, not in a coordinating agent or the driver kit.
 - **Fail closed.** If the engine, the runner, an evaluator, or a decision provider is unavailable, protected actions and required steps do not pass.
 - **Happy path first.** Build the simplest thing that advances a happy path step. Anything else goes to `BACKLOG.md` "Next", not into the current spec.
 - **Verify current docs.** Check the current documentation of any library, SDK, or tool before using it (Context7), and record the version in the plan.
