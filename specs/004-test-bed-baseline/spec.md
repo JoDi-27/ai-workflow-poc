@@ -2,11 +2,11 @@
 id: 004
 title: "Test bed baseline"
 type: feature
-status: draft
+status: done
 phase: 0
 depends_on: [002]
 refs: ["PLAN Phase 0 / Spikes / 2. Test bed", "BACKLOG Feedback loop / Seed data", "docs/test-bed.md / Repository / Baseline"]
-updated: 2026-10-18
+updated: 2026-10-19
 ---
 
 # 004 · Test bed baseline
@@ -87,7 +87,7 @@ Baseline commit:
 
 ## Acceptance criteria
 
-- **AC-1** (R1) Given `sample-crm` at the baseline tag, when its spec 001 is read, then its status is `done` and its verification evidence names that commit.
+- **AC-1** (R1) Given `sample-crm` at the baseline tag, when its spec 001 is read, then its status is `done`, its verification evidence names the commit whose code was verified, and the diff from that commit to the tag touches only `specs/`, `PLAN.md`, and `BACKLOG.md`.
 - **AC-2** (R2) Given the baseline, when each of T01 to T12 is compared with the API description and the code, then none of the behaviors they ask for exists yet. Recorded as a manual check, one line per task.
 - **AC-3** (R3) Given the baseline commit, when its checks are viewed on GitHub, then a CI run that executed every test passed on that SHA. Recorded as a manual check with a link.
 - **AC-4** (R4) Given the running baseline with five contacts, when page 1 and page 2 are listed with page size 2, then the first contact of page 2 is the second contact of page 1. Recorded as a check kept in this repository.
@@ -111,3 +111,8 @@ Baseline commit:
 - 2026-10-18 Created. `sample-crm` is developed with its own spec kit; its spec 001 holds the product behavior, and this spec holds what only the test bed needs (decided by the user, 2026-10-18).
 - 2026-10-18 Clarified R6 (six places) and the tag name.
 - 2026-10-18 From spike 002 G4: R3 now runs CI against a PostgreSQL service container; added R13 (external database switch) and AC-13. `sample-crm`'s spec 001 and draft plan need the matching neutral change.
+- 2026-10-19 Approved by running /sdd-plan.
+- 2026-10-19 AC-1: the evidence names the verified code commit, and the tag may add only the verification records on top of it, since a commit cannot name its own SHA.
+- 2026-10-19 Planned: plan.md and tasks.md written.
+- 2026-10-19 In progress: plan approved by running /sdd-implement.
+- 2026-10-19 Verified and closed: every acceptance criterion passes; baseline tag `baseline` at `0916dbf` in `sample-crm`.
