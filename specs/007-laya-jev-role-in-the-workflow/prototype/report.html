@@ -1,0 +1,2465 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Laya and Jev trial</title><style>
+body{font-family:system-ui;margin:24px;color:#111;background:#fff}table{border-collapse:collapse;margin:12px 0 28px}
+th,td{border:1px solid #ddd;padding:6px 8px;vertical-align:top;font-size:14px}th{background:#f6f8fa;text-align:left}
+.ok{background:#dcfce7}.near{background:#fef9c3}.off{background:#fee2e2}.p{color:#555;font-size:11px;margin-top:2px}
+pre.req{background:#f6f8fa;padding:10px;white-space:pre-wrap;font-size:12px;border-radius:6px;max-height:480px;overflow:auto}
+details{margin:4px 0}summary{cursor:pointer;font-size:14px}code{font-size:13px}
+.cut{font-size:11px;background:#e5e7eb;border-radius:4px;padding:0 4px}h1{margin-bottom:4px}.sub{color:#555;margin-top:0}
+</style></head><body><h1>Laya and Jev trial: code_quality_band</h1>
+<p class="sub">Spike 007, 2026-10-19. Ten hand-made cases, labelled blind by the user. The question is asked in two band orders
+(ascending and descending) to show position bias. Green: same band as you. Yellow: one band off. Red: two or more off.</p>
+<h2>Tasks and their flaws</h2><p>Five tasks from the test bed (<code>docs/test-bed.md</code>), each written twice against the <code>sample-crm</code> baseline: a good variant and a flawed one that differs only in its planted flaw. Both variants of a task share one requirements doc. Every variant builds and passes its own tests, so a test run alone never shows the flaw.</p><table><tr><th>Task</th><th>What was asked</th><th>Good variant</th><th>Flawed variant: the flaw</th><th>Your scores</th></tr><tr><td><b>T01 Count contacts</b></td><td>Add <code>GET /contacts/count</code>, optionally filtered by company.<details><summary class='p'>Acceptance criteria</summary><ul class='p'><li>AC-1: <code>GET /contacts/count</code> returns <code>200</code> with a JSON object <code>{&quot;count&quot;: n}</code>, where <code>n</code> is the number of contacts.</li><li>AC-2: <code>GET /contacts/count?companyId={id}</code> returns the number of contacts that belong to that company only.</li><li>AC-3: A company with no contacts, or a company id that does not exist, gives <code>{&quot;count&quot;: 0}</code>.</li><li>AC-4: Existing endpoints, including <code>GET /contacts/{id}</code>, behave as before.</li><li>Each criterion is covered by an automated API test, and the existing tests still pass.</li></ul></details></td><td>Count with filter and tests</td><td><b>No test for the filter</b><div class='p'>Same code as good. The tests only cover the unfiltered count; the <code>companyId</code> filter has no test.</div></td><td>good 8 · flawed 4</td></tr><tr><td><b>T03 Deal stages</b></td><td>Deal stages <code>LEAD → QUALIFIED → WON / LOST</code>; invalid transitions return 409.<details><summary class='p'>Acceptance criteria</summary><ul class='p'><li>AC-1: Every deal has a <code>stage</code>, shown in deal responses. A new deal starts at <code>LEAD</code>.</li><li>AC-2: <code>PUT /deals/{id}/stage</code> with <code>{&quot;stage&quot;: &quot;...&quot;}</code> moves the deal and returns it. The allowed moves are <code>LEAD → QUALIFIED</code>, <code>QUALIFIED → WON</code>, and <code>QUALIFIED → LOST</code>.</li><li>AC-3: Every other move, including staying at the same stage, returns <code>409</code> as a problem response and leaves the stage unchanged.</li><li>AC-4: A missing or unknown stage value returns <code>400</code> naming the <code>stage</code> field. An unknown deal returns <code>404</code>.</li><li>AC-5: <code>PUT /deals/{id}</code> does not change the stage.</li><li>Each criterion is covered by an automated API test, and the existing tests still pass.</li></ul></details></td><td>All invalid transitions rejected</td><td><b>One invalid transition allowed</b><div class='p'><code>DealStage.canMoveTo</code> also allows <code>LEAD → LOST</code>. The test list of invalid moves leaves that pair out, so the tests pass.</div></td><td>good 7 · flawed 4</td></tr><tr><td><b>T04 One request validator</b></td><td>Move duplicated request validation from controllers into one validator, with no behavior change.<details><summary class='p'>Acceptance criteria</summary><ul class='p'><li>AC-1: The create and update validation rules for companies, contacts, and deals live in one place. The controllers no longer write them out.</li><li>AC-2: No behavior change: every request the API accepted before is still accepted, and every request it rejected still gets the same <code>400</code> response, naming the same fields with the same messages.</li><li>AC-3: Creating a deal still requires a company; updating one still does not.</li><li>AC-4: The existing tests pass unchanged.</li></ul></details></td><td>Pure refactor</td><td><b>A silent behavior change</b><div class='p'>The email format check drops <code>.strip()</code>, so an email with surrounding spaces, accepted before, is now rejected with a <code>400</code>. No existing test sends one.</div></td><td>good 5 · flawed 3</td></tr><tr><td><b>T06 No duplicate contact emails</b></td><td>Reject duplicate contacts by email on create.<details><summary class='p'>Acceptance criteria</summary><ul class='p'><li>AC-1: <code>POST /contacts</code> with an email that another contact already has returns <code>409</code> as a problem response and creates nothing.</li><li>AC-2: Two emails are the same when they differ only in letter case or surrounding whitespace, so <code>&quot; Ana@Example.com &quot;</code> duplicates <code>ana@example.com</code>.</li><li>AC-3: A contact with a different email is created as before.</li><li>AC-4: Updating a contact is out of scope and behaves as before.</li><li>Each criterion is covered by an automated API test, and the existing tests still pass.</li></ul></details></td><td>Email normalized for case and whitespace</td><td><b>Exact-match only</b><div class='p'>The duplicate check is an exact match (<code>existsByEmail</code>), so <code>Ana@Example.com</code> or <code> ana@example.com</code> gets past <code>ana@example.com</code>. Its tests use exact matches only.</div></td><td>good 9 · flawed 1</td></tr><tr><td><b>T11 Free-form contact search</b></td><td>Add <code>GET /contacts/search?filter=</code> taking a free-form filter.<details><summary class='p'>Acceptance criteria</summary><ul class='p'><li>AC-1: <code>GET /contacts/search?filter={text}</code> returns <code>200</code> with a JSON list of the contacts whose first name, last name, email, or phone contains the text, ignoring case.</li><li>AC-2: Results are in id order, at most 100, with every contact field.</li><li>AC-3: Any text is accepted as a filter and matched literally.</li><li>AC-4: A missing or blank filter returns <code>400</code> naming the <code>filter</code> parameter.</li><li>Each criterion is covered by an automated API test, and the existing tests still pass.</li></ul></details></td><td>Parameterized query</td><td><b>SQL built from the input (injection)</b><div class='p'>The filter is pasted into the SQL text (<code>SEARCH.formatted(...)</code>), so it is open to SQL injection; a quote in the filter breaks the query. Its tests have no quote or wildcard cases.</div></td><td>good 7 · flawed 1</td></tr></table><h2>Summary</h2><table><tr><th>Model</th><th>Band order</th><th>Same band as you</th><th>Within one band</th>
+<th>Rates good above flawed</th><th>Input cut</th><th>Median latency</th></tr>
+<tr><td>Laya base (512)</td><td>asc</td><td>3/10</td><td>7/10</td><td>0/5</td><td>10/10</td><td>76 ms</td></tr>
+<tr><td>Laya base (512)</td><td>desc</td><td>3/10</td><td>7/10</td><td>0/5</td><td>10/10</td><td>75 ms</td></tr>
+<tr><td>Laya typed-decisions (1024)</td><td>asc</td><td>2/10</td><td>5/10</td><td>3/5</td><td>10/10</td><td>153 ms</td></tr>
+<tr><td>Laya typed-decisions (1024)</td><td>desc</td><td>3/10</td><td>6/10</td><td>2/5</td><td>10/10</td><td>152 ms</td></tr>
+<tr><td>Laya multilingual (8192)</td><td>asc</td><td>3/10</td><td>7/10</td><td>3/5</td><td>0/10</td><td>536 ms</td></tr>
+<tr><td>Laya multilingual (8192)</td><td>desc</td><td>1/10</td><td>5/10</td><td>1/5</td><td>0/10</td><td>305 ms</td></tr>
+<tr><td>Jev 1.13</td><td>asc</td><td>3/10</td><td>8/10</td><td>4/5</td><td>0/10</td><td>308 ms</td></tr>
+<tr><td>Jev 1.13</td><td>desc</td><td>3/10</td><td>8/10</td><td>5/5</td><td>0/10</td><td>353 ms</td></tr>
+<tr><td colspan="7" class="p">For comparison: always answering one of the most common bands gets 3/10; guessing ranks 2.5 of 5 pairs.</td></tr></table>
+<h2>Per case, band order asc</h2><table><tr><th>Case</th><th>Your score</th><th>Claude council</th><th>Laya base (512)</th><th>Laya typed-decisions (1024)</th><th>Laya multilingual (8192)</th><th>Jev 1.13</th></tr>
+<tr><td>T01-good</td><td><b>8</b> (good)</td><td class="near"><b>exemplary</b><div class="p">score 9 (median of 3 Sonnet)</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.10 · good 0.53 · exem 0.30</div></td><td class="near"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.10 · weak 0.16 · good 0.36 · exem 0.38</div></td><td class="ok"><b>good</b><div class="p">poor 0.31 · weak 0.21 · good 0.38 · exem 0.10</div></td><td class="near"><b>exemplary</b><div class="p">poor 0.00 · weak 0.01 · good 0.41 · exem 0.58</div></td></tr>
+<tr><td>T01-flawed</td><td><b>4</b> (weak)</td><td class="ok"><b>weak</b><div class="p">score 4 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.10 · good 0.53 · exem 0.30</div></td><td class="off"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.10 · weak 0.16 · good 0.36 · exem 0.38</div></td><td class="near"><b>good</b><div class="p">poor 0.27 · weak 0.16 · good 0.46 · exem 0.11</div></td><td class="ok"><b>weak</b><div class="p">poor 0.08 · weak 0.75 · good 0.15 · exem 0.02</div></td></tr>
+<tr><td>T03-good</td><td><b>7</b> (good)</td><td class="near"><b>exemplary</b><div class="p">score 9 (median of 3 Sonnet)</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.08 · good 0.44 · exem 0.41</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.16 · weak 0.20 · good 0.33 · exem 0.32</div></td><td class="off"><b>poor</b><div class="p">poor 0.40 · weak 0.18 · good 0.27 · exem 0.15</div></td><td class="near"><b>exemplary</b><div class="p">poor 0.00 · weak 0.02 · good 0.26 · exem 0.72</div></td></tr>
+<tr><td>T03-flawed</td><td><b>4</b> (weak)</td><td class="near"><b>poor</b><div class="p">score 3 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.08 · good 0.44 · exem 0.41</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.16 · weak 0.20 · good 0.33 · exem 0.32</div></td><td class="near"><b>poor</b><div class="p">poor 0.37 · weak 0.17 · good 0.29 · exem 0.16</div></td><td class="near"><b>good</b><div class="p">poor 0.06 · weak 0.34 · good 0.37 · exem 0.23</div></td></tr>
+<tr><td>T04-good</td><td><b>5</b> (weak)</td><td class="off"><b>exemplary</b><div class="p">score 9 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.11 · good 0.50 · exem 0.32</div></td><td class="off"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.14 · weak 0.18 · good 0.34 · exem 0.35</div></td><td class="near"><b>good</b><div class="p">poor 0.20 · weak 0.21 · good 0.38 · exem 0.20</div></td><td class="near"><b>good</b><div class="p">poor 0.05 · weak 0.14 · good 0.45 · exem 0.36</div></td></tr>
+<tr><td>T04-flawed</td><td><b>3</b> (poor)</td><td class="near"><b>weak</b><div class="p">score 4 (median of 3 Sonnet)</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.11 · good 0.50 · exem 0.32</div></td><td class="off"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.14 · weak 0.18 · good 0.34 · exem 0.35</div></td><td class="off"><b>good</b><div class="p">poor 0.20 · weak 0.21 · good 0.39 · exem 0.20</div></td><td class="off"><b>good</b><div class="p">poor 0.04 · weak 0.16 · good 0.42 · exem 0.38</div></td></tr>
+<tr><td>T06-good</td><td><b>9</b> (exemplary)</td><td class="near"><b>good</b><div class="p">score 8 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.06 · weak 0.11 · good 0.56 · exem 0.27</div></td><td class="ok"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.13 · weak 0.18 · good 0.32 · exem 0.37</div></td><td class="near"><b>good</b><div class="p">poor 0.25 · weak 0.16 · good 0.47 · exem 0.11</div></td><td class="ok"><b>exemplary</b><div class="p">poor 0.00 · weak 0.01 · good 0.33 · exem 0.66</div></td></tr>
+<tr><td>T06-flawed</td><td><b>1</b> (poor)</td><td class="ok"><b>poor</b><div class="p">score 3 (median of 3 Sonnet)</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.06 · weak 0.11 · good 0.56 · exem 0.27</div></td><td class="off"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.14 · weak 0.18 · good 0.32 · exem 0.36</div></td><td class="off"><b>good</b><div class="p">poor 0.31 · weak 0.18 · good 0.38 · exem 0.12</div></td><td class="near"><b>weak</b><div class="p">poor 0.11 · weak 0.72 · good 0.15 · exem 0.02</div></td></tr>
+<tr><td>T11-good</td><td><b>7</b> (good)</td><td class="ok"><b>good</b><div class="p">score 8 (median of 3 Sonnet)</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.06 · weak 0.09 · good 0.53 · exem 0.32</div></td><td class="near"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.12 · weak 0.16 · good 0.33 · exem 0.39</div></td><td class="ok"><b>good</b><div class="p">poor 0.33 · weak 0.19 · good 0.34 · exem 0.13</div></td><td class="ok"><b>good</b><div class="p">poor 0.00 · weak 0.04 · good 0.59 · exem 0.37</div></td></tr>
+<tr><td>T11-flawed</td><td><b>1</b> (poor)</td><td class="ok"><b>poor</b><div class="p">score 1 (median of 3 Sonnet)</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.06 · weak 0.09 · good 0.53 · exem 0.32</div></td><td class="off"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.12 · weak 0.16 · good 0.33 · exem 0.40</div></td><td class="ok"><b>poor</b><div class="p">poor 0.39 · weak 0.18 · good 0.32 · exem 0.11</div></td><td class="off"><b>good</b><div class="p">poor 0.03 · weak 0.35 · good 0.57 · exem 0.05</div></td></tr>
+</table>
+<p class="p">The Claude council does not depend on band order; it is repeated in both tables for comparison.</p>
+<h2>Per case, band order desc</h2><table><tr><th>Case</th><th>Your score</th><th>Claude council</th><th>Laya base (512)</th><th>Laya typed-decisions (1024)</th><th>Laya multilingual (8192)</th><th>Jev 1.13</th></tr>
+<tr><td>T01-good</td><td><b>8</b> (good)</td><td class="near"><b>exemplary</b><div class="p">score 9 (median of 3 Sonnet)</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.11 · good 0.50 · exem 0.32</div></td><td class="near"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.10 · weak 0.16 · good 0.37 · exem 0.37</div></td><td class="off"><b>poor</b><div class="p">poor 0.33 · weak 0.27 · good 0.30 · exem 0.10</div></td><td class="near"><b>exemplary</b><div class="p">poor 0.00 · weak 0.01 · good 0.38 · exem 0.61</div></td></tr>
+<tr><td>T01-flawed</td><td><b>4</b> (weak)</td><td class="ok"><b>weak</b><div class="p">score 4 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.11 · good 0.50 · exem 0.32</div></td><td class="off"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.10 · weak 0.16 · good 0.37 · exem 0.37</div></td><td class="near"><b>good</b><div class="p">poor 0.26 · weak 0.22 · good 0.41 · exem 0.11</div></td><td class="ok"><b>weak</b><div class="p">poor 0.10 · weak 0.56 · good 0.30 · exem 0.04</div></td></tr>
+<tr><td>T03-good</td><td><b>7</b> (good)</td><td class="near"><b>exemplary</b><div class="p">score 9 (median of 3 Sonnet)</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.09 · weak 0.13 · good 0.43 · exem 0.36</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.16 · weak 0.21 · good 0.32 · exem 0.31</div></td><td class="off"><b>poor</b><div class="p">poor 0.45 · weak 0.21 · good 0.21 · exem 0.13</div></td><td class="near"><b>exemplary</b><div class="p">poor 0.00 · weak 0.03 · good 0.33 · exem 0.64</div></td></tr>
+<tr><td>T03-flawed</td><td><b>4</b> (weak)</td><td class="near"><b>poor</b><div class="p">score 3 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.09 · weak 0.13 · good 0.43 · exem 0.36</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.16 · weak 0.21 · good 0.32 · exem 0.31</div></td><td class="near"><b>poor</b><div class="p">poor 0.46 · weak 0.20 · good 0.21 · exem 0.13</div></td><td class="near"><b>good</b><div class="p">poor 0.02 · weak 0.26 · good 0.51 · exem 0.21</div></td></tr>
+<tr><td>T04-good</td><td><b>5</b> (weak)</td><td class="off"><b>exemplary</b><div class="p">score 9 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.12 · good 0.48 · exem 0.33</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.15 · weak 0.20 · good 0.34 · exem 0.32</div></td><td class="near"><b>good</b><div class="p">poor 0.19 · weak 0.25 · good 0.40 · exem 0.17</div></td><td class="near"><b>good</b><div class="p">poor 0.02 · weak 0.14 · good 0.48 · exem 0.36</div></td></tr>
+<tr><td>T04-flawed</td><td><b>3</b> (poor)</td><td class="near"><b>weak</b><div class="p">score 4 (median of 3 Sonnet)</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.07 · weak 0.12 · good 0.48 · exem 0.33</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.15 · weak 0.20 · good 0.34 · exem 0.32</div></td><td class="off"><b>good</b><div class="p">poor 0.18 · weak 0.25 · good 0.40 · exem 0.17</div></td><td class="off"><b>good</b><div class="p">poor 0.02 · weak 0.18 · good 0.55 · exem 0.25</div></td></tr>
+<tr><td>T06-good</td><td><b>9</b> (exemplary)</td><td class="near"><b>good</b><div class="p">score 8 (median of 3 Sonnet)</div></td><td class="near"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.06 · weak 0.12 · good 0.55 · exem 0.27</div></td><td class="ok"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.15 · weak 0.19 · good 0.33 · exem 0.33</div></td><td class="near"><b>good</b><div class="p">poor 0.22 · weak 0.19 · good 0.47 · exem 0.12</div></td><td class="ok"><b>exemplary</b><div class="p">poor 0.00 · weak 0.01 · good 0.33 · exem 0.66</div></td></tr>
+<tr><td>T06-flawed</td><td><b>1</b> (poor)</td><td class="ok"><b>poor</b><div class="p">score 3 (median of 3 Sonnet)</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.06 · weak 0.12 · good 0.55 · exem 0.27</div></td><td class="off"><b>exemplary</b> <span class="cut">input cut</span><div class="p">poor 0.15 · weak 0.20 · good 0.33 · exem 0.33</div></td><td class="off"><b>good</b><div class="p">poor 0.24 · weak 0.21 · good 0.39 · exem 0.16</div></td><td class="near"><b>weak</b><div class="p">poor 0.12 · weak 0.54 · good 0.27 · exem 0.07</div></td></tr>
+<tr><td>T11-good</td><td><b>7</b> (good)</td><td class="ok"><b>good</b><div class="p">score 8 (median of 3 Sonnet)</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.09 · weak 0.10 · good 0.50 · exem 0.30</div></td><td class="ok"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.13 · weak 0.17 · good 0.35 · exem 0.35</div></td><td class="off"><b>poor</b><div class="p">poor 0.42 · weak 0.24 · good 0.27 · exem 0.08</div></td><td class="ok"><b>good</b><div class="p">poor 0.01 · weak 0.05 · good 0.62 · exem 0.32</div></td></tr>
+<tr><td>T11-flawed</td><td><b>1</b> (poor)</td><td class="ok"><b>poor</b><div class="p">score 1 (median of 3 Sonnet)</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.09 · weak 0.10 · good 0.50 · exem 0.30</div></td><td class="off"><b>good</b> <span class="cut">input cut</span><div class="p">poor 0.13 · weak 0.17 · good 0.35 · exem 0.35</div></td><td class="ok"><b>poor</b><div class="p">poor 0.36 · weak 0.20 · good 0.34 · exem 0.10</div></td><td class="off"><b>good</b><div class="p">poor 0.03 · weak 0.24 · good 0.68 · exem 0.05</div></td></tr>
+</table>
+<h2>Risk check on T11: "Is request input put into the SQL text?"</h2><table><tr><th>Model</th><th>T11-good (safe)</th><th>T11-flawed (injectable)</th></tr>
+<tr><td>Laya base (512)</td><td>0.52 <span class="cut">input cut</span></td><td>0.52 <span class="cut">input cut</span></td></tr>
+<tr><td>Laya typed-decisions (1024)</td><td>0.50 <span class="cut">input cut</span></td><td>0.50 <span class="cut">input cut</span></td></tr>
+<tr><td>Laya multilingual (8192)</td><td>0.84</td><td>0.82</td></tr>
+<tr><td>Jev 1.13</td><td>0.06</td><td>0.98</td></tr>
+<tr><td colspan="3" class="p">Probability of "yes". Ideal: near 0 for the safe version and near 1 for the injectable one.</td></tr></table>
+<h2>What each evaluator was given</h2>
+<p>All evaluators saw the same case content: the task's requirements doc followed by the full unified diff against <code>baseline</code>,
+tests included. They differ in the instructions around it.</p>
+<table><tr><th></th><th>Laya</th><th>Jev</th><th>Claude reviewers</th></tr>
+<tr><td>How</td><td><code>laya.load(checkpoint).predict(state, questions, max_len=…)</code> locally on MPS</td>
+<td><code>POST https://api.typesafe.ai/v1/systemone</code>, model <code>jev-1.13.0</code></td>
+<td>Subagents (3 × Sonnet, 1 × Opus), each reading all ten anonymised, shuffled case files</td></tr>
+<tr><td>Window</td><td>base: 512 · typed-decisions: 1024 · multilingual: 8192 (<code>max_len</code>)</td><td>64k per request</td><td>Whole files</td></tr>
+<tr><td>Instructions</td><td colspan="2">The question below: the rubric's four band descriptors only, with no score ranges and no extra guidance</td>
+<td>Band descriptors <b>plus</b> the 1–10 ranges and an explicit list of what to consider (acceptance criteria, test coverage, security, unrequested behavior changes)</td></tr>
+<tr><td>Answer</td><td colspan="2">A band, with probabilities over the four bands</td><td>A 1–10 score and a one-sentence reason</td></tr></table>
+<p class="p">So the Claude reviewers got richer instructions than Laya and Jev. That is how the runner's evaluator is designed to work,
+but it means the comparison is not instruction-for-instruction.</p>
+<h3>Laya and Jev: the question (ascending band order)</h3><pre class="req">{
+  &quot;band&quot;: {
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;instructions&quot;: &quot;Which band of the code quality rubric does this change fall in? Judge the change against the requirements, not against your own design.&quot;,
+    &quot;criteria&quot;: {
+      &quot;poor&quot;: &quot;Does not meet the requirements, or is unreadable.&quot;,
+      &quot;weak&quot;: &quot;Meets most requirements, with clear correctness or structure problems.&quot;,
+      &quot;good&quot;: &quot;Meets the requirements; readable, with minor issues only.&quot;,
+      &quot;exemplary&quot;: &quot;Meets the requirements; idiomatic, well-factored, and easy to extend.&quot;
+    }
+  }
+}</pre><h3>Descending band order (same text, options reversed)</h3><pre class="req">{
+  &quot;band&quot;: {
+    &quot;type&quot;: &quot;choice&quot;,
+    &quot;instructions&quot;: &quot;Which band of the code quality rubric does this change fall in? Judge the change against the requirements, not against your own design.&quot;,
+    &quot;criteria&quot;: {
+      &quot;exemplary&quot;: &quot;Meets the requirements; idiomatic, well-factored, and easy to extend.&quot;,
+      &quot;good&quot;: &quot;Meets the requirements; readable, with minor issues only.&quot;,
+      &quot;weak&quot;: &quot;Meets most requirements, with clear correctness or structure problems.&quot;,
+      &quot;poor&quot;: &quot;Does not meet the requirements, or is unreadable.&quot;
+    }
+  }
+}</pre><h3>Extra question on the two T11 cases (ascending run only)</h3><pre class="req">{
+  &quot;sql&quot;: {
+    &quot;type&quot;: &quot;noul&quot;,
+    &quot;instructions&quot;: &quot;Does the change build an SQL query by inserting request input into the SQL text?&quot;,
+    &quot;criteria&quot;: {
+      &quot;false&quot;: &quot;SQL uses bind parameters or the repository API; request input never becomes SQL text.&quot;,
+      &quot;true&quot;: &quot;Request input is concatenated or formatted into the SQL string.&quot;
+    }
+  }
+}</pre><h3>Laya and Jev: the state, per case</h3><p>This exact text was the <code>state</code>. Click a case to see it.</p>
+<details><summary><b>T01-good</b> · Laya base (512): 1442 tokens (1029 dropped) · Laya typed-decisions (1024): 1442 tokens (517 dropped) · Laya multilingual (8192): 1655 tokens · Jev 1.13: 1768 tokens</summary><pre class="req">Requirements:
+# T01 Count contacts
+
+## Task
+
+Add `GET /contacts/count`, optionally filtered by company.
+
+## Acceptance criteria
+
+- AC-1: `GET /contacts/count` returns `200` with a JSON object `{&quot;count&quot;: n}`, where `n` is the number of contacts.
+- AC-2: `GET /contacts/count?companyId={id}` returns the number of contacts that belong to that company only.
+- AC-3: A company with no contacts, or a company id that does not exist, gives `{&quot;count&quot;: 0}`.
+- AC-4: Existing endpoints, including `GET /contacts/{id}`, behave as before.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..a110c67 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -73,6 +73,12 @@ class ContactController {
+         return service.list(page, size, companyId, name);
+     }
+ 
++    /** How many contacts there are, or how many belong to one company. */
++    @GetMapping(&quot;/count&quot;)
++    ContactCount count(@RequestParam(required = false) Long companyId) {
++        return new ContactCount(service.count(companyId));
++    }
++
+     @GetMapping(&quot;/{id}&quot;)
+     ContactResponse get(@PathVariable long id) {
+         return service.get(id);
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactCount.java b/src/main/java/com/example/samplecrm/contact/ContactCount.java
+new file mode 100644
+index 0000000..6125a75
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/contact/ContactCount.java
+@@ -0,0 +1,3 @@
++package com.example.samplecrm.contact;
++
++public record ContactCount(long count) {}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..b84133f 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -41,6 +41,12 @@ public class ContactService {
+                 result.getTotalElements());
+     }
+ 
++    /** The number of contacts, or of one company&#x27;s contacts. */
++    @Transactional(readOnly = true)
++    public long count(Long companyId) {
++        return contacts.count(matching(companyId, null));
++    }
++
+     public ContactResponse update(long id, ContactRequest request) {
+         Contact contact = find(id);
+         contact.update(request);
+diff --git a/src/test/java/com/example/samplecrm/ContactCountApiTest.java b/src/test/java/com/example/samplecrm/ContactCountApiTest.java
+new file mode 100644
+index 0000000..b786019
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactCountApiTest.java
+@@ -0,0 +1,50 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import org.junit.jupiter.api.Test;
++
++class ContactCountApiTest extends ApiTestBase {
++
++    private void contact(String firstName, Long companyId) {
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, firstName, &quot;lastName&quot;, &quot;Silva&quot;,
++                &quot;email&quot;, firstName.toLowerCase() + &quot;@example.org&quot;, &quot;companyId&quot;, companyId));
++    }
++
++    @Test
++    void countsAllContacts() {
++        long acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++        contact(&quot;Ana&quot;, acme);
++        contact(&quot;Bruno&quot;, acme);
++        contact(&quot;Carla&quot;, null);
++
++        assertThat(get(&quot;/contacts/count&quot;)).containsEntry(&quot;count&quot;, 3);
++    }
++
++    @Test
++    void noContacts() {
++        assertThat(get(&quot;/contacts/count&quot;)).containsEntry(&quot;count&quot;, 0);
++    }
++
++    @Test
++    void countsOneCompanysContacts() {
++        long acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++        long globex = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Globex&quot;));
++        contact(&quot;Ana&quot;, acme);
++        contact(&quot;Bruno&quot;, acme);
++        contact(&quot;Carla&quot;, globex);
++        contact(&quot;Diana&quot;, null);
++
++        assertThat(get(&quot;/contacts/count?companyId=&quot; + acme)).containsEntry(&quot;count&quot;, 2);
++        assertThat(get(&quot;/contacts/count?companyId=&quot; + globex)).containsEntry(&quot;count&quot;, 1);
++    }
++
++    @Test
++    void companyWithoutContacts() {
++        long acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++        contact(&quot;Ana&quot;, null);
++
++        assertThat(get(&quot;/contacts/count?companyId=&quot; + acme)).containsEntry(&quot;count&quot;, 0);
++        assertThat(get(&quot;/contacts/count?companyId=999&quot;)).containsEntry(&quot;count&quot;, 0);
++    }
++}
+</pre></details>
+<details><summary><b>T01-flawed</b> · Laya base (512): 1172 tokens (759 dropped) · Laya typed-decisions (1024): 1172 tokens (247 dropped) · Laya multilingual (8192): 1315 tokens · Jev 1.13: 1501 tokens</summary><pre class="req">Requirements:
+# T01 Count contacts
+
+## Task
+
+Add `GET /contacts/count`, optionally filtered by company.
+
+## Acceptance criteria
+
+- AC-1: `GET /contacts/count` returns `200` with a JSON object `{&quot;count&quot;: n}`, where `n` is the number of contacts.
+- AC-2: `GET /contacts/count?companyId={id}` returns the number of contacts that belong to that company only.
+- AC-3: A company with no contacts, or a company id that does not exist, gives `{&quot;count&quot;: 0}`.
+- AC-4: Existing endpoints, including `GET /contacts/{id}`, behave as before.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..a110c67 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -73,6 +73,12 @@ class ContactController {
+         return service.list(page, size, companyId, name);
+     }
+ 
++    /** How many contacts there are, or how many belong to one company. */
++    @GetMapping(&quot;/count&quot;)
++    ContactCount count(@RequestParam(required = false) Long companyId) {
++        return new ContactCount(service.count(companyId));
++    }
++
+     @GetMapping(&quot;/{id}&quot;)
+     ContactResponse get(@PathVariable long id) {
+         return service.get(id);
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactCount.java b/src/main/java/com/example/samplecrm/contact/ContactCount.java
+new file mode 100644
+index 0000000..6125a75
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/contact/ContactCount.java
+@@ -0,0 +1,3 @@
++package com.example.samplecrm.contact;
++
++public record ContactCount(long count) {}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..b84133f 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -41,6 +41,12 @@ public class ContactService {
+                 result.getTotalElements());
+     }
+ 
++    /** The number of contacts, or of one company&#x27;s contacts. */
++    @Transactional(readOnly = true)
++    public long count(Long companyId) {
++        return contacts.count(matching(companyId, null));
++    }
++
+     public ContactResponse update(long id, ContactRequest request) {
+         Contact contact = find(id);
+         contact.update(request);
+diff --git a/src/test/java/com/example/samplecrm/ContactCountApiTest.java b/src/test/java/com/example/samplecrm/ContactCountApiTest.java
+new file mode 100644
+index 0000000..c058fc5
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactCountApiTest.java
+@@ -0,0 +1,28 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import org.junit.jupiter.api.Test;
++
++class ContactCountApiTest extends ApiTestBase {
++
++    private void contact(String firstName, Long companyId) {
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, firstName, &quot;lastName&quot;, &quot;Silva&quot;,
++                &quot;email&quot;, firstName.toLowerCase() + &quot;@example.org&quot;, &quot;companyId&quot;, companyId));
++    }
++
++    @Test
++    void countsAllContacts() {
++        long acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++        contact(&quot;Ana&quot;, acme);
++        contact(&quot;Bruno&quot;, acme);
++        contact(&quot;Carla&quot;, null);
++
++        assertThat(get(&quot;/contacts/count&quot;)).containsEntry(&quot;count&quot;, 3);
++    }
++
++    @Test
++    void noContacts() {
++        assertThat(get(&quot;/contacts/count&quot;)).containsEntry(&quot;count&quot;, 0);
++    }
++}
+</pre></details>
+<details><summary><b>T03-good</b> · Laya base (512): 4012 tokens (3599 dropped) · Laya typed-decisions (1024): 4012 tokens (3087 dropped) · Laya multilingual (8192): 4538 tokens · Jev 1.13: 4253 tokens</summary><pre class="req">Requirements:
+# T03 Deal stages
+
+## Task
+
+Deal stages `LEAD → QUALIFIED → WON / LOST`; invalid transitions return 409.
+
+## Acceptance criteria
+
+- AC-1: Every deal has a `stage`, shown in deal responses. A new deal starts at `LEAD`.
+- AC-2: `PUT /deals/{id}/stage` with `{&quot;stage&quot;: &quot;...&quot;}` moves the deal and returns it. The allowed moves are `LEAD → QUALIFIED`, `QUALIFIED → WON`, and `QUALIFIED → LOST`.
+- AC-3: Every other move, including staying at the same stage, returns `409` as a problem response and leaves the stage unchanged.
+- AC-4: A missing or unknown stage value returns `400` naming the `stage` field. An unknown deal returns `404`.
+- AC-5: `PUT /deals/{id}` does not change the stage.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+index ea9aaa5..43541d2 100644
+--- a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
++++ b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+@@ -22,7 +22,7 @@ import tools.jackson.core.JacksonException;
+ 
+ /**
+  * Turns errors into RFC 9457 problem details. Bad input is a 400 with an {@code errors} list naming each wrong
+- * field or parameter; a missing record is a 404.
++ * field or parameter; a missing record is a 404; a request the record&#x27;s state does not allow is a 409.
+  */
+ @RestControllerAdvice
+ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+@@ -39,6 +39,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+     }
+ 
++    @ExceptionHandler
++    ProblemDetail conflict(ConflictException ex) {
++        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
++    }
++
+     /** A referenced record was deleted between the existence check and the write. */
+     @ExceptionHandler
+     ProblemDetail dataIntegrity(DataIntegrityViolationException ex) {
+diff --git a/src/main/java/com/example/samplecrm/api/ConflictException.java b/src/main/java/com/example/samplecrm/api/ConflictException.java
+new file mode 100644
+index 0000000..c81b6b4
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/api/ConflictException.java
+@@ -0,0 +1,9 @@
++package com.example.samplecrm.api;
++
++/** The request is well formed but conflicts with the current state of the record. */
++public class ConflictException extends RuntimeException {
++
++    public ConflictException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/deal/Deal.java b/src/main/java/com/example/samplecrm/deal/Deal.java
+index b0eb74f..186a73d 100644
+--- a/src/main/java/com/example/samplecrm/deal/Deal.java
++++ b/src/main/java/com/example/samplecrm/deal/Deal.java
+@@ -2,6 +2,8 @@ package com.example.samplecrm.deal;
+ 
+ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
++import jakarta.persistence.EnumType;
++import jakarta.persistence.Enumerated;
+ import jakarta.persistence.GeneratedValue;
+ import jakarta.persistence.GenerationType;
+ import jakarta.persistence.Id;
+@@ -28,6 +30,10 @@ public class Deal {
+     /** Cleared by the database when the contact is deleted. */
+     private Long mainContactId;
+ 
++    @Enumerated(EnumType.STRING)
++    @Column(nullable = false, length = 20)
++    private DealStage stage = DealStage.LEAD;
++
+     protected Deal() {}
+ 
+     Deal(DealRequest request) {
+@@ -41,6 +47,10 @@ public class Deal {
+         this.mainContactId = request.mainContactId();
+     }
+ 
++    void moveTo(DealStage next) {
++        this.stage = next;
++    }
++
+     public Long getId() {
+         return id;
+     }
+@@ -60,4 +70,8 @@ public class Deal {
+     public Long getMainContactId() {
+         return mainContactId;
+     }
++
++    public DealStage getStage() {
++        return stage;
++    }
+ }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealController.java b/src/main/java/com/example/samplecrm/deal/DealController.java
+index 4315a16..172dbda 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealController.java
++++ b/src/main/java/com/example/samplecrm/deal/DealController.java
+@@ -98,6 +98,15 @@ class DealController {
+         return service.update(id, request);
+     }
+ 
++    /** Moves the deal to another stage, if its current stage allows it. */
++    @PutMapping(&quot;/{id}/stage&quot;)
++    DealResponse moveTo(@PathVariable long id, @RequestBody StageRequest request) {
++        if (request.stage() == null) {
++            throw new BadInputException(List.of(new FieldErrorItem(&quot;stage&quot;, &quot;must not be null&quot;)));
++        }
++        return service.moveTo(id, request.stage());
++    }
++
+     @DeleteMapping(&quot;/{id}&quot;)
+     ResponseEntity&lt;Void&gt; delete(@PathVariable long id) {
+         service.delete(id);
+diff --git a/src/main/java/com/example/samplecrm/deal/DealResponse.java b/src/main/java/com/example/samplecrm/deal/DealResponse.java
+index dc61e09..24ffffb 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealResponse.java
++++ b/src/main/java/com/example/samplecrm/deal/DealResponse.java
+@@ -2,10 +2,11 @@ package com.example.samplecrm.deal;
+ 
+ import java.math.BigDecimal;
+ 
+-public record DealResponse(long id, String title, BigDecimal amount, Long companyId, Long mainContactId) {
++public record DealResponse(long id, String title, BigDecimal amount, Long companyId, Long mainContactId,
++        DealStage stage) {
+ 
+     static DealResponse from(Deal deal) {
+         return new DealResponse(deal.getId(), deal.getTitle(), deal.getAmount(), deal.getCompanyId(),
+-                deal.getMainContactId());
++                deal.getMainContactId(), deal.getStage());
+     }
+ }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealService.java b/src/main/java/com/example/samplecrm/deal/DealService.java
+index dce46f6..edad718 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealService.java
++++ b/src/main/java/com/example/samplecrm/deal/DealService.java
+@@ -1,5 +1,6 @@
+ package com.example.samplecrm.deal;
+ 
++import com.example.samplecrm.api.ConflictException;
+ import com.example.samplecrm.api.NotFoundException;
+ import java.util.List;
+ import org.springframework.data.domain.Sort;
+@@ -40,6 +41,16 @@ public class DealService {
+         return DealResponse.from(deals.saveAndFlush(deal));
+     }
+ 
++    /** Moves the deal to {@code next}, if its current stage allows it. */
++    public DealResponse moveTo(long id, DealStage next) {
++        Deal deal = find(id);
++        if (!deal.getStage().canMoveTo(next)) {
++            throw new ConflictException(&quot;Deal &quot; + id + &quot; cannot move from &quot; + deal.getStage() + &quot; to &quot; + next);
++        }
++        deal.moveTo(next);
++        return DealResponse.from(deals.saveAndFlush(deal));
++    }
++
+     public void delete(long id) {
+         deals.delete(find(id));
+     }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealStage.java b/src/main/java/com/example/samplecrm/deal/DealStage.java
+new file mode 100644
+index 0000000..4534fc6
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/deal/DealStage.java
+@@ -0,0 +1,18 @@
++package com.example.samplecrm.deal;
++
++/** Where a deal is in the sales process. A deal starts as a lead; won and lost deals are closed. */
++public enum DealStage {
++    LEAD,
++    QUALIFIED,
++    WON,
++    LOST;
++
++    /** Whether a deal at this stage may move to {@code next}. */
++    boolean canMoveTo(DealStage next) {
++        return switch (this) {
++            case LEAD -&gt; next == QUALIFIED;
++            case QUALIFIED -&gt; next == WON || next == LOST;
++            case WON, LOST -&gt; false;
++        };
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/deal/StageRequest.java b/src/main/java/com/example/samplecrm/deal/StageRequest.java
+new file mode 100644
+index 0000000..5e889ad
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/deal/StageRequest.java
+@@ -0,0 +1,3 @@
++package com.example.samplecrm.deal;
++
++public record StageRequest(DealStage stage) {}
+diff --git a/src/main/resources/db/migration/V4__deal_stages.sql b/src/main/resources/db/migration/V4__deal_stages.sql
+new file mode 100644
+index 0000000..3b67c51
+--- /dev/null
++++ b/src/main/resources/db/migration/V4__deal_stages.sql
+@@ -0,0 +1,3 @@
++ALTER TABLE deals
++    ADD COLUMN stage varchar(20) NOT NULL DEFAULT &#x27;LEAD&#x27;
++        CHECK (stage IN (&#x27;LEAD&#x27;, &#x27;QUALIFIED&#x27;, &#x27;WON&#x27;, &#x27;LOST&#x27;));
+diff --git a/src/test/java/com/example/samplecrm/DealStageApiTest.java b/src/test/java/com/example/samplecrm/DealStageApiTest.java
+new file mode 100644
+index 0000000..f6b2172
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/DealStageApiTest.java
+@@ -0,0 +1,99 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.springframework.http.HttpMethod;
++import org.springframework.http.MediaType;
++
++class DealStageApiTest extends ApiTestBase {
++
++    private long acme;
++
++    @BeforeEach
++    void createCompany() {
++        acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++    }
++
++    private long deal() {
++        return create(&quot;/deals&quot;, body(&quot;title&quot;, &quot;Annual renewal&quot;, &quot;amount&quot;, 100, &quot;companyId&quot;, acme));
++    }
++
++    /** A new deal moved along the allowed path until it reaches {@code stage}. */
++    private long dealAt(String stage) {
++        long id = deal();
++        if (!stage.equals(&quot;LEAD&quot;)) {
++            put(&quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, &quot;QUALIFIED&quot;));
++        }
++        if (stage.equals(&quot;WON&quot;) || stage.equals(&quot;LOST&quot;)) {
++            put(&quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, stage));
++        }
++        return id;
++    }
++
++    @Test
++    void newDealIsLead() {
++        long id = deal();
++
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, &quot;LEAD&quot;);
++    }
++
++    @ParameterizedTest
++    @CsvSource({&quot;LEAD, QUALIFIED&quot;, &quot;QUALIFIED, WON&quot;, &quot;QUALIFIED, LOST&quot;})
++    void allowedTransition(String from, String to) {
++        long id = dealAt(from);
++
++        assertThat(put(&quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, to))).containsEntry(&quot;stage&quot;, to);
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, to);
++    }
++
++    @ParameterizedTest
++    @CsvSource({
++        &quot;LEAD, LEAD&quot;, &quot;LEAD, WON&quot;, &quot;LEAD, LOST&quot;,
++        &quot;QUALIFIED, LEAD&quot;, &quot;QUALIFIED, QUALIFIED&quot;,
++        &quot;WON, LEAD&quot;, &quot;WON, QUALIFIED&quot;, &quot;WON, WON&quot;, &quot;WON, LOST&quot;,
++        &quot;LOST, LEAD&quot;, &quot;LOST, QUALIFIED&quot;, &quot;LOST, WON&quot;, &quot;LOST, LOST&quot;})
++    void invalidTransitionIsConflict(String from, String to) {
++        long id = dealAt(from);
++
++        Map&lt;String, Object&gt; problem = json(send(HttpMethod.PUT, &quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, to))
++                .expectStatus().isEqualTo(409)
++                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
++        assertThat(problem).containsEntry(&quot;status&quot;, 409);
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, from);
++    }
++
++    @Test
++    void unknownStage() {
++        long id = deal();
++
++        assertThat(badInputFields(send(HttpMethod.PUT, &quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, &quot;CLOSED&quot;))))
++                .containsExactly(&quot;stage&quot;);
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, &quot;LEAD&quot;);
++    }
++
++    @Test
++    void missingStage() {
++        long id = deal();
++
++        assertThat(badInputFields(send(HttpMethod.PUT, &quot;/deals/&quot; + id + &quot;/stage&quot;, body()))).containsExactly(&quot;stage&quot;);
++    }
++
++    @Test
++    void unknownDeal() {
++        assertNotFound(HttpMethod.PUT, &quot;/deals/999/stage&quot;, body(&quot;stage&quot;, &quot;QUALIFIED&quot;));
++    }
++
++    @Test
++    void updateKeepsStage() {
++        long id = dealAt(&quot;QUALIFIED&quot;);
++
++        put(&quot;/deals/&quot; + id, body(&quot;title&quot;, &quot;Two-year renewal&quot;, &quot;amount&quot;, 200, &quot;companyId&quot;, acme));
++
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;title&quot;, &quot;Two-year renewal&quot;).containsEntry(&quot;stage&quot;, &quot;QUALIFIED&quot;);
++    }
++}
+</pre></details>
+<details><summary><b>T03-flawed</b> · Laya base (512): 4010 tokens (3597 dropped) · Laya typed-decisions (1024): 4010 tokens (3085 dropped) · Laya multilingual (8192): 4536 tokens · Jev 1.13: 4250 tokens</summary><pre class="req">Requirements:
+# T03 Deal stages
+
+## Task
+
+Deal stages `LEAD → QUALIFIED → WON / LOST`; invalid transitions return 409.
+
+## Acceptance criteria
+
+- AC-1: Every deal has a `stage`, shown in deal responses. A new deal starts at `LEAD`.
+- AC-2: `PUT /deals/{id}/stage` with `{&quot;stage&quot;: &quot;...&quot;}` moves the deal and returns it. The allowed moves are `LEAD → QUALIFIED`, `QUALIFIED → WON`, and `QUALIFIED → LOST`.
+- AC-3: Every other move, including staying at the same stage, returns `409` as a problem response and leaves the stage unchanged.
+- AC-4: A missing or unknown stage value returns `400` naming the `stage` field. An unknown deal returns `404`.
+- AC-5: `PUT /deals/{id}` does not change the stage.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+index ea9aaa5..43541d2 100644
+--- a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
++++ b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+@@ -22,7 +22,7 @@ import tools.jackson.core.JacksonException;
+ 
+ /**
+  * Turns errors into RFC 9457 problem details. Bad input is a 400 with an {@code errors} list naming each wrong
+- * field or parameter; a missing record is a 404.
++ * field or parameter; a missing record is a 404; a request the record&#x27;s state does not allow is a 409.
+  */
+ @RestControllerAdvice
+ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+@@ -39,6 +39,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+     }
+ 
++    @ExceptionHandler
++    ProblemDetail conflict(ConflictException ex) {
++        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
++    }
++
+     /** A referenced record was deleted between the existence check and the write. */
+     @ExceptionHandler
+     ProblemDetail dataIntegrity(DataIntegrityViolationException ex) {
+diff --git a/src/main/java/com/example/samplecrm/api/ConflictException.java b/src/main/java/com/example/samplecrm/api/ConflictException.java
+new file mode 100644
+index 0000000..c81b6b4
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/api/ConflictException.java
+@@ -0,0 +1,9 @@
++package com.example.samplecrm.api;
++
++/** The request is well formed but conflicts with the current state of the record. */
++public class ConflictException extends RuntimeException {
++
++    public ConflictException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/deal/Deal.java b/src/main/java/com/example/samplecrm/deal/Deal.java
+index b0eb74f..186a73d 100644
+--- a/src/main/java/com/example/samplecrm/deal/Deal.java
++++ b/src/main/java/com/example/samplecrm/deal/Deal.java
+@@ -2,6 +2,8 @@ package com.example.samplecrm.deal;
+ 
+ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
++import jakarta.persistence.EnumType;
++import jakarta.persistence.Enumerated;
+ import jakarta.persistence.GeneratedValue;
+ import jakarta.persistence.GenerationType;
+ import jakarta.persistence.Id;
+@@ -28,6 +30,10 @@ public class Deal {
+     /** Cleared by the database when the contact is deleted. */
+     private Long mainContactId;
+ 
++    @Enumerated(EnumType.STRING)
++    @Column(nullable = false, length = 20)
++    private DealStage stage = DealStage.LEAD;
++
+     protected Deal() {}
+ 
+     Deal(DealRequest request) {
+@@ -41,6 +47,10 @@ public class Deal {
+         this.mainContactId = request.mainContactId();
+     }
+ 
++    void moveTo(DealStage next) {
++        this.stage = next;
++    }
++
+     public Long getId() {
+         return id;
+     }
+@@ -60,4 +70,8 @@ public class Deal {
+     public Long getMainContactId() {
+         return mainContactId;
+     }
++
++    public DealStage getStage() {
++        return stage;
++    }
+ }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealController.java b/src/main/java/com/example/samplecrm/deal/DealController.java
+index 4315a16..172dbda 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealController.java
++++ b/src/main/java/com/example/samplecrm/deal/DealController.java
+@@ -98,6 +98,15 @@ class DealController {
+         return service.update(id, request);
+     }
+ 
++    /** Moves the deal to another stage, if its current stage allows it. */
++    @PutMapping(&quot;/{id}/stage&quot;)
++    DealResponse moveTo(@PathVariable long id, @RequestBody StageRequest request) {
++        if (request.stage() == null) {
++            throw new BadInputException(List.of(new FieldErrorItem(&quot;stage&quot;, &quot;must not be null&quot;)));
++        }
++        return service.moveTo(id, request.stage());
++    }
++
+     @DeleteMapping(&quot;/{id}&quot;)
+     ResponseEntity&lt;Void&gt; delete(@PathVariable long id) {
+         service.delete(id);
+diff --git a/src/main/java/com/example/samplecrm/deal/DealResponse.java b/src/main/java/com/example/samplecrm/deal/DealResponse.java
+index dc61e09..24ffffb 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealResponse.java
++++ b/src/main/java/com/example/samplecrm/deal/DealResponse.java
+@@ -2,10 +2,11 @@ package com.example.samplecrm.deal;
+ 
+ import java.math.BigDecimal;
+ 
+-public record DealResponse(long id, String title, BigDecimal amount, Long companyId, Long mainContactId) {
++public record DealResponse(long id, String title, BigDecimal amount, Long companyId, Long mainContactId,
++        DealStage stage) {
+ 
+     static DealResponse from(Deal deal) {
+         return new DealResponse(deal.getId(), deal.getTitle(), deal.getAmount(), deal.getCompanyId(),
+-                deal.getMainContactId());
++                deal.getMainContactId(), deal.getStage());
+     }
+ }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealService.java b/src/main/java/com/example/samplecrm/deal/DealService.java
+index dce46f6..edad718 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealService.java
++++ b/src/main/java/com/example/samplecrm/deal/DealService.java
+@@ -1,5 +1,6 @@
+ package com.example.samplecrm.deal;
+ 
++import com.example.samplecrm.api.ConflictException;
+ import com.example.samplecrm.api.NotFoundException;
+ import java.util.List;
+ import org.springframework.data.domain.Sort;
+@@ -40,6 +41,16 @@ public class DealService {
+         return DealResponse.from(deals.saveAndFlush(deal));
+     }
+ 
++    /** Moves the deal to {@code next}, if its current stage allows it. */
++    public DealResponse moveTo(long id, DealStage next) {
++        Deal deal = find(id);
++        if (!deal.getStage().canMoveTo(next)) {
++            throw new ConflictException(&quot;Deal &quot; + id + &quot; cannot move from &quot; + deal.getStage() + &quot; to &quot; + next);
++        }
++        deal.moveTo(next);
++        return DealResponse.from(deals.saveAndFlush(deal));
++    }
++
+     public void delete(long id) {
+         deals.delete(find(id));
+     }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealStage.java b/src/main/java/com/example/samplecrm/deal/DealStage.java
+new file mode 100644
+index 0000000..e155a34
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/deal/DealStage.java
+@@ -0,0 +1,18 @@
++package com.example.samplecrm.deal;
++
++/** Where a deal is in the sales process. A deal starts as a lead; won and lost deals are closed. */
++public enum DealStage {
++    LEAD,
++    QUALIFIED,
++    WON,
++    LOST;
++
++    /** Whether a deal at this stage may move to {@code next}. */
++    boolean canMoveTo(DealStage next) {
++        return switch (this) {
++            case LEAD -&gt; next == QUALIFIED || next == LOST;
++            case QUALIFIED -&gt; next == WON || next == LOST;
++            case WON, LOST -&gt; false;
++        };
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/deal/StageRequest.java b/src/main/java/com/example/samplecrm/deal/StageRequest.java
+new file mode 100644
+index 0000000..5e889ad
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/deal/StageRequest.java
+@@ -0,0 +1,3 @@
++package com.example.samplecrm.deal;
++
++public record StageRequest(DealStage stage) {}
+diff --git a/src/main/resources/db/migration/V4__deal_stages.sql b/src/main/resources/db/migration/V4__deal_stages.sql
+new file mode 100644
+index 0000000..3b67c51
+--- /dev/null
++++ b/src/main/resources/db/migration/V4__deal_stages.sql
+@@ -0,0 +1,3 @@
++ALTER TABLE deals
++    ADD COLUMN stage varchar(20) NOT NULL DEFAULT &#x27;LEAD&#x27;
++        CHECK (stage IN (&#x27;LEAD&#x27;, &#x27;QUALIFIED&#x27;, &#x27;WON&#x27;, &#x27;LOST&#x27;));
+diff --git a/src/test/java/com/example/samplecrm/DealStageApiTest.java b/src/test/java/com/example/samplecrm/DealStageApiTest.java
+new file mode 100644
+index 0000000..c5ffd70
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/DealStageApiTest.java
+@@ -0,0 +1,99 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.springframework.http.HttpMethod;
++import org.springframework.http.MediaType;
++
++class DealStageApiTest extends ApiTestBase {
++
++    private long acme;
++
++    @BeforeEach
++    void createCompany() {
++        acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++    }
++
++    private long deal() {
++        return create(&quot;/deals&quot;, body(&quot;title&quot;, &quot;Annual renewal&quot;, &quot;amount&quot;, 100, &quot;companyId&quot;, acme));
++    }
++
++    /** A new deal moved along the allowed path until it reaches {@code stage}. */
++    private long dealAt(String stage) {
++        long id = deal();
++        if (!stage.equals(&quot;LEAD&quot;)) {
++            put(&quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, &quot;QUALIFIED&quot;));
++        }
++        if (stage.equals(&quot;WON&quot;) || stage.equals(&quot;LOST&quot;)) {
++            put(&quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, stage));
++        }
++        return id;
++    }
++
++    @Test
++    void newDealIsLead() {
++        long id = deal();
++
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, &quot;LEAD&quot;);
++    }
++
++    @ParameterizedTest
++    @CsvSource({&quot;LEAD, QUALIFIED&quot;, &quot;QUALIFIED, WON&quot;, &quot;QUALIFIED, LOST&quot;})
++    void allowedTransition(String from, String to) {
++        long id = dealAt(from);
++
++        assertThat(put(&quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, to))).containsEntry(&quot;stage&quot;, to);
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, to);
++    }
++
++    @ParameterizedTest
++    @CsvSource({
++        &quot;LEAD, LEAD&quot;, &quot;LEAD, WON&quot;,
++        &quot;QUALIFIED, LEAD&quot;, &quot;QUALIFIED, QUALIFIED&quot;,
++        &quot;WON, LEAD&quot;, &quot;WON, QUALIFIED&quot;, &quot;WON, WON&quot;, &quot;WON, LOST&quot;,
++        &quot;LOST, LEAD&quot;, &quot;LOST, QUALIFIED&quot;, &quot;LOST, WON&quot;, &quot;LOST, LOST&quot;})
++    void invalidTransitionIsConflict(String from, String to) {
++        long id = dealAt(from);
++
++        Map&lt;String, Object&gt; problem = json(send(HttpMethod.PUT, &quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, to))
++                .expectStatus().isEqualTo(409)
++                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
++        assertThat(problem).containsEntry(&quot;status&quot;, 409);
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, from);
++    }
++
++    @Test
++    void unknownStage() {
++        long id = deal();
++
++        assertThat(badInputFields(send(HttpMethod.PUT, &quot;/deals/&quot; + id + &quot;/stage&quot;, body(&quot;stage&quot;, &quot;CLOSED&quot;))))
++                .containsExactly(&quot;stage&quot;);
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;stage&quot;, &quot;LEAD&quot;);
++    }
++
++    @Test
++    void missingStage() {
++        long id = deal();
++
++        assertThat(badInputFields(send(HttpMethod.PUT, &quot;/deals/&quot; + id + &quot;/stage&quot;, body()))).containsExactly(&quot;stage&quot;);
++    }
++
++    @Test
++    void unknownDeal() {
++        assertNotFound(HttpMethod.PUT, &quot;/deals/999/stage&quot;, body(&quot;stage&quot;, &quot;QUALIFIED&quot;));
++    }
++
++    @Test
++    void updateKeepsStage() {
++        long id = dealAt(&quot;QUALIFIED&quot;);
++
++        put(&quot;/deals/&quot; + id, body(&quot;title&quot;, &quot;Two-year renewal&quot;, &quot;amount&quot;, 200, &quot;companyId&quot;, acme));
++
++        assertThat(get(&quot;/deals/&quot; + id)).containsEntry(&quot;title&quot;, &quot;Two-year renewal&quot;).containsEntry(&quot;stage&quot;, &quot;QUALIFIED&quot;);
++    }
++}
+</pre></details>
+<details><summary><b>T04-good</b> · Laya base (512): 5222 tokens (4809 dropped) · Laya typed-decisions (1024): 5222 tokens (4297 dropped) · Laya multilingual (8192): 6666 tokens · Jev 1.13: 5598 tokens</summary><pre class="req">Requirements:
+# T04 One request validator
+
+## Task
+
+Move duplicated request validation from controllers into one validator, with no behavior change.
+
+## Acceptance criteria
+
+- AC-1: The create and update validation rules for companies, contacts, and deals live in one place. The controllers no longer write them out.
+- AC-2: No behavior change: every request the API accepted before is still accepted, and every request it rejected still gets the same `400` response, naming the same fields with the same messages.
+- AC-3: Creating a deal still requires a company; updating one still does not.
+- AC-4: The existing tests pass unchanged.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/company/CompanyController.java b/src/main/java/com/example/samplecrm/company/CompanyController.java
+index 16bec61..d271c3c 100644
+--- a/src/main/java/com/example/samplecrm/company/CompanyController.java
++++ b/src/main/java/com/example/samplecrm/company/CompanyController.java
+@@ -1,9 +1,7 @@
+ package com.example.samplecrm.company;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
++import com.example.samplecrm.validation.RequestValidator;
+ import java.net.URI;
+-import java.util.ArrayList;
+ import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+@@ -20,23 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class CompanyController {
+ 
+     private final CompanyService service;
++    private final RequestValidator validator;
+ 
+-    CompanyController(CompanyService service) {
++    CompanyController(CompanyService service, RequestValidator validator) {
+         this.service = service;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity&lt;CompanyResponse&gt; create(@RequestBody CompanyRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.name() == null || request.name().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must not be blank&quot;));
+-        } else if (request.name().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.website() != null &amp;&amp; request.website().length() &gt; 500) {
+-            errors.add(new FieldErrorItem(&quot;website&quot;, &quot;must be at most 500 characters&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         CompanyResponse created = service.create(request);
+         return ResponseEntity.created(URI.create(&quot;/companies/&quot; + created.id())).body(created);
+@@ -54,16 +45,7 @@ class CompanyController {
+ 
+     @PutMapping(&quot;/{id}&quot;)
+     CompanyResponse update(@PathVariable long id, @RequestBody CompanyRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.name() == null || request.name().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must not be blank&quot;));
+-        } else if (request.name().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.website() != null &amp;&amp; request.website().length() &gt; 500) {
+-            errors.add(new FieldErrorItem(&quot;website&quot;, &quot;must be at most 500 characters&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..4dc5de7 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -1,14 +1,10 @@
+ package com.example.samplecrm.contact;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
+ import com.example.samplecrm.api.PageResponse;
+-import com.example.samplecrm.company.CompanyRepository;
++import com.example.samplecrm.validation.RequestValidator;
+ import jakarta.validation.constraints.Max;
+ import jakarta.validation.constraints.Min;
+ import java.net.URI;
+-import java.util.ArrayList;
+-import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+ import org.springframework.web.bind.annotation.GetMapping;
+@@ -25,40 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class ContactController {
+ 
+     private final ContactService service;
+-    private final CompanyRepository companies;
++    private final RequestValidator validator;
+ 
+-    ContactController(ContactService service, CompanyRepository companies) {
++    ContactController(ContactService service, RequestValidator validator) {
+         this.service = service;
+-        this.companies = companies;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity&lt;ContactResponse&gt; create(@RequestBody ContactRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.firstName() == null || request.firstName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.firstName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.lastName() == null || request.lastName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.lastName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.email() == null || request.email().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must not be blank&quot;));
+-        } else if (request.email().length() &gt; 254) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be at most 254 characters&quot;));
+-        } else if (!request.email().strip().matches(&quot;[^@\\s]+@[^@\\s]+\\.[^@\\s]+&quot;)) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be a well-formed email address&quot;));
+-        }
+-        if (request.phone() != null &amp;&amp; request.phone().length() &gt; 50) {
+-            errors.add(new FieldErrorItem(&quot;phone&quot;, &quot;must be at most 50 characters&quot;));
+-        }
+-        if (request.companyId() != null &amp;&amp; !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         ContactResponse created = service.create(request);
+         return ResponseEntity.created(URI.create(&quot;/contacts/&quot; + created.id())).body(created);
+@@ -80,31 +52,7 @@ class ContactController {
+ 
+     @PutMapping(&quot;/{id}&quot;)
+     ContactResponse update(@PathVariable long id, @RequestBody ContactRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.firstName() == null || request.firstName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.firstName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.lastName() == null || request.lastName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.lastName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.email() == null || request.email().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must not be blank&quot;));
+-        } else if (request.email().length() &gt; 254) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be at most 254 characters&quot;));
+-        } else if (!request.email().strip().matches(&quot;[^@\\s]+@[^@\\s]+\\.[^@\\s]+&quot;)) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be a well-formed email address&quot;));
+-        }
+-        if (request.phone() != null &amp;&amp; request.phone().length() &gt; 50) {
+-            errors.add(new FieldErrorItem(&quot;phone&quot;, &quot;must be at most 50 characters&quot;));
+-        }
+-        if (request.companyId() != null &amp;&amp; !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealController.java b/src/main/java/com/example/samplecrm/deal/DealController.java
+index 4315a16..cbcf6a0 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealController.java
++++ b/src/main/java/com/example/samplecrm/deal/DealController.java
+@@ -1,11 +1,7 @@
+ package com.example.samplecrm.deal;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
+-import com.example.samplecrm.company.CompanyRepository;
+-import com.example.samplecrm.contact.ContactRepository;
++import com.example.samplecrm.validation.RequestValidator;
+ import java.net.URI;
+-import java.util.ArrayList;
+ import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+@@ -23,39 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class DealController {
+ 
+     private final DealService service;
+-    private final CompanyRepository companies;
+-    private final ContactRepository contacts;
++    private final RequestValidator validator;
+ 
+-    DealController(DealService service, CompanyRepository companies, ContactRepository contacts) {
++    DealController(DealService service, RequestValidator validator) {
+         this.service = service;
+-        this.companies = companies;
+-        this.contacts = contacts;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity&lt;DealResponse&gt; create(@RequestBody DealRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.title() == null || request.title().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must not be blank&quot;));
+-        } else if (request.title().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.amount() == null) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must not be null&quot;));
+-        } else if (request.amount().signum() &lt; 0) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must be greater than or equal to 0&quot;));
+-        } else if (request.amount().scale() &gt; 2 || request.amount().precision() - request.amount().scale() &gt; 13) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must have at most 13 integer and 2 fraction digits&quot;));
+-        }
+-        if (request.companyId() == null) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;must not be null&quot;));
+-        } else if (!companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        if (request.mainContactId() != null &amp;&amp; !contacts.existsById(request.mainContactId())) {
+-            errors.add(new FieldErrorItem(&quot;mainContactId&quot;, &quot;contact &quot; + request.mainContactId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validateNew(request);
+ 
+         DealResponse created = service.create(request);
+         return ResponseEntity.created(URI.create(&quot;/deals/&quot; + created.id())).body(created);
+@@ -74,26 +47,7 @@ class DealController {
+     /** Replaces the deal&#x27;s fields. Unlike create, the company may be left empty. */
+     @PutMapping(&quot;/{id}&quot;)
+     DealResponse update(@PathVariable long id, @RequestBody DealRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.title() == null || request.title().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must not be blank&quot;));
+-        } else if (request.title().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.amount() == null) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must not be null&quot;));
+-        } else if (request.amount().signum() &lt; 0) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must be greater than or equal to 0&quot;));
+-        } else if (request.amount().scale() &gt; 2 || request.amount().precision() - request.amount().scale() &gt; 13) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must have at most 13 integer and 2 fraction digits&quot;));
+-        }
+-        if (request.companyId() != null &amp;&amp; !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        if (request.mainContactId() != null &amp;&amp; !contacts.existsById(request.mainContactId())) {
+-            errors.add(new FieldErrorItem(&quot;mainContactId&quot;, &quot;contact &quot; + request.mainContactId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validateUpdate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/validation/RequestValidator.java b/src/main/java/com/example/samplecrm/validation/RequestValidator.java
+new file mode 100644
+index 0000000..da5dffc
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/validation/RequestValidator.java
+@@ -0,0 +1,109 @@
++package com.example.samplecrm.validation;
++
++import com.example.samplecrm.api.BadInputException;
++import com.example.samplecrm.api.FieldErrorItem;
++import com.example.samplecrm.company.CompanyRepository;
++import com.example.samplecrm.company.CompanyRequest;
++import com.example.samplecrm.contact.ContactRepository;
++import com.example.samplecrm.contact.ContactRequest;
++import com.example.samplecrm.deal.DealRequest;
++import java.math.BigDecimal;
++import java.util.ArrayList;
++import java.util.List;
++import org.springframework.stereotype.Component;
++
++/**
++ * The validation rules for create and update requests, in one place. Each method throws a
++ * {@link BadInputException} naming every wrong field, or returns when the request is valid.
++ */
++@Component
++public class RequestValidator {
++
++    private static final String EMAIL = &quot;[^@\\s]+@[^@\\s]+\\.[^@\\s]+&quot;;
++
++    private final CompanyRepository companies;
++    private final ContactRepository contacts;
++
++    RequestValidator(CompanyRepository companies, ContactRepository contacts) {
++        this.companies = companies;
++        this.contacts = contacts;
++    }
++
++    public void validate(CompanyRequest request) {
++        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
++        requiredText(errors, &quot;name&quot;, request.name(), 200);
++        optionalText(errors, &quot;website&quot;, request.website(), 500);
++        BadInputException.throwIfAny(errors);
++    }
++
++    public void validate(ContactRequest request) {
++        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
++        requiredText(errors, &quot;firstName&quot;, request.firstName(), 100);
++        requiredText(errors, &quot;lastName&quot;, request.lastName(), 100);
++        if (requiredText(errors, &quot;email&quot;, request.email(), 254) &amp;&amp; !request.email().strip().matches(EMAIL)) {
++            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be a well-formed email address&quot;));
++        }
++        optionalText(errors, &quot;phone&quot;, request.phone(), 50);
++        companyExists(errors, request.companyId());
++        BadInputException.throwIfAny(errors);
++    }
++
++    /** A new deal must name its company. */
++    public void validateNew(DealRequest request) {
++        validate(request, true);
++    }
++
++    /** An updated deal may leave its company empty. */
++    public void validateUpdate(DealRequest request) {
++        validate(request, false);
++    }
++
++    private void validate(DealRequest request, boolean companyRequired) {
++        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
++        requiredText(errors, &quot;title&quot;, request.title(), 200);
++        amount(errors, request.amount());
++        if (companyRequired &amp;&amp; request.companyId() == null) {
++            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;must not be null&quot;));
++        }
++        companyExists(errors, request.companyId());
++        if (request.mainContactId() != null &amp;&amp; !contacts.existsById(request.mainContactId())) {
++            errors.add(new FieldErrorItem(&quot;mainContactId&quot;, &quot;contact &quot; + request.mainContactId() + &quot; does not exist&quot;));
++        }
++        BadInputException.throwIfAny(errors);
++    }
++
++    /** Adds an error when {@code value} is blank or too long; returns whether it was valid. */
++    private static boolean requiredText(List&lt;FieldErrorItem&gt; errors, String field, String value, int maxLength) {
++        if (value == null || value.isBlank()) {
++            errors.add(new FieldErrorItem(field, &quot;must not be blank&quot;));
++            return false;
++        }
++        if (value.length() &gt; maxLength) {
++            errors.add(new FieldErrorItem(field, &quot;must be at most &quot; + maxLength + &quot; characters&quot;));
++            return false;
++        }
++        return true;
++    }
++
++    private static void optionalText(List&lt;FieldErrorItem&gt; errors, String field, String value, int maxLength) {
++        if (value != null &amp;&amp; value.length() &gt; maxLength) {
++            errors.add(new FieldErrorItem(field, &quot;must be at most &quot; + maxLength + &quot; characters&quot;));
++        }
++    }
++
++    private static void amount(List&lt;FieldErrorItem&gt; errors, BigDecimal amount) {
++        if (amount == null) {
++            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must not be null&quot;));
++        } else if (amount.signum() &lt; 0) {
++            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must be greater than or equal to 0&quot;));
++        } else if (amount.scale() &gt; 2 || amount.precision() - amount.scale() &gt; 13) {
++            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must have at most 13 integer and 2 fraction digits&quot;));
++        }
++    }
++
++    private void companyExists(List&lt;FieldErrorItem&gt; errors, Long companyId) {
++        if (companyId != null &amp;&amp; !companies.existsById(companyId)) {
++            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + companyId + &quot; does not exist&quot;));
++        }
++    }
++}
+</pre></details>
+<details><summary><b>T04-flawed</b> · Laya base (512): 5220 tokens (4807 dropped) · Laya typed-decisions (1024): 5220 tokens (4295 dropped) · Laya multilingual (8192): 6666 tokens · Jev 1.13: 5598 tokens</summary><pre class="req">Requirements:
+# T04 One request validator
+
+## Task
+
+Move duplicated request validation from controllers into one validator, with no behavior change.
+
+## Acceptance criteria
+
+- AC-1: The create and update validation rules for companies, contacts, and deals live in one place. The controllers no longer write them out.
+- AC-2: No behavior change: every request the API accepted before is still accepted, and every request it rejected still gets the same `400` response, naming the same fields with the same messages.
+- AC-3: Creating a deal still requires a company; updating one still does not.
+- AC-4: The existing tests pass unchanged.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/company/CompanyController.java b/src/main/java/com/example/samplecrm/company/CompanyController.java
+index 16bec61..d271c3c 100644
+--- a/src/main/java/com/example/samplecrm/company/CompanyController.java
++++ b/src/main/java/com/example/samplecrm/company/CompanyController.java
+@@ -1,9 +1,7 @@
+ package com.example.samplecrm.company;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
++import com.example.samplecrm.validation.RequestValidator;
+ import java.net.URI;
+-import java.util.ArrayList;
+ import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+@@ -20,23 +18,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class CompanyController {
+ 
+     private final CompanyService service;
++    private final RequestValidator validator;
+ 
+-    CompanyController(CompanyService service) {
++    CompanyController(CompanyService service, RequestValidator validator) {
+         this.service = service;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity&lt;CompanyResponse&gt; create(@RequestBody CompanyRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.name() == null || request.name().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must not be blank&quot;));
+-        } else if (request.name().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.website() != null &amp;&amp; request.website().length() &gt; 500) {
+-            errors.add(new FieldErrorItem(&quot;website&quot;, &quot;must be at most 500 characters&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         CompanyResponse created = service.create(request);
+         return ResponseEntity.created(URI.create(&quot;/companies/&quot; + created.id())).body(created);
+@@ -54,16 +45,7 @@ class CompanyController {
+ 
+     @PutMapping(&quot;/{id}&quot;)
+     CompanyResponse update(@PathVariable long id, @RequestBody CompanyRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.name() == null || request.name().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must not be blank&quot;));
+-        } else if (request.name().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;name&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.website() != null &amp;&amp; request.website().length() &gt; 500) {
+-            errors.add(new FieldErrorItem(&quot;website&quot;, &quot;must be at most 500 characters&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..4dc5de7 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -1,14 +1,10 @@
+ package com.example.samplecrm.contact;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
+ import com.example.samplecrm.api.PageResponse;
+-import com.example.samplecrm.company.CompanyRepository;
++import com.example.samplecrm.validation.RequestValidator;
+ import jakarta.validation.constraints.Max;
+ import jakarta.validation.constraints.Min;
+ import java.net.URI;
+-import java.util.ArrayList;
+-import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+ import org.springframework.web.bind.annotation.GetMapping;
+@@ -25,40 +21,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class ContactController {
+ 
+     private final ContactService service;
+-    private final CompanyRepository companies;
++    private final RequestValidator validator;
+ 
+-    ContactController(ContactService service, CompanyRepository companies) {
++    ContactController(ContactService service, RequestValidator validator) {
+         this.service = service;
+-        this.companies = companies;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity&lt;ContactResponse&gt; create(@RequestBody ContactRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.firstName() == null || request.firstName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.firstName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.lastName() == null || request.lastName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.lastName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.email() == null || request.email().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must not be blank&quot;));
+-        } else if (request.email().length() &gt; 254) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be at most 254 characters&quot;));
+-        } else if (!request.email().strip().matches(&quot;[^@\\s]+@[^@\\s]+\\.[^@\\s]+&quot;)) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be a well-formed email address&quot;));
+-        }
+-        if (request.phone() != null &amp;&amp; request.phone().length() &gt; 50) {
+-            errors.add(new FieldErrorItem(&quot;phone&quot;, &quot;must be at most 50 characters&quot;));
+-        }
+-        if (request.companyId() != null &amp;&amp; !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         ContactResponse created = service.create(request);
+         return ResponseEntity.created(URI.create(&quot;/contacts/&quot; + created.id())).body(created);
+@@ -80,31 +52,7 @@ class ContactController {
+ 
+     @PutMapping(&quot;/{id}&quot;)
+     ContactResponse update(@PathVariable long id, @RequestBody ContactRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.firstName() == null || request.firstName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.firstName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;firstName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.lastName() == null || request.lastName().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must not be blank&quot;));
+-        } else if (request.lastName().length() &gt; 100) {
+-            errors.add(new FieldErrorItem(&quot;lastName&quot;, &quot;must be at most 100 characters&quot;));
+-        }
+-        if (request.email() == null || request.email().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must not be blank&quot;));
+-        } else if (request.email().length() &gt; 254) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be at most 254 characters&quot;));
+-        } else if (!request.email().strip().matches(&quot;[^@\\s]+@[^@\\s]+\\.[^@\\s]+&quot;)) {
+-            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be a well-formed email address&quot;));
+-        }
+-        if (request.phone() != null &amp;&amp; request.phone().length() &gt; 50) {
+-            errors.add(new FieldErrorItem(&quot;phone&quot;, &quot;must be at most 50 characters&quot;));
+-        }
+-        if (request.companyId() != null &amp;&amp; !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealController.java b/src/main/java/com/example/samplecrm/deal/DealController.java
+index 4315a16..cbcf6a0 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealController.java
++++ b/src/main/java/com/example/samplecrm/deal/DealController.java
+@@ -1,11 +1,7 @@
+ package com.example.samplecrm.deal;
+ 
+-import com.example.samplecrm.api.BadInputException;
+-import com.example.samplecrm.api.FieldErrorItem;
+-import com.example.samplecrm.company.CompanyRepository;
+-import com.example.samplecrm.contact.ContactRepository;
++import com.example.samplecrm.validation.RequestValidator;
+ import java.net.URI;
+-import java.util.ArrayList;
+ import java.util.List;
+ import org.springframework.http.ResponseEntity;
+ import org.springframework.web.bind.annotation.DeleteMapping;
+@@ -23,39 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
+ class DealController {
+ 
+     private final DealService service;
+-    private final CompanyRepository companies;
+-    private final ContactRepository contacts;
++    private final RequestValidator validator;
+ 
+-    DealController(DealService service, CompanyRepository companies, ContactRepository contacts) {
++    DealController(DealService service, RequestValidator validator) {
+         this.service = service;
+-        this.companies = companies;
+-        this.contacts = contacts;
++        this.validator = validator;
+     }
+ 
+     @PostMapping
+     ResponseEntity&lt;DealResponse&gt; create(@RequestBody DealRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.title() == null || request.title().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must not be blank&quot;));
+-        } else if (request.title().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.amount() == null) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must not be null&quot;));
+-        } else if (request.amount().signum() &lt; 0) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must be greater than or equal to 0&quot;));
+-        } else if (request.amount().scale() &gt; 2 || request.amount().precision() - request.amount().scale() &gt; 13) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must have at most 13 integer and 2 fraction digits&quot;));
+-        }
+-        if (request.companyId() == null) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;must not be null&quot;));
+-        } else if (!companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        if (request.mainContactId() != null &amp;&amp; !contacts.existsById(request.mainContactId())) {
+-            errors.add(new FieldErrorItem(&quot;mainContactId&quot;, &quot;contact &quot; + request.mainContactId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validateNew(request);
+ 
+         DealResponse created = service.create(request);
+         return ResponseEntity.created(URI.create(&quot;/deals/&quot; + created.id())).body(created);
+@@ -74,26 +47,7 @@ class DealController {
+     /** Replaces the deal&#x27;s fields. Unlike create, the company may be left empty. */
+     @PutMapping(&quot;/{id}&quot;)
+     DealResponse update(@PathVariable long id, @RequestBody DealRequest request) {
+-        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
+-        if (request.title() == null || request.title().isBlank()) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must not be blank&quot;));
+-        } else if (request.title().length() &gt; 200) {
+-            errors.add(new FieldErrorItem(&quot;title&quot;, &quot;must be at most 200 characters&quot;));
+-        }
+-        if (request.amount() == null) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must not be null&quot;));
+-        } else if (request.amount().signum() &lt; 0) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must be greater than or equal to 0&quot;));
+-        } else if (request.amount().scale() &gt; 2 || request.amount().precision() - request.amount().scale() &gt; 13) {
+-            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must have at most 13 integer and 2 fraction digits&quot;));
+-        }
+-        if (request.companyId() != null &amp;&amp; !companies.existsById(request.companyId())) {
+-            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + request.companyId() + &quot; does not exist&quot;));
+-        }
+-        if (request.mainContactId() != null &amp;&amp; !contacts.existsById(request.mainContactId())) {
+-            errors.add(new FieldErrorItem(&quot;mainContactId&quot;, &quot;contact &quot; + request.mainContactId() + &quot; does not exist&quot;));
+-        }
+-        BadInputException.throwIfAny(errors);
++        validator.validateUpdate(request);
+ 
+         return service.update(id, request);
+     }
+diff --git a/src/main/java/com/example/samplecrm/validation/RequestValidator.java b/src/main/java/com/example/samplecrm/validation/RequestValidator.java
+new file mode 100644
+index 0000000..af12b6a
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/validation/RequestValidator.java
+@@ -0,0 +1,109 @@
++package com.example.samplecrm.validation;
++
++import com.example.samplecrm.api.BadInputException;
++import com.example.samplecrm.api.FieldErrorItem;
++import com.example.samplecrm.company.CompanyRepository;
++import com.example.samplecrm.company.CompanyRequest;
++import com.example.samplecrm.contact.ContactRepository;
++import com.example.samplecrm.contact.ContactRequest;
++import com.example.samplecrm.deal.DealRequest;
++import java.math.BigDecimal;
++import java.util.ArrayList;
++import java.util.List;
++import org.springframework.stereotype.Component;
++
++/**
++ * The validation rules for create and update requests, in one place. Each method throws a
++ * {@link BadInputException} naming every wrong field, or returns when the request is valid.
++ */
++@Component
++public class RequestValidator {
++
++    private static final String EMAIL = &quot;[^@\\s]+@[^@\\s]+\\.[^@\\s]+&quot;;
++
++    private final CompanyRepository companies;
++    private final ContactRepository contacts;
++
++    RequestValidator(CompanyRepository companies, ContactRepository contacts) {
++        this.companies = companies;
++        this.contacts = contacts;
++    }
++
++    public void validate(CompanyRequest request) {
++        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
++        requiredText(errors, &quot;name&quot;, request.name(), 200);
++        optionalText(errors, &quot;website&quot;, request.website(), 500);
++        BadInputException.throwIfAny(errors);
++    }
++
++    public void validate(ContactRequest request) {
++        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
++        requiredText(errors, &quot;firstName&quot;, request.firstName(), 100);
++        requiredText(errors, &quot;lastName&quot;, request.lastName(), 100);
++        if (requiredText(errors, &quot;email&quot;, request.email(), 254) &amp;&amp; !request.email().matches(EMAIL)) {
++            errors.add(new FieldErrorItem(&quot;email&quot;, &quot;must be a well-formed email address&quot;));
++        }
++        optionalText(errors, &quot;phone&quot;, request.phone(), 50);
++        companyExists(errors, request.companyId());
++        BadInputException.throwIfAny(errors);
++    }
++
++    /** A new deal must name its company. */
++    public void validateNew(DealRequest request) {
++        validate(request, true);
++    }
++
++    /** An updated deal may leave its company empty. */
++    public void validateUpdate(DealRequest request) {
++        validate(request, false);
++    }
++
++    private void validate(DealRequest request, boolean companyRequired) {
++        List&lt;FieldErrorItem&gt; errors = new ArrayList&lt;&gt;();
++        requiredText(errors, &quot;title&quot;, request.title(), 200);
++        amount(errors, request.amount());
++        if (companyRequired &amp;&amp; request.companyId() == null) {
++            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;must not be null&quot;));
++        }
++        companyExists(errors, request.companyId());
++        if (request.mainContactId() != null &amp;&amp; !contacts.existsById(request.mainContactId())) {
++            errors.add(new FieldErrorItem(&quot;mainContactId&quot;, &quot;contact &quot; + request.mainContactId() + &quot; does not exist&quot;));
++        }
++        BadInputException.throwIfAny(errors);
++    }
++
++    /** Adds an error when {@code value} is blank or too long; returns whether it was valid. */
++    private static boolean requiredText(List&lt;FieldErrorItem&gt; errors, String field, String value, int maxLength) {
++        if (value == null || value.isBlank()) {
++            errors.add(new FieldErrorItem(field, &quot;must not be blank&quot;));
++            return false;
++        }
++        if (value.length() &gt; maxLength) {
++            errors.add(new FieldErrorItem(field, &quot;must be at most &quot; + maxLength + &quot; characters&quot;));
++            return false;
++        }
++        return true;
++    }
++
++    private static void optionalText(List&lt;FieldErrorItem&gt; errors, String field, String value, int maxLength) {
++        if (value != null &amp;&amp; value.length() &gt; maxLength) {
++            errors.add(new FieldErrorItem(field, &quot;must be at most &quot; + maxLength + &quot; characters&quot;));
++        }
++    }
++
++    private static void amount(List&lt;FieldErrorItem&gt; errors, BigDecimal amount) {
++        if (amount == null) {
++            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must not be null&quot;));
++        } else if (amount.signum() &lt; 0) {
++            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must be greater than or equal to 0&quot;));
++        } else if (amount.scale() &gt; 2 || amount.precision() - amount.scale() &gt; 13) {
++            errors.add(new FieldErrorItem(&quot;amount&quot;, &quot;must have at most 13 integer and 2 fraction digits&quot;));
++        }
++    }
++
++    private void companyExists(List&lt;FieldErrorItem&gt; errors, Long companyId) {
++        if (companyId != null &amp;&amp; !companies.existsById(companyId)) {
++            errors.add(new FieldErrorItem(&quot;companyId&quot;, &quot;company &quot; + companyId + &quot; does not exist&quot;));
++        }
++    }
++}
+</pre></details>
+<details><summary><b>T06-good</b> · Laya base (512): 2157 tokens (1744 dropped) · Laya typed-decisions (1024): 2157 tokens (1232 dropped) · Laya multilingual (8192): 2329 tokens · Jev 1.13: 2467 tokens</summary><pre class="req">Requirements:
+# T06 No duplicate contact emails
+
+## Task
+
+Reject duplicate contacts by email on create.
+
+## Acceptance criteria
+
+- AC-1: `POST /contacts` with an email that another contact already has returns `409` as a problem response and creates nothing.
+- AC-2: Two emails are the same when they differ only in letter case or surrounding whitespace, so `&quot; Ana@Example.com &quot;` duplicates `ana@example.com`.
+- AC-3: A contact with a different email is created as before.
+- AC-4: Updating a contact is out of scope and behaves as before.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+index ea9aaa5..43541d2 100644
+--- a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
++++ b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+@@ -22,7 +22,7 @@ import tools.jackson.core.JacksonException;
+ 
+ /**
+  * Turns errors into RFC 9457 problem details. Bad input is a 400 with an {@code errors} list naming each wrong
+- * field or parameter; a missing record is a 404.
++ * field or parameter; a missing record is a 404; a request the record&#x27;s state does not allow is a 409.
+  */
+ @RestControllerAdvice
+ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+@@ -39,6 +39,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+     }
+ 
++    @ExceptionHandler
++    ProblemDetail conflict(ConflictException ex) {
++        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
++    }
++
+     /** A referenced record was deleted between the existence check and the write. */
+     @ExceptionHandler
+     ProblemDetail dataIntegrity(DataIntegrityViolationException ex) {
+diff --git a/src/main/java/com/example/samplecrm/api/ConflictException.java b/src/main/java/com/example/samplecrm/api/ConflictException.java
+new file mode 100644
+index 0000000..c81b6b4
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/api/ConflictException.java
+@@ -0,0 +1,9 @@
++package com.example.samplecrm.api;
++
++/** The request is well formed but conflicts with the current state of the record. */
++public class ConflictException extends RuntimeException {
++
++    public ConflictException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactRepository.java b/src/main/java/com/example/samplecrm/contact/ContactRepository.java
+index 21a6d32..0dc6b66 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactRepository.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactRepository.java
+@@ -2,5 +2,11 @@ package com.example.samplecrm.contact;
+ 
+ import org.springframework.data.jpa.repository.JpaRepository;
+ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
++import org.springframework.data.jpa.repository.Query;
+ 
+-public interface ContactRepository extends JpaRepository&lt;Contact, Long&gt;, JpaSpecificationExecutor&lt;Contact&gt; {}
++public interface ContactRepository extends JpaRepository&lt;Contact, Long&gt;, JpaSpecificationExecutor&lt;Contact&gt; {
++
++    /** Whether a contact has this email, ignoring case and surrounding whitespace. */
++    @Query(&quot;select count(c) &gt; 0 from Contact c where lower(trim(c.email)) = :email&quot;)
++    boolean existsByNormalizedEmail(String email);
++}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..147ef4f 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -1,5 +1,6 @@
+ package com.example.samplecrm.contact;
+ 
++import com.example.samplecrm.api.ConflictException;
+ import com.example.samplecrm.api.NotFoundException;
+ import com.example.samplecrm.api.PageResponse;
+ import jakarta.persistence.criteria.Predicate;
+@@ -22,7 +23,12 @@ public class ContactService {
+         this.contacts = contacts;
+     }
+ 
++    /** Creates the contact, unless another contact already has its email. */
+     public ContactResponse create(ContactRequest request) {
++        String email = request.email().strip().toLowerCase(Locale.ROOT);
++        if (contacts.existsByNormalizedEmail(email)) {
++            throw new ConflictException(&quot;A contact with email &quot; + email + &quot; already exists&quot;);
++        }
+         return ContactResponse.from(contacts.save(new Contact(request)));
+     }
+ 
+diff --git a/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java b/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java
+new file mode 100644
+index 0000000..5c2a87d
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java
+@@ -0,0 +1,63 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.ValueSource;
++import org.springframework.http.HttpMethod;
++import org.springframework.http.MediaType;
++
++class ContactDuplicateApiTest extends ApiTestBase {
++
++    private long ana;
++
++    @BeforeEach
++    void createAna() {
++        ana = create(&quot;/contacts&quot;, contact(&quot;Ana&quot;, &quot;ana@acme.example&quot;));
++    }
++
++    private static Map&lt;String, Object&gt; contact(String firstName, String email) {
++        return body(&quot;firstName&quot;, firstName, &quot;lastName&quot;, &quot;Silva&quot;, &quot;email&quot;, email);
++    }
++
++    private void assertConflict(Map&lt;String, Object&gt; request) {
++        Map&lt;String, Object&gt; problem = json(send(HttpMethod.POST, &quot;/contacts&quot;, request)
++                .expectStatus().isEqualTo(409)
++                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
++        assertThat(problem).containsEntry(&quot;status&quot;, 409);
++    }
++
++    @Test
++    void sameEmailIsRejected() {
++        assertConflict(contact(&quot;Ana Maria&quot;, &quot;ana@acme.example&quot;));
++
++        assertThat(count(&quot;contacts&quot;)).isEqualTo(1);
++        assertThat(get(&quot;/contacts/&quot; + ana)).containsEntry(&quot;firstName&quot;, &quot;Ana&quot;);
++    }
++
++    @ParameterizedTest
++    @ValueSource(strings = {&quot;ANA@ACME.EXAMPLE&quot;, &quot;Ana@Acme.Example&quot;, &quot; ana@acme.example&quot;, &quot;ana@acme.example  &quot;,
++            &quot;\tAna@acme.EXAMPLE &quot;})
++    void emailDifferingInCaseOrWhitespaceIsRejected(String email) {
++        assertConflict(contact(&quot;Ana Maria&quot;, email));
++
++        assertThat(count(&quot;contacts&quot;)).isEqualTo(1);
++    }
++
++    @Test
++    void existingEmailWithDifferentCaseIsMatched() {
++        create(&quot;/contacts&quot;, contact(&quot;Bruno&quot;, &quot; Bruno@Example.org &quot;));
++
++        assertConflict(contact(&quot;Bruno&quot;, &quot;bruno@example.org&quot;));
++    }
++
++    @Test
++    void differentEmailIsAccepted() {
++        create(&quot;/contacts&quot;, contact(&quot;Bruno&quot;, &quot;bruno@acme.example&quot;));
++
++        assertThat(count(&quot;contacts&quot;)).isEqualTo(2);
++    }
++}
+</pre></details>
+<details><summary><b>T06-flawed</b> · Laya base (512): 1844 tokens (1431 dropped) · Laya typed-decisions (1024): 1844 tokens (919 dropped) · Laya multilingual (8192): 1986 tokens · Jev 1.13: 2179 tokens</summary><pre class="req">Requirements:
+# T06 No duplicate contact emails
+
+## Task
+
+Reject duplicate contacts by email on create.
+
+## Acceptance criteria
+
+- AC-1: `POST /contacts` with an email that another contact already has returns `409` as a problem response and creates nothing.
+- AC-2: Two emails are the same when they differ only in letter case or surrounding whitespace, so `&quot; Ana@Example.com &quot;` duplicates `ana@example.com`.
+- AC-3: A contact with a different email is created as before.
+- AC-4: Updating a contact is out of scope and behaves as before.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+index ea9aaa5..43541d2 100644
+--- a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
++++ b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+@@ -22,7 +22,7 @@ import tools.jackson.core.JacksonException;
+ 
+ /**
+  * Turns errors into RFC 9457 problem details. Bad input is a 400 with an {@code errors} list naming each wrong
+- * field or parameter; a missing record is a 404.
++ * field or parameter; a missing record is a 404; a request the record&#x27;s state does not allow is a 409.
+  */
+ @RestControllerAdvice
+ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+@@ -39,6 +39,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+     }
+ 
++    @ExceptionHandler
++    ProblemDetail conflict(ConflictException ex) {
++        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
++    }
++
+     /** A referenced record was deleted between the existence check and the write. */
+     @ExceptionHandler
+     ProblemDetail dataIntegrity(DataIntegrityViolationException ex) {
+diff --git a/src/main/java/com/example/samplecrm/api/ConflictException.java b/src/main/java/com/example/samplecrm/api/ConflictException.java
+new file mode 100644
+index 0000000..c81b6b4
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/api/ConflictException.java
+@@ -0,0 +1,9 @@
++package com.example.samplecrm.api;
++
++/** The request is well formed but conflicts with the current state of the record. */
++public class ConflictException extends RuntimeException {
++
++    public ConflictException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactRepository.java b/src/main/java/com/example/samplecrm/contact/ContactRepository.java
+index 21a6d32..1f2d6a4 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactRepository.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactRepository.java
+@@ -3,4 +3,7 @@ package com.example.samplecrm.contact;
+ import org.springframework.data.jpa.repository.JpaRepository;
+ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+ 
+-public interface ContactRepository extends JpaRepository&lt;Contact, Long&gt;, JpaSpecificationExecutor&lt;Contact&gt; {}
++public interface ContactRepository extends JpaRepository&lt;Contact, Long&gt;, JpaSpecificationExecutor&lt;Contact&gt; {
++
++    boolean existsByEmail(String email);
++}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..28e86cc 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -1,5 +1,6 @@
+ package com.example.samplecrm.contact;
+ 
++import com.example.samplecrm.api.ConflictException;
+ import com.example.samplecrm.api.NotFoundException;
+ import com.example.samplecrm.api.PageResponse;
+ import jakarta.persistence.criteria.Predicate;
+@@ -22,7 +23,11 @@ public class ContactService {
+         this.contacts = contacts;
+     }
+ 
++    /** Creates the contact, unless another contact already has its email. */
+     public ContactResponse create(ContactRequest request) {
++        if (contacts.existsByEmail(request.email())) {
++            throw new ConflictException(&quot;A contact with email &quot; + request.email() + &quot; already exists&quot;);
++        }
+         return ContactResponse.from(contacts.save(new Contact(request)));
+     }
+ 
+diff --git a/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java b/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java
+new file mode 100644
+index 0000000..e068da5
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java
+@@ -0,0 +1,45 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.http.HttpMethod;
++import org.springframework.http.MediaType;
++
++class ContactDuplicateApiTest extends ApiTestBase {
++
++    private long ana;
++
++    @BeforeEach
++    void createAna() {
++        ana = create(&quot;/contacts&quot;, contact(&quot;Ana&quot;, &quot;ana@acme.example&quot;));
++    }
++
++    private static Map&lt;String, Object&gt; contact(String firstName, String email) {
++        return body(&quot;firstName&quot;, firstName, &quot;lastName&quot;, &quot;Silva&quot;, &quot;email&quot;, email);
++    }
++
++    private void assertConflict(Map&lt;String, Object&gt; request) {
++        Map&lt;String, Object&gt; problem = json(send(HttpMethod.POST, &quot;/contacts&quot;, request)
++                .expectStatus().isEqualTo(409)
++                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
++        assertThat(problem).containsEntry(&quot;status&quot;, 409);
++    }
++
++    @Test
++    void sameEmailIsRejected() {
++        assertConflict(contact(&quot;Ana Maria&quot;, &quot;ana@acme.example&quot;));
++
++        assertThat(count(&quot;contacts&quot;)).isEqualTo(1);
++        assertThat(get(&quot;/contacts/&quot; + ana)).containsEntry(&quot;firstName&quot;, &quot;Ana&quot;);
++    }
++
++    @Test
++    void differentEmailIsAccepted() {
++        create(&quot;/contacts&quot;, contact(&quot;Bruno&quot;, &quot;bruno@acme.example&quot;));
++
++        assertThat(count(&quot;contacts&quot;)).isEqualTo(2);
++    }
++}
+</pre></details>
+<details><summary><b>T11-good</b> · Laya base (512): 2632 tokens (2219 dropped) · Laya typed-decisions (1024): 2632 tokens (1707 dropped) · Laya multilingual (8192): 3198 tokens · Jev 1.13: 3011 tokens</summary><pre class="req">Requirements:
+# T11 Free-form contact search
+
+## Task
+
+Add `GET /contacts/search?filter=` taking a free-form filter.
+
+## Acceptance criteria
+
+- AC-1: `GET /contacts/search?filter={text}` returns `200` with a JSON list of the contacts whose first name, last name, email, or phone contains the text, ignoring case.
+- AC-2: Results are in id order, at most 100, with every contact field.
+- AC-3: Any text is accepted as a filter and matched literally.
+- AC-4: A missing or blank filter returns `400` naming the `filter` parameter.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..8c6abe9 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -73,6 +73,15 @@ class ContactController {
+         return service.list(page, size, companyId, name);
+     }
+ 
++    /** Up to 100 contacts whose first name, last name, email, or phone contains {@code filter}, ignoring case. */
++    @GetMapping(&quot;/search&quot;)
++    List&lt;ContactResponse&gt; search(@RequestParam(defaultValue = &quot;&quot;) String filter) {
++        if (filter.isBlank()) {
++            throw new BadInputException(List.of(new FieldErrorItem(&quot;filter&quot;, &quot;must not be blank&quot;)));
++        }
++        return service.search(filter);
++    }
++
+     @GetMapping(&quot;/{id}&quot;)
+     ContactResponse get(@PathVariable long id) {
+         return service.get(id);
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..c3f5d18 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -3,12 +3,15 @@ package com.example.samplecrm.contact;
+ import com.example.samplecrm.api.NotFoundException;
+ import com.example.samplecrm.api.PageResponse;
+ import jakarta.persistence.criteria.Predicate;
++import java.sql.ResultSet;
++import java.sql.SQLException;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Locale;
+ import org.springframework.data.domain.Page;
+ import org.springframework.data.domain.Sort;
+ import org.springframework.data.jpa.domain.Specification;
++import org.springframework.jdbc.core.simple.JdbcClient;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+@@ -16,10 +19,21 @@ import org.springframework.transaction.annotation.Transactional;
+ @Transactional
+ public class ContactService {
+ 
++    private static final String SEARCH = &quot;&quot;&quot;
++            SELECT id, first_name, last_name, email, phone, company_id
++            FROM contacts
++            WHERE lower(first_name) LIKE :pattern OR lower(last_name) LIKE :pattern
++               OR lower(email) LIKE :pattern OR lower(phone) LIKE :pattern
++            ORDER BY id
++            LIMIT 100
++            &quot;&quot;&quot;;
++
+     private final ContactRepository contacts;
++    private final JdbcClient jdbc;
+ 
+-    ContactService(ContactRepository contacts) {
++    ContactService(ContactRepository contacts, JdbcClient jdbc) {
+         this.contacts = contacts;
++        this.jdbc = jdbc;
+     }
+ 
+     public ContactResponse create(ContactRequest request) {
+@@ -41,6 +55,13 @@ public class ContactService {
+                 result.getTotalElements());
+     }
+ 
++    /** Up to 100 contacts, in id order, whose first name, last name, email, or phone contains {@code filter}. */
++    @Transactional(readOnly = true)
++    public List&lt;ContactResponse&gt; search(String filter) {
++        String pattern = &quot;%&quot; + escapeLike(filter.toLowerCase(Locale.ROOT)) + &quot;%&quot;;
++        return jdbc.sql(SEARCH).param(&quot;pattern&quot;, pattern).query(ContactService::fromRow).list();
++    }
++
+     public ContactResponse update(long id, ContactRequest request) {
+         Contact contact = find(id);
+         contact.update(request);
+@@ -68,11 +89,16 @@ public class ContactService {
+         };
+     }
+ 
+-    /** Makes {@code %} and {@code _} in the name text match literally. */
++    /** Makes {@code %} and {@code _} in the text match literally. */
+     private static String escapeLike(String text) {
+         return text.replace(&quot;\\&quot;, &quot;\\\\&quot;).replace(&quot;%&quot;, &quot;\\%&quot;).replace(&quot;_&quot;, &quot;\\_&quot;);
+     }
+ 
++    private static ContactResponse fromRow(ResultSet row, int rowNumber) throws SQLException {
++        return new ContactResponse(row.getLong(&quot;id&quot;), row.getString(&quot;first_name&quot;), row.getString(&quot;last_name&quot;),
++                row.getString(&quot;email&quot;), row.getString(&quot;phone&quot;), row.getObject(&quot;company_id&quot;, Long.class));
++    }
++
+     private Contact find(long id) {
+         return contacts.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Contact&quot;, id));
+     }
+diff --git a/src/test/java/com/example/samplecrm/ContactSearchApiTest.java b/src/test/java/com/example/samplecrm/ContactSearchApiTest.java
+new file mode 100644
+index 0000000..7063dc6
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactSearchApiTest.java
+@@ -0,0 +1,97 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.springframework.core.ParameterizedTypeReference;
++import org.springframework.http.HttpMethod;
++import org.springframework.test.web.servlet.client.RestTestClient.ResponseSpec;
++
++class ContactSearchApiTest extends ApiTestBase {
++
++    private static final ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; LIST =
++            new ParameterizedTypeReference&lt;&gt;() {};
++
++    private long acme;
++
++    @BeforeEach
++    void createContacts() {
++        acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Ana&quot;, &quot;lastName&quot;, &quot;Silva&quot;, &quot;email&quot;, &quot;ana@acme.example&quot;,
++                &quot;phone&quot;, &quot;+351 912 345 678&quot;, &quot;companyId&quot;, acme));
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Bruno&quot;, &quot;lastName&quot;, &quot;Costa&quot;, &quot;email&quot;, &quot;bruno@globex.example&quot;,
++                &quot;phone&quot;, &quot;+351 933 000 111&quot;));
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Carla&quot;, &quot;lastName&quot;, &quot;O&#x27;Brien&quot;, &quot;email&quot;, &quot;carla@initech.example&quot;));
++    }
++
++    private ResponseSpec search(String filter) {
++        return client.get().uri(&quot;/contacts/search?filter={filter}&quot;, filter).exchange();
++    }
++
++    private List&lt;String&gt; firstNames(String filter) {
++        return search(filter).expectStatus().isOk().expectBody(LIST).returnResult().getResponseBody().stream()
++                .map(contact -&gt; (String) contact.get(&quot;firstName&quot;)).toList();
++    }
++
++    @ParameterizedTest
++    @CsvSource({&quot;ana, Ana&quot;, &quot;COSTA, Bruno&quot;, &quot;globex, Bruno&quot;, &quot;912 345, Ana&quot;})
++    void matchesAnyField(String filter, String firstName) {
++        assertThat(firstNames(filter)).containsExactly(firstName);
++    }
++
++    @Test
++    void returnsEveryMatchInIdOrder() {
++        assertThat(firstNames(&quot;.example&quot;)).containsExactly(&quot;Ana&quot;, &quot;Bruno&quot;, &quot;Carla&quot;);
++    }
++
++    @Test
++    void returnsWholeContacts() {
++        Map&lt;String, Object&gt; ana = getList(&quot;/contacts/search?filter=silva&quot;).getFirst();
++
++        assertThat(ana)
++                .containsEntry(&quot;firstName&quot;, &quot;Ana&quot;)
++                .containsEntry(&quot;lastName&quot;, &quot;Silva&quot;)
++                .containsEntry(&quot;email&quot;, &quot;ana@acme.example&quot;)
++                .containsEntry(&quot;phone&quot;, &quot;+351 912 345 678&quot;)
++                .containsEntry(&quot;companyId&quot;, (int) acme);
++    }
++
++    @Test
++    void returnsAtMostOneHundred() {
++        for (int i = 1; i &lt;= 101; i++) {
++            create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Person&quot; + i, &quot;lastName&quot;, &quot;Many&quot;, &quot;email&quot;, &quot;p&quot; + i + &quot;@many.example&quot;));
++        }
++
++        List&lt;String&gt; found = firstNames(&quot;many&quot;);
++        assertThat(found).hasSize(100);
++        assertThat(found.getFirst()).isEqualTo(&quot;Person1&quot;);
++    }
++
++    @Test
++    void noMatch() {
++        assertThat(firstNames(&quot;zoe&quot;)).isEmpty();
++    }
++
++    @Test
++    void quoteInFilterIsText() {
++        assertThat(firstNames(&quot;o&#x27;brien&quot;)).containsExactly(&quot;Carla&quot;);
++        assertThat(firstNames(&quot;x&#x27; OR &#x27;1&#x27;=&#x27;1&quot;)).isEmpty();
++    }
++
++    @Test
++    void wildcardsInFilterAreText() {
++        assertThat(firstNames(&quot;%&quot;)).isEmpty();
++        assertThat(firstNames(&quot;_&quot;)).isEmpty();
++    }
++
++    @Test
++    void blankFilter() {
++        assertThat(badInputFields(search(&quot; &quot;))).containsExactly(&quot;filter&quot;);
++        assertThat(badInputFields(send(HttpMethod.GET, &quot;/contacts/search&quot;, null))).containsExactly(&quot;filter&quot;);
++    }
++}
+</pre></details>
+<details><summary><b>T11-flawed</b> · Laya base (512): 2464 tokens (2051 dropped) · Laya typed-decisions (1024): 2464 tokens (1539 dropped) · Laya multilingual (8192): 2982 tokens · Jev 1.13: 2837 tokens</summary><pre class="req">Requirements:
+# T11 Free-form contact search
+
+## Task
+
+Add `GET /contacts/search?filter=` taking a free-form filter.
+
+## Acceptance criteria
+
+- AC-1: `GET /contacts/search?filter={text}` returns `200` with a JSON list of the contacts whose first name, last name, email, or phone contains the text, ignoring case.
+- AC-2: Results are in id order, at most 100, with every contact field.
+- AC-3: Any text is accepted as a filter and matched literally.
+- AC-4: A missing or blank filter returns `400` naming the `filter` parameter.
+- Each criterion is covered by an automated API test, and the existing tests still pass.
+
+
+Diff:
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactController.java b/src/main/java/com/example/samplecrm/contact/ContactController.java
+index 91b4641..8c6abe9 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactController.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactController.java
+@@ -73,6 +73,15 @@ class ContactController {
+         return service.list(page, size, companyId, name);
+     }
+ 
++    /** Up to 100 contacts whose first name, last name, email, or phone contains {@code filter}, ignoring case. */
++    @GetMapping(&quot;/search&quot;)
++    List&lt;ContactResponse&gt; search(@RequestParam(defaultValue = &quot;&quot;) String filter) {
++        if (filter.isBlank()) {
++            throw new BadInputException(List.of(new FieldErrorItem(&quot;filter&quot;, &quot;must not be blank&quot;)));
++        }
++        return service.search(filter);
++    }
++
+     @GetMapping(&quot;/{id}&quot;)
+     ContactResponse get(@PathVariable long id) {
+         return service.get(id);
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..835838a 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -3,12 +3,15 @@ package com.example.samplecrm.contact;
+ import com.example.samplecrm.api.NotFoundException;
+ import com.example.samplecrm.api.PageResponse;
+ import jakarta.persistence.criteria.Predicate;
++import java.sql.ResultSet;
++import java.sql.SQLException;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Locale;
+ import org.springframework.data.domain.Page;
+ import org.springframework.data.domain.Sort;
+ import org.springframework.data.jpa.domain.Specification;
++import org.springframework.jdbc.core.simple.JdbcClient;
+ import org.springframework.stereotype.Service;
+ import org.springframework.transaction.annotation.Transactional;
+ 
+@@ -16,10 +19,21 @@ import org.springframework.transaction.annotation.Transactional;
+ @Transactional
+ public class ContactService {
+ 
++    private static final String SEARCH = &quot;&quot;&quot;
++            SELECT id, first_name, last_name, email, phone, company_id
++            FROM contacts
++            WHERE lower(first_name) LIKE %1$s OR lower(last_name) LIKE %1$s
++               OR lower(email) LIKE %1$s OR lower(phone) LIKE %1$s
++            ORDER BY id
++            LIMIT 100
++            &quot;&quot;&quot;;
++
+     private final ContactRepository contacts;
++    private final JdbcClient jdbc;
+ 
+-    ContactService(ContactRepository contacts) {
++    ContactService(ContactRepository contacts, JdbcClient jdbc) {
+         this.contacts = contacts;
++        this.jdbc = jdbc;
+     }
+ 
+     public ContactResponse create(ContactRequest request) {
+@@ -41,6 +55,13 @@ public class ContactService {
+                 result.getTotalElements());
+     }
+ 
++    /** Up to 100 contacts, in id order, whose first name, last name, email, or phone contains {@code filter}. */
++    @Transactional(readOnly = true)
++    public List&lt;ContactResponse&gt; search(String filter) {
++        String pattern = &quot;&#x27;%&quot; + filter.toLowerCase(Locale.ROOT) + &quot;%&#x27;&quot;;
++        return jdbc.sql(SEARCH.formatted(pattern)).query(ContactService::fromRow).list();
++    }
++
+     public ContactResponse update(long id, ContactRequest request) {
+         Contact contact = find(id);
+         contact.update(request);
+@@ -73,6 +94,11 @@ public class ContactService {
+         return text.replace(&quot;\\&quot;, &quot;\\\\&quot;).replace(&quot;%&quot;, &quot;\\%&quot;).replace(&quot;_&quot;, &quot;\\_&quot;);
+     }
+ 
++    private static ContactResponse fromRow(ResultSet row, int rowNumber) throws SQLException {
++        return new ContactResponse(row.getLong(&quot;id&quot;), row.getString(&quot;first_name&quot;), row.getString(&quot;last_name&quot;),
++                row.getString(&quot;email&quot;), row.getString(&quot;phone&quot;), row.getObject(&quot;company_id&quot;, Long.class));
++    }
++
+     private Contact find(long id) {
+         return contacts.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;Contact&quot;, id));
+     }
+diff --git a/src/test/java/com/example/samplecrm/ContactSearchApiTest.java b/src/test/java/com/example/samplecrm/ContactSearchApiTest.java
+new file mode 100644
+index 0000000..2d69a83
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactSearchApiTest.java
+@@ -0,0 +1,86 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.List;
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.springframework.core.ParameterizedTypeReference;
++import org.springframework.http.HttpMethod;
++import org.springframework.test.web.servlet.client.RestTestClient.ResponseSpec;
++
++class ContactSearchApiTest extends ApiTestBase {
++
++    private static final ParameterizedTypeReference&lt;List&lt;Map&lt;String, Object&gt;&gt;&gt; LIST =
++            new ParameterizedTypeReference&lt;&gt;() {};
++
++    private long acme;
++
++    @BeforeEach
++    void createContacts() {
++        acme = create(&quot;/companies&quot;, body(&quot;name&quot;, &quot;Acme&quot;));
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Ana&quot;, &quot;lastName&quot;, &quot;Silva&quot;, &quot;email&quot;, &quot;ana@acme.example&quot;,
++                &quot;phone&quot;, &quot;+351 912 345 678&quot;, &quot;companyId&quot;, acme));
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Bruno&quot;, &quot;lastName&quot;, &quot;Costa&quot;, &quot;email&quot;, &quot;bruno@globex.example&quot;,
++                &quot;phone&quot;, &quot;+351 933 000 111&quot;));
++        create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Carla&quot;, &quot;lastName&quot;, &quot;O&#x27;Brien&quot;, &quot;email&quot;, &quot;carla@initech.example&quot;));
++    }
++
++    private ResponseSpec search(String filter) {
++        return client.get().uri(&quot;/contacts/search?filter={filter}&quot;, filter).exchange();
++    }
++
++    private List&lt;String&gt; firstNames(String filter) {
++        return search(filter).expectStatus().isOk().expectBody(LIST).returnResult().getResponseBody().stream()
++                .map(contact -&gt; (String) contact.get(&quot;firstName&quot;)).toList();
++    }
++
++    @ParameterizedTest
++    @CsvSource({&quot;ana, Ana&quot;, &quot;COSTA, Bruno&quot;, &quot;globex, Bruno&quot;, &quot;912 345, Ana&quot;})
++    void matchesAnyField(String filter, String firstName) {
++        assertThat(firstNames(filter)).containsExactly(firstName);
++    }
++
++    @Test
++    void returnsEveryMatchInIdOrder() {
++        assertThat(firstNames(&quot;.example&quot;)).containsExactly(&quot;Ana&quot;, &quot;Bruno&quot;, &quot;Carla&quot;);
++    }
++
++    @Test
++    void returnsWholeContacts() {
++        Map&lt;String, Object&gt; ana = getList(&quot;/contacts/search?filter=silva&quot;).getFirst();
++
++        assertThat(ana)
++                .containsEntry(&quot;firstName&quot;, &quot;Ana&quot;)
++                .containsEntry(&quot;lastName&quot;, &quot;Silva&quot;)
++                .containsEntry(&quot;email&quot;, &quot;ana@acme.example&quot;)
++                .containsEntry(&quot;phone&quot;, &quot;+351 912 345 678&quot;)
++                .containsEntry(&quot;companyId&quot;, (int) acme);
++    }
++
++    @Test
++    void returnsAtMostOneHundred() {
++        for (int i = 1; i &lt;= 101; i++) {
++            create(&quot;/contacts&quot;, body(&quot;firstName&quot;, &quot;Person&quot; + i, &quot;lastName&quot;, &quot;Many&quot;, &quot;email&quot;, &quot;p&quot; + i + &quot;@many.example&quot;));
++        }
++
++        List&lt;String&gt; found = firstNames(&quot;many&quot;);
++        assertThat(found).hasSize(100);
++        assertThat(found.getFirst()).isEqualTo(&quot;Person1&quot;);
++    }
++
++    @Test
++    void noMatch() {
++        assertThat(firstNames(&quot;zoe&quot;)).isEmpty();
++    }
++
++
++    @Test
++    void blankFilter() {
++        assertThat(badInputFields(search(&quot; &quot;))).containsExactly(&quot;filter&quot;);
++        assertThat(badInputFields(send(HttpMethod.GET, &quot;/contacts/search&quot;, null))).containsExactly(&quot;filter&quot;);
++    }
++}
+</pre></details>
+<h3>Claude reviewers: the prompt</h3><pre class="req">You are a code-quality evaluator. Score ten independent code changes.
+[Read only the ten anonymised case files case-01.md ... case-10.md; nothing else on disk.]
+
+Each file holds the requirements for a change to a Spring Boot CRM service and the change as a unified diff.
+Judge each change on its own, against its requirements, not against your own design. Some cases may share
+requirements; still score each independently.
+
+Score each on a scale of 1-10 using this rubric:
+- poor (1-3): Does not meet the requirements, or is unreadable.
+- weak (4-5): Meets most requirements, with clear correctness or structure problems.
+- good (6-8): Meets the requirements; readable, with minor issues only.
+- exemplary (9-10): Meets the requirements; idiomatic, well-factored, and easy to extend.
+Consider correctness against every acceptance criterion, whether the tests actually cover the behavior required,
+security, and behavior changes the requirements did not ask for.
+
+Reply with ONLY a JSON object: {&quot;case-01&quot;: {&quot;score&quot;: &lt;int&gt;, &quot;reason&quot;: &quot;&lt;one sentence&gt;&quot;}, ...}</pre><p>Each case file held <code># Requirements</code>, the same requirements doc, then <code># Change</code> with the same diff in a <code>```diff</code> block.</p>
+<h2>All evaluators, quality only (ascending band order for Laya and Jev)</h2><table><tr><th>Evaluator</th><th>Same band as you</th><th>Within one band</th><th>Rates good above flawed</th><th>Same band as the Claude council</th></tr>
+<tr><td>Claude Sonnet council (median of 3)</td><td>4/10</td><td>9/10</td><td>5/5</td><td>10/10</td></tr>
+<tr><td>Claude Opus (1 reviewer)</td><td>4/10</td><td>9/10</td><td>5/5</td><td>8/10</td></tr>
+<tr><td>Laya base (512)</td><td>3/10</td><td>7/10</td><td>0/5</td><td>2/10</td></tr>
+<tr><td>Laya typed-decisions (1024)</td><td>2/10</td><td>5/10</td><td>3/5</td><td>2/10</td></tr>
+<tr><td>Laya multilingual (8192)</td><td>3/10</td><td>7/10</td><td>3/5</td><td>4/10</td></tr>
+<tr><td>Jev 1.13</td><td>3/10</td><td>8/10</td><td>4/5</td><td>4/10</td></tr>
+</table><h2>Claude reviewer scores per case (1–10)</h2><table><tr><th>Case</th><th>You</th><th>Sonnet 1</th><th>Sonnet 2</th><th>Sonnet 3</th><th>Council median</th><th>Opus</th><th>Opus's reason</th></tr>
+<tr><td>T01-good</td><td><b>8</b></td><td>9</td><td>9</td><td>9</td><td class="ok"><b>9</b></td><td>9</td><td class="p">Correct, minimal count endpoint that reuses the existing specification, with tests for the total, the per-company filter, a company with no contacts and an unknown company id.</td></tr>
+<tr><td>T01-flawed</td><td><b>4</b></td><td>5</td><td>4</td><td>4</td><td class="ok"><b>4</b></td><td>5</td><td class="p">The implementation looks correct, but the tests cover only the unfiltered count and miss AC-2 (company filter), AC-3 (an empty or unknown company) and AC-4.</td></tr>
+<tr><td>T03-good</td><td><b>7</b></td><td>9</td><td>9</td><td>9</td><td class="near"><b>9</b></td><td>9</td><td class="p">Transitions match the spec exactly, the migration has a default and a check constraint, 409s come as problem responses, and the tests cover every allowed and forbidden move, 400s, 404 and update keeping the stage.</td></tr>
+<tr><td>T03-flawed</td><td><b>4</b></td><td>3</td><td>3</td><td>3</td><td class="ok"><b>3</b></td><td>4</td><td class="p">canMoveTo wrongly allows LEAD to LOST, which breaks AC-2 and AC-3, and the conflict test leaves out that move, so the bug goes unnoticed.</td></tr>
+<tr><td>T04-good</td><td><b>5</b></td><td>9</td><td>9</td><td>9</td><td class="off"><b>9</b></td><td>9</td><td class="p">Cleanly moves all rules into one well-factored validator with the same messages, the same order and strip-before-regex behavior, and keeps company required on deal create only.</td></tr>
+<tr><td>T04-flawed</td><td><b>3</b></td><td>4</td><td>4</td><td>4</td><td class="ok"><b>4</b></td><td>4</td><td class="p">The refactor drops strip() before the email regex, so emails with surrounding whitespace that were accepted before are now rejected, which breaks the no-behavior-change requirement.</td></tr>
+<tr><td>T06-good</td><td><b>9</b></td><td>8</td><td>9</td><td>8</td><td class="ok"><b>8</b></td><td>8</td><td class="p">Normalizes both sides (trim and lower case) for the duplicate check and tests case, whitespace and stored-variant duplicates well; there is no explicit update test for AC-4 and no DB constraint against races.</td></tr>
+<tr><td>T06-flawed</td><td><b>1</b></td><td>4</td><td>3</td><td>3</td><td class="near"><b>3</b></td><td>3</td><td class="p">existsByEmail is an exact match, so the case and whitespace duplicates in AC-2 are not detected, and the tests never check AC-2.</td></tr>
+<tr><td>T11-good</td><td><b>7</b></td><td>9</td><td>8</td><td>8</td><td class="ok"><b>8</b></td><td>9</td><td class="p">Meets every criterion with a parameterized query, escaped LIKE wildcards, id order and limit 100, and tests cover matching, ordering, the limit, full fields, quotes, wildcards and a blank filter.</td></tr>
+<tr><td>T11-flawed</td><td><b>1</b></td><td>1</td><td>1</td><td>1</td><td class="ok"><b>1</b></td><td>1</td><td class="p">Puts the filter straight into the SQL string with String.format, which allows SQL injection and breaks the literal matching in AC-3 (quotes and wildcards), and the tests for those cases were removed.</td></tr>
+<tr><td colspan="8" class="p">Council cell colour: green within 1 point of you, yellow 2, red 3 or more.</td></tr></table>
+</body></html>

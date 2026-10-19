@@ -1,0 +1,65 @@
+{
+ "key": "case ids map to variants in claude-blind-key.json",
+ "reviewers": {
+  "sonnet-1": {
+   "T11-good": 9,
+   "T03-flawed": 3,
+   "T01-flawed": 5,
+   "T04-good": 9,
+   "T06-flawed": 4,
+   "T01-good": 9,
+   "T11-flawed": 1,
+   "T06-good": 8,
+   "T03-good": 9,
+   "T04-flawed": 4
+  },
+  "sonnet-2": {
+   "T11-good": 8,
+   "T03-flawed": 3,
+   "T01-flawed": 4,
+   "T04-good": 9,
+   "T06-flawed": 3,
+   "T01-good": 9,
+   "T11-flawed": 1,
+   "T06-good": 9,
+   "T03-good": 9,
+   "T04-flawed": 4
+  },
+  "sonnet-3": {
+   "T11-good": 8,
+   "T03-flawed": 3,
+   "T01-flawed": 4,
+   "T04-good": 9,
+   "T06-flawed": 3,
+   "T01-good": 9,
+   "T11-flawed": 1,
+   "T06-good": 8,
+   "T03-good": 9,
+   "T04-flawed": 4
+  },
+  "opus": {
+   "T11-good": 9,
+   "T03-flawed": 4,
+   "T01-flawed": 5,
+   "T04-good": 9,
+   "T06-flawed": 3,
+   "T01-good": 9,
+   "T11-flawed": 1,
+   "T06-good": 8,
+   "T03-good": 9,
+   "T04-flawed": 4
+  }
+ },
+ "sonnet_council_median": {
+  "T01-good": 9,
+  "T01-flawed": 4,
+  "T03-good": 9,
+  "T03-flawed": 3,
+  "T04-good": 9,
+  "T04-flawed": 4,
+  "T06-good": 8,
+  "T06-flawed": 3,
+  "T11-good": 8,
+  "T11-flawed": 1
+ }
+}

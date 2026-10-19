@@ -186,6 +186,9 @@ transitions:
             - question: code_quality_band
               provider: laya
               mode: shadow
+            - question: code_quality_band
+              provider: jev
+              mode: shadow
 
         - id: docs_updated
           executor: agent_evaluator

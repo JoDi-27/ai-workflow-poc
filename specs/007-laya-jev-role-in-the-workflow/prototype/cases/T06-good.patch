@@ -1,0 +1,150 @@
+diff --git a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+index ea9aaa5..43541d2 100644
+--- a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
++++ b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+@@ -22,7 +22,7 @@ import tools.jackson.core.JacksonException;
+ 
+ /**
+  * Turns errors into RFC 9457 problem details. Bad input is a 400 with an {@code errors} list naming each wrong
+- * field or parameter; a missing record is a 404.
++ * field or parameter; a missing record is a 404; a request the record's state does not allow is a 409.
+  */
+ @RestControllerAdvice
+ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+@@ -39,6 +39,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+     }
+ 
++    @ExceptionHandler
++    ProblemDetail conflict(ConflictException ex) {
++        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
++    }
++
+     /** A referenced record was deleted between the existence check and the write. */
+     @ExceptionHandler
+     ProblemDetail dataIntegrity(DataIntegrityViolationException ex) {
+diff --git a/src/main/java/com/example/samplecrm/api/ConflictException.java b/src/main/java/com/example/samplecrm/api/ConflictException.java
+new file mode 100644
+index 0000000..c81b6b4
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/api/ConflictException.java
+@@ -0,0 +1,9 @@
++package com.example.samplecrm.api;
++
++/** The request is well formed but conflicts with the current state of the record. */
++public class ConflictException extends RuntimeException {
++
++    public ConflictException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactRepository.java b/src/main/java/com/example/samplecrm/contact/ContactRepository.java
+index 21a6d32..0dc6b66 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactRepository.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactRepository.java
+@@ -2,5 +2,11 @@ package com.example.samplecrm.contact;
+ 
+ import org.springframework.data.jpa.repository.JpaRepository;
+ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
++import org.springframework.data.jpa.repository.Query;
+ 
+-public interface ContactRepository extends JpaRepository<Contact, Long>, JpaSpecificationExecutor<Contact> {}
++public interface ContactRepository extends JpaRepository<Contact, Long>, JpaSpecificationExecutor<Contact> {
++
++    /** Whether a contact has this email, ignoring case and surrounding whitespace. */
++    @Query("select count(c) > 0 from Contact c where lower(trim(c.email)) = :email")
++    boolean existsByNormalizedEmail(String email);
++}
+diff --git a/src/main/java/com/example/samplecrm/contact/ContactService.java b/src/main/java/com/example/samplecrm/contact/ContactService.java
+index a5ceec2..147ef4f 100644
+--- a/src/main/java/com/example/samplecrm/contact/ContactService.java
++++ b/src/main/java/com/example/samplecrm/contact/ContactService.java
+@@ -1,5 +1,6 @@
+ package com.example.samplecrm.contact;
+ 
++import com.example.samplecrm.api.ConflictException;
+ import com.example.samplecrm.api.NotFoundException;
+ import com.example.samplecrm.api.PageResponse;
+ import jakarta.persistence.criteria.Predicate;
+@@ -22,7 +23,12 @@ public class ContactService {
+         this.contacts = contacts;
+     }
+ 
++    /** Creates the contact, unless another contact already has its email. */
+     public ContactResponse create(ContactRequest request) {
++        String email = request.email().strip().toLowerCase(Locale.ROOT);
++        if (contacts.existsByNormalizedEmail(email)) {
++            throw new ConflictException("A contact with email " + email + " already exists");
++        }
+         return ContactResponse.from(contacts.save(new Contact(request)));
+     }
+ 
+diff --git a/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java b/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java
+new file mode 100644
+index 0000000..5c2a87d
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/ContactDuplicateApiTest.java
+@@ -0,0 +1,63 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.ValueSource;
++import org.springframework.http.HttpMethod;
++import org.springframework.http.MediaType;
++
++class ContactDuplicateApiTest extends ApiTestBase {
++
++    private long ana;
++
++    @BeforeEach
++    void createAna() {
++        ana = create("/contacts", contact("Ana", "ana@acme.example"));
++    }
++
++    private static Map<String, Object> contact(String firstName, String email) {
++        return body("firstName", firstName, "lastName", "Silva", "email", email);
++    }
++
++    private void assertConflict(Map<String, Object> request) {
++        Map<String, Object> problem = json(send(HttpMethod.POST, "/contacts", request)
++                .expectStatus().isEqualTo(409)
++                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
++        assertThat(problem).containsEntry("status", 409);
++    }
++
++    @Test
++    void sameEmailIsRejected() {
++        assertConflict(contact("Ana Maria", "ana@acme.example"));
++
++        assertThat(count("contacts")).isEqualTo(1);
++        assertThat(get("/contacts/" + ana)).containsEntry("firstName", "Ana");
++    }
++
++    @ParameterizedTest
++    @ValueSource(strings = {"ANA@ACME.EXAMPLE", "Ana@Acme.Example", " ana@acme.example", "ana@acme.example  ",
++            "\tAna@acme.EXAMPLE "})
++    void emailDifferingInCaseOrWhitespaceIsRejected(String email) {
++        assertConflict(contact("Ana Maria", email));
++
++        assertThat(count("contacts")).isEqualTo(1);
++    }
++
++    @Test
++    void existingEmailWithDifferentCaseIsMatched() {
++        create("/contacts", contact("Bruno", " Bruno@Example.org "));
++
++        assertConflict(contact("Bruno", "bruno@example.org"));
++    }
++
++    @Test
++    void differentEmailIsAccepted() {
++        create("/contacts", contact("Bruno", "bruno@acme.example"));
++
++        assertThat(count("contacts")).isEqualTo(2);
++    }
++}

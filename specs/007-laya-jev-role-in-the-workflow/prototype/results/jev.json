@@ -1,0 +1,402 @@
+[
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T01-good",
+  "order": "asc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.0,
+   "weak": 0.01,
+   "good": 0.41,
+   "exemplary": 0.58
+  },
+  "answer_confidence": 0.58,
+  "confidence": 0.44,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 1768,
+  "ms": 366
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T01-good",
+  "order": "desc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "exemplary",
+  "probs": {
+   "exemplary": 0.61,
+   "good": 0.38,
+   "weak": 0.01,
+   "poor": 0.0
+  },
+  "answer_confidence": 0.61,
+  "confidence": 0.48,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 1768,
+  "ms": 408
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T01-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "weak",
+  "probs": {
+   "poor": 0.08,
+   "weak": 0.75,
+   "good": 0.15,
+   "exemplary": 0.02
+  },
+  "answer_confidence": 0.75,
+  "confidence": 0.67,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 1501,
+  "ms": 308
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T01-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "weak",
+  "probs": {
+   "exemplary": 0.04,
+   "good": 0.3,
+   "weak": 0.56,
+   "poor": 0.1
+  },
+  "answer_confidence": 0.56,
+  "confidence": 0.41,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 1501,
+  "ms": 305
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T03-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.0,
+   "weak": 0.02,
+   "good": 0.26,
+   "exemplary": 0.72
+  },
+  "answer_confidence": 0.72,
+  "confidence": 0.63,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 4253,
+  "ms": 411
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T03-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "exemplary",
+  "probs": {
+   "exemplary": 0.64,
+   "good": 0.33,
+   "weak": 0.03,
+   "poor": 0.0
+  },
+  "answer_confidence": 0.64,
+  "confidence": 0.52,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 4253,
+  "ms": 760
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T03-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.06,
+   "weak": 0.34,
+   "good": 0.37,
+   "exemplary": 0.23
+  },
+  "answer_confidence": 0.37,
+  "confidence": 0.16,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 4250,
+  "ms": 274
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T03-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.21,
+   "good": 0.51,
+   "weak": 0.26,
+   "poor": 0.02
+  },
+  "answer_confidence": 0.51,
+  "confidence": 0.35,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 4250,
+  "ms": 353
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T04-good",
+  "order": "asc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.05,
+   "weak": 0.14,
+   "good": 0.45,
+   "exemplary": 0.36
+  },
+  "answer_confidence": 0.45,
+  "confidence": 0.27,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 5598,
+  "ms": 291
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T04-good",
+  "order": "desc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.36,
+   "good": 0.48,
+   "weak": 0.14,
+   "poor": 0.02
+  },
+  "answer_confidence": 0.48,
+  "confidence": 0.31,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 5598,
+  "ms": 297
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T04-flawed",
+  "order": "asc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.04,
+   "weak": 0.16,
+   "good": 0.42,
+   "exemplary": 0.38
+  },
+  "answer_confidence": 0.42,
+  "confidence": 0.23,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 5598,
+  "ms": 433
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T04-flawed",
+  "order": "desc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.25,
+   "good": 0.55,
+   "weak": 0.18,
+   "poor": 0.02
+  },
+  "answer_confidence": 0.55,
+  "confidence": 0.4,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 5598,
+  "ms": 357
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T06-good",
+  "order": "asc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.0,
+   "weak": 0.01,
+   "good": 0.33,
+   "exemplary": 0.66
+  },
+  "answer_confidence": 0.66,
+  "confidence": 0.55,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 2467,
+  "ms": 248
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T06-good",
+  "order": "desc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "exemplary",
+  "probs": {
+   "exemplary": 0.66,
+   "good": 0.33,
+   "weak": 0.01,
+   "poor": 0.0
+  },
+  "answer_confidence": 0.66,
+  "confidence": 0.55,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 2467,
+  "ms": 367
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T06-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "weak",
+  "probs": {
+   "poor": 0.11,
+   "weak": 0.72,
+   "good": 0.15,
+   "exemplary": 0.02
+  },
+  "answer_confidence": 0.72,
+  "confidence": 0.63,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 2179,
+  "ms": 268
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T06-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "weak",
+  "probs": {
+   "exemplary": 0.07,
+   "good": 0.27,
+   "weak": 0.54,
+   "poor": 0.12
+  },
+  "answer_confidence": 0.54,
+  "confidence": 0.39,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 2179,
+  "ms": 286
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T11-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0,
+   "weak": 0.04,
+   "good": 0.59,
+   "exemplary": 0.37
+  },
+  "answer_confidence": 0.59,
+  "confidence": 0.45,
+  "sql_true": 0.06,
+  "truncated": false,
+  "input_tokens": 3011,
+  "ms": 367
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T11-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.32,
+   "good": 0.62,
+   "weak": 0.05,
+   "poor": 0.01
+  },
+  "answer_confidence": 0.62,
+  "confidence": 0.49,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 2943,
+  "ms": 294
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T11-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.03,
+   "weak": 0.35,
+   "good": 0.57,
+   "exemplary": 0.05
+  },
+  "answer_confidence": 0.57,
+  "confidence": 0.43,
+  "sql_true": 0.98,
+  "truncated": false,
+  "input_tokens": 2837,
+  "ms": 269
+ },
+ {
+  "checkpoint": "jev-1.13.0",
+  "case": "T11-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.05,
+   "good": 0.68,
+   "weak": 0.24,
+   "poor": 0.03
+  },
+  "answer_confidence": 0.68,
+  "confidence": 0.57,
+  "sql_true": null,
+  "truncated": false,
+  "input_tokens": 2769,
+  "ms": 290
+ }
+]

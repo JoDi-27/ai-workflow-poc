@@ -1,0 +1,1202 @@
+[
+ {
+  "checkpoint": "laya",
+  "case": "T01-good",
+  "order": "asc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.066,
+   "weak": 0.0983,
+   "good": 0.5342,
+   "exemplary": 0.3015
+  },
+  "answer_confidence": 0.5342,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1442,
+  "dropped": 1029,
+  "ms": 170
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T01-good",
+  "order": "desc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3186,
+   "good": 0.5037,
+   "weak": 0.1116,
+   "poor": 0.0661
+  },
+  "answer_confidence": 0.5037,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1442,
+  "dropped": 1029,
+  "ms": 73
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T01-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.066,
+   "weak": 0.0983,
+   "good": 0.5342,
+   "exemplary": 0.3015
+  },
+  "answer_confidence": 0.5342,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1172,
+  "dropped": 759,
+  "ms": 73
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T01-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3186,
+   "good": 0.5037,
+   "weak": 0.1116,
+   "poor": 0.0661
+  },
+  "answer_confidence": 0.5037,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1172,
+  "dropped": 759,
+  "ms": 73
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T03-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0711,
+   "weak": 0.0766,
+   "good": 0.441,
+   "exemplary": 0.4113
+  },
+  "answer_confidence": 0.441,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4012,
+  "dropped": 3599,
+  "ms": 75
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T03-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3597,
+   "good": 0.4252,
+   "weak": 0.1301,
+   "poor": 0.085
+  },
+  "answer_confidence": 0.4252,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4012,
+  "dropped": 3599,
+  "ms": 75
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T03-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0711,
+   "weak": 0.0766,
+   "good": 0.441,
+   "exemplary": 0.4113
+  },
+  "answer_confidence": 0.441,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4010,
+  "dropped": 3597,
+  "ms": 75
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T03-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3597,
+   "good": 0.4252,
+   "weak": 0.1301,
+   "poor": 0.085
+  },
+  "answer_confidence": 0.4252,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4010,
+  "dropped": 3597,
+  "ms": 75
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T04-good",
+  "order": "asc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0734,
+   "weak": 0.1075,
+   "good": 0.5021,
+   "exemplary": 0.3169
+  },
+  "answer_confidence": 0.5021,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5222,
+  "dropped": 4809,
+  "ms": 76
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T04-good",
+  "order": "desc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.328,
+   "good": 0.4818,
+   "weak": 0.1213,
+   "poor": 0.0689
+  },
+  "answer_confidence": 0.4818,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5222,
+  "dropped": 4809,
+  "ms": 76
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T04-flawed",
+  "order": "asc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0734,
+   "weak": 0.1075,
+   "good": 0.5021,
+   "exemplary": 0.3169
+  },
+  "answer_confidence": 0.5021,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5220,
+  "dropped": 4807,
+  "ms": 76
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T04-flawed",
+  "order": "desc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.328,
+   "good": 0.4818,
+   "weak": 0.1213,
+   "poor": 0.0689
+  },
+  "answer_confidence": 0.4818,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5220,
+  "dropped": 4807,
+  "ms": 76
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T06-good",
+  "order": "asc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0637,
+   "weak": 0.1068,
+   "good": 0.5593,
+   "exemplary": 0.2702
+  },
+  "answer_confidence": 0.5593,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2157,
+  "dropped": 1744,
+  "ms": 74
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T06-good",
+  "order": "desc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.2738,
+   "good": 0.545,
+   "weak": 0.117,
+   "poor": 0.0642
+  },
+  "answer_confidence": 0.545,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2157,
+  "dropped": 1744,
+  "ms": 74
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T06-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0637,
+   "weak": 0.1068,
+   "good": 0.5593,
+   "exemplary": 0.2702
+  },
+  "answer_confidence": 0.5593,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1844,
+  "dropped": 1431,
+  "ms": 73
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T06-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.2738,
+   "good": 0.545,
+   "weak": 0.117,
+   "poor": 0.0642
+  },
+  "answer_confidence": 0.545,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1844,
+  "dropped": 1431,
+  "ms": 74
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T11-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0633,
+   "weak": 0.0912,
+   "good": 0.5255,
+   "exemplary": 0.32
+  },
+  "answer_confidence": 0.5255,
+  "sql_true": 0.5179,
+  "truncated": true,
+  "state_tokens": 2632,
+  "dropped": 2219,
+  "ms": 147
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T11-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3045,
+   "good": 0.5012,
+   "weak": 0.1039,
+   "poor": 0.0904
+  },
+  "answer_confidence": 0.5012,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2632,
+  "dropped": 2219,
+  "ms": 75
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T11-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.0633,
+   "weak": 0.0912,
+   "good": 0.5255,
+   "exemplary": 0.32
+  },
+  "answer_confidence": 0.5255,
+  "sql_true": 0.5179,
+  "truncated": true,
+  "state_tokens": 2464,
+  "dropped": 2051,
+  "ms": 141
+ },
+ {
+  "checkpoint": "laya",
+  "case": "T11-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3045,
+   "good": 0.5012,
+   "weak": 0.1039,
+   "poor": 0.0904
+  },
+  "answer_confidence": 0.5012,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2464,
+  "dropped": 2051,
+  "ms": 75
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T01-good",
+  "order": "asc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.0983,
+   "weak": 0.1595,
+   "good": 0.3631,
+   "exemplary": 0.3791
+  },
+  "answer_confidence": 0.3791,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1442,
+  "dropped": 517,
+  "ms": 155
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T01-good",
+  "order": "desc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "exemplary",
+  "probs": {
+   "exemplary": 0.3736,
+   "good": 0.3683,
+   "weak": 0.1575,
+   "poor": 0.1006
+  },
+  "answer_confidence": 0.3736,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1442,
+  "dropped": 517,
+  "ms": 151
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T01-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.0992,
+   "weak": 0.1588,
+   "good": 0.363,
+   "exemplary": 0.3791
+  },
+  "answer_confidence": 0.3791,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1172,
+  "dropped": 247,
+  "ms": 150
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T01-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "exemplary",
+  "probs": {
+   "exemplary": 0.3739,
+   "good": 0.3678,
+   "weak": 0.1576,
+   "poor": 0.1006
+  },
+  "answer_confidence": 0.3739,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1172,
+  "dropped": 247,
+  "ms": 150
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T03-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.1585,
+   "weak": 0.1958,
+   "good": 0.3259,
+   "exemplary": 0.3198
+  },
+  "answer_confidence": 0.3259,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4012,
+  "dropped": 3087,
+  "ms": 153
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T03-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3073,
+   "good": 0.3182,
+   "weak": 0.2135,
+   "poor": 0.161
+  },
+  "answer_confidence": 0.3182,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4012,
+  "dropped": 3087,
+  "ms": 152
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T03-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.1585,
+   "weak": 0.1958,
+   "good": 0.3259,
+   "exemplary": 0.3198
+  },
+  "answer_confidence": 0.3259,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4010,
+  "dropped": 3085,
+  "ms": 152
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T03-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3073,
+   "good": 0.3182,
+   "weak": 0.2135,
+   "poor": 0.161
+  },
+  "answer_confidence": 0.3182,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 4010,
+  "dropped": 3085,
+  "ms": 152
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T04-good",
+  "order": "asc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.1393,
+   "weak": 0.1778,
+   "good": 0.3355,
+   "exemplary": 0.3474
+  },
+  "answer_confidence": 0.3474,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5222,
+  "dropped": 4297,
+  "ms": 154
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T04-good",
+  "order": "desc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3183,
+   "good": 0.336,
+   "weak": 0.1989,
+   "poor": 0.1468
+  },
+  "answer_confidence": 0.336,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5222,
+  "dropped": 4297,
+  "ms": 154
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T04-flawed",
+  "order": "asc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.1393,
+   "weak": 0.1778,
+   "good": 0.3355,
+   "exemplary": 0.3474
+  },
+  "answer_confidence": 0.3474,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5220,
+  "dropped": 4295,
+  "ms": 153
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T04-flawed",
+  "order": "desc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3183,
+   "good": 0.336,
+   "weak": 0.1989,
+   "poor": 0.1468
+  },
+  "answer_confidence": 0.336,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 5220,
+  "dropped": 4295,
+  "ms": 153
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T06-good",
+  "order": "asc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.1324,
+   "weak": 0.1825,
+   "good": 0.3186,
+   "exemplary": 0.3666
+  },
+  "answer_confidence": 0.3666,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2157,
+  "dropped": 1232,
+  "ms": 151
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T06-good",
+  "order": "desc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "exemplary",
+  "probs": {
+   "exemplary": 0.3305,
+   "good": 0.3298,
+   "weak": 0.1946,
+   "poor": 0.1451
+  },
+  "answer_confidence": 0.3305,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2157,
+  "dropped": 1232,
+  "ms": 151
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T06-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.1384,
+   "weak": 0.1835,
+   "good": 0.3203,
+   "exemplary": 0.3578
+  },
+  "answer_confidence": 0.3578,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1844,
+  "dropped": 919,
+  "ms": 151
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T06-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "exemplary",
+  "probs": {
+   "exemplary": 0.3275,
+   "good": 0.3264,
+   "weak": 0.1959,
+   "poor": 0.1502
+  },
+  "answer_confidence": 0.3275,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 1844,
+  "dropped": 919,
+  "ms": 152
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T11-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.1173,
+   "weak": 0.1611,
+   "good": 0.3271,
+   "exemplary": 0.3945
+  },
+  "answer_confidence": 0.3945,
+  "sql_true": 0.5006,
+  "truncated": true,
+  "state_tokens": 2632,
+  "dropped": 1707,
+  "ms": 302
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T11-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.3501,
+   "good": 0.354,
+   "weak": 0.165,
+   "poor": 0.131
+  },
+  "answer_confidence": 0.354,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2632,
+  "dropped": 1707,
+  "ms": 152
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T11-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "exemplary",
+  "probs": {
+   "poor": 0.1188,
+   "weak": 0.16,
+   "good": 0.3257,
+   "exemplary": 0.3955
+  },
+  "answer_confidence": 0.3955,
+  "sql_true": 0.5014,
+  "truncated": true,
+  "state_tokens": 2464,
+  "dropped": 1539,
+  "ms": 300
+ },
+ {
+  "checkpoint": "typed-decisions",
+  "case": "T11-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.348,
+   "good": 0.3516,
+   "weak": 0.1668,
+   "poor": 0.1336
+  },
+  "answer_confidence": 0.3516,
+  "sql_true": null,
+  "truncated": true,
+  "state_tokens": 2464,
+  "dropped": 1539,
+  "ms": 153
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T01-good",
+  "order": "asc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.3074,
+   "weak": 0.2107,
+   "good": 0.3841,
+   "exemplary": 0.0978
+  },
+  "answer_confidence": 0.3841,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 1655,
+  "dropped": 0,
+  "ms": 136
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T01-good",
+  "order": "desc",
+  "human": 8,
+  "human_band": "good",
+  "laya_band": "poor",
+  "probs": {
+   "exemplary": 0.0973,
+   "good": 0.3048,
+   "weak": 0.2704,
+   "poor": 0.3275
+  },
+  "answer_confidence": 0.3275,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 1655,
+  "dropped": 0,
+  "ms": 125
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T01-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.2696,
+   "weak": 0.1585,
+   "good": 0.4581,
+   "exemplary": 0.1138
+  },
+  "answer_confidence": 0.4581,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 1315,
+  "dropped": 0,
+  "ms": 100
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T01-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.1126,
+   "good": 0.4083,
+   "weak": 0.2222,
+   "poor": 0.2569
+  },
+  "answer_confidence": 0.4083,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 1315,
+  "dropped": 0,
+  "ms": 97
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T03-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "poor",
+  "probs": {
+   "poor": 0.4032,
+   "weak": 0.1762,
+   "good": 0.2716,
+   "exemplary": 0.149
+  },
+  "answer_confidence": 0.4032,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 4538,
+  "dropped": 0,
+  "ms": 536
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T03-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "poor",
+  "probs": {
+   "exemplary": 0.1266,
+   "good": 0.2134,
+   "weak": 0.2098,
+   "poor": 0.4502
+  },
+  "answer_confidence": 0.4502,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 4538,
+  "dropped": 0,
+  "ms": 507
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T03-flawed",
+  "order": "asc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "poor",
+  "probs": {
+   "poor": 0.3729,
+   "weak": 0.1749,
+   "good": 0.2937,
+   "exemplary": 0.1585
+  },
+  "answer_confidence": 0.3729,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 4536,
+  "dropped": 0,
+  "ms": 511
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T03-flawed",
+  "order": "desc",
+  "human": 4,
+  "human_band": "weak",
+  "laya_band": "poor",
+  "probs": {
+   "exemplary": 0.13,
+   "good": 0.2139,
+   "weak": 0.2003,
+   "poor": 0.4559
+  },
+  "answer_confidence": 0.4559,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 4536,
+  "dropped": 0,
+  "ms": 504
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T04-good",
+  "order": "asc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.2015,
+   "weak": 0.2131,
+   "good": 0.3809,
+   "exemplary": 0.2045
+  },
+  "answer_confidence": 0.3809,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 6666,
+  "dropped": 0,
+  "ms": 951
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T04-good",
+  "order": "desc",
+  "human": 5,
+  "human_band": "weak",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.1704,
+   "good": 0.3971,
+   "weak": 0.2473,
+   "poor": 0.1852
+  },
+  "answer_confidence": 0.3971,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 6666,
+  "dropped": 0,
+  "ms": 953
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T04-flawed",
+  "order": "asc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.2035,
+   "weak": 0.2103,
+   "good": 0.3877,
+   "exemplary": 0.1985
+  },
+  "answer_confidence": 0.3877,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 6666,
+  "dropped": 0,
+  "ms": 954
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T04-flawed",
+  "order": "desc",
+  "human": 3,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.1699,
+   "good": 0.3972,
+   "weak": 0.2506,
+   "poor": 0.1822
+  },
+  "answer_confidence": 0.3972,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 6666,
+  "dropped": 0,
+  "ms": 945
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T06-good",
+  "order": "asc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.2541,
+   "weak": 0.159,
+   "good": 0.4725,
+   "exemplary": 0.1143
+  },
+  "answer_confidence": 0.4725,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 2329,
+  "dropped": 0,
+  "ms": 197
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T06-good",
+  "order": "desc",
+  "human": 9,
+  "human_band": "exemplary",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.1222,
+   "good": 0.469,
+   "weak": 0.1855,
+   "poor": 0.2233
+  },
+  "answer_confidence": 0.469,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 2329,
+  "dropped": 0,
+  "ms": 193
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T06-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.3145,
+   "weak": 0.1834,
+   "good": 0.381,
+   "exemplary": 0.1211
+  },
+  "answer_confidence": 0.381,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 1986,
+  "dropped": 0,
+  "ms": 166
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T06-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "good",
+  "probs": {
+   "exemplary": 0.1559,
+   "good": 0.3889,
+   "weak": 0.2105,
+   "poor": 0.2446
+  },
+  "answer_confidence": 0.3889,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 1986,
+  "dropped": 0,
+  "ms": 159
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T11-good",
+  "order": "asc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "good",
+  "probs": {
+   "poor": 0.3325,
+   "weak": 0.191,
+   "good": 0.3424,
+   "exemplary": 0.1341
+  },
+  "answer_confidence": 0.3424,
+  "sql_true": 0.8352,
+  "truncated": false,
+  "state_tokens": 3198,
+  "dropped": 0,
+  "ms": 611
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T11-good",
+  "order": "desc",
+  "human": 7,
+  "human_band": "good",
+  "laya_band": "poor",
+  "probs": {
+   "exemplary": 0.076,
+   "good": 0.2664,
+   "weak": 0.2378,
+   "poor": 0.4198
+  },
+  "answer_confidence": 0.4198,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 3198,
+  "dropped": 0,
+  "ms": 305
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T11-flawed",
+  "order": "asc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "poor",
+  "probs": {
+   "poor": 0.3909,
+   "weak": 0.1847,
+   "good": 0.3153,
+   "exemplary": 0.1091
+  },
+  "answer_confidence": 0.3909,
+  "sql_true": 0.8198,
+  "truncated": false,
+  "state_tokens": 2982,
+  "dropped": 0,
+  "ms": 554
+ },
+ {
+  "checkpoint": "multilingual-8192",
+  "case": "T11-flawed",
+  "order": "desc",
+  "human": 1,
+  "human_band": "poor",
+  "laya_band": "poor",
+  "probs": {
+   "exemplary": 0.0951,
+   "good": 0.3383,
+   "weak": 0.2037,
+   "poor": 0.3629
+  },
+  "answer_confidence": 0.3629,
+  "sql_true": null,
+  "truncated": false,
+  "state_tokens": 2982,
+  "dropped": 0,
+  "ms": 280
+ }
+]

@@ -1,0 +1,297 @@
+diff --git a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+index ea9aaa5..43541d2 100644
+--- a/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
++++ b/src/main/java/com/example/samplecrm/api/ApiExceptionHandler.java
+@@ -22,7 +22,7 @@ import tools.jackson.core.JacksonException;
+ 
+ /**
+  * Turns errors into RFC 9457 problem details. Bad input is a 400 with an {@code errors} list naming each wrong
+- * field or parameter; a missing record is a 404.
++ * field or parameter; a missing record is a 404; a request the record's state does not allow is a 409.
+  */
+ @RestControllerAdvice
+ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+@@ -39,6 +39,11 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+     }
+ 
++    @ExceptionHandler
++    ProblemDetail conflict(ConflictException ex) {
++        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
++    }
++
+     /** A referenced record was deleted between the existence check and the write. */
+     @ExceptionHandler
+     ProblemDetail dataIntegrity(DataIntegrityViolationException ex) {
+diff --git a/src/main/java/com/example/samplecrm/api/ConflictException.java b/src/main/java/com/example/samplecrm/api/ConflictException.java
+new file mode 100644
+index 0000000..c81b6b4
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/api/ConflictException.java
+@@ -0,0 +1,9 @@
++package com.example.samplecrm.api;
++
++/** The request is well formed but conflicts with the current state of the record. */
++public class ConflictException extends RuntimeException {
++
++    public ConflictException(String message) {
++        super(message);
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/deal/Deal.java b/src/main/java/com/example/samplecrm/deal/Deal.java
+index b0eb74f..186a73d 100644
+--- a/src/main/java/com/example/samplecrm/deal/Deal.java
++++ b/src/main/java/com/example/samplecrm/deal/Deal.java
+@@ -2,6 +2,8 @@ package com.example.samplecrm.deal;
+ 
+ import jakarta.persistence.Column;
+ import jakarta.persistence.Entity;
++import jakarta.persistence.EnumType;
++import jakarta.persistence.Enumerated;
+ import jakarta.persistence.GeneratedValue;
+ import jakarta.persistence.GenerationType;
+ import jakarta.persistence.Id;
+@@ -28,6 +30,10 @@ public class Deal {
+     /** Cleared by the database when the contact is deleted. */
+     private Long mainContactId;
+ 
++    @Enumerated(EnumType.STRING)
++    @Column(nullable = false, length = 20)
++    private DealStage stage = DealStage.LEAD;
++
+     protected Deal() {}
+ 
+     Deal(DealRequest request) {
+@@ -41,6 +47,10 @@ public class Deal {
+         this.mainContactId = request.mainContactId();
+     }
+ 
++    void moveTo(DealStage next) {
++        this.stage = next;
++    }
++
+     public Long getId() {
+         return id;
+     }
+@@ -60,4 +70,8 @@ public class Deal {
+     public Long getMainContactId() {
+         return mainContactId;
+     }
++
++    public DealStage getStage() {
++        return stage;
++    }
+ }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealController.java b/src/main/java/com/example/samplecrm/deal/DealController.java
+index 4315a16..172dbda 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealController.java
++++ b/src/main/java/com/example/samplecrm/deal/DealController.java
+@@ -98,6 +98,15 @@ class DealController {
+         return service.update(id, request);
+     }
+ 
++    /** Moves the deal to another stage, if its current stage allows it. */
++    @PutMapping("/{id}/stage")
++    DealResponse moveTo(@PathVariable long id, @RequestBody StageRequest request) {
++        if (request.stage() == null) {
++            throw new BadInputException(List.of(new FieldErrorItem("stage", "must not be null")));
++        }
++        return service.moveTo(id, request.stage());
++    }
++
+     @DeleteMapping("/{id}")
+     ResponseEntity<Void> delete(@PathVariable long id) {
+         service.delete(id);
+diff --git a/src/main/java/com/example/samplecrm/deal/DealResponse.java b/src/main/java/com/example/samplecrm/deal/DealResponse.java
+index dc61e09..24ffffb 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealResponse.java
++++ b/src/main/java/com/example/samplecrm/deal/DealResponse.java
+@@ -2,10 +2,11 @@ package com.example.samplecrm.deal;
+ 
+ import java.math.BigDecimal;
+ 
+-public record DealResponse(long id, String title, BigDecimal amount, Long companyId, Long mainContactId) {
++public record DealResponse(long id, String title, BigDecimal amount, Long companyId, Long mainContactId,
++        DealStage stage) {
+ 
+     static DealResponse from(Deal deal) {
+         return new DealResponse(deal.getId(), deal.getTitle(), deal.getAmount(), deal.getCompanyId(),
+-                deal.getMainContactId());
++                deal.getMainContactId(), deal.getStage());
+     }
+ }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealService.java b/src/main/java/com/example/samplecrm/deal/DealService.java
+index dce46f6..edad718 100644
+--- a/src/main/java/com/example/samplecrm/deal/DealService.java
++++ b/src/main/java/com/example/samplecrm/deal/DealService.java
+@@ -1,5 +1,6 @@
+ package com.example.samplecrm.deal;
+ 
++import com.example.samplecrm.api.ConflictException;
+ import com.example.samplecrm.api.NotFoundException;
+ import java.util.List;
+ import org.springframework.data.domain.Sort;
+@@ -40,6 +41,16 @@ public class DealService {
+         return DealResponse.from(deals.saveAndFlush(deal));
+     }
+ 
++    /** Moves the deal to {@code next}, if its current stage allows it. */
++    public DealResponse moveTo(long id, DealStage next) {
++        Deal deal = find(id);
++        if (!deal.getStage().canMoveTo(next)) {
++            throw new ConflictException("Deal " + id + " cannot move from " + deal.getStage() + " to " + next);
++        }
++        deal.moveTo(next);
++        return DealResponse.from(deals.saveAndFlush(deal));
++    }
++
+     public void delete(long id) {
+         deals.delete(find(id));
+     }
+diff --git a/src/main/java/com/example/samplecrm/deal/DealStage.java b/src/main/java/com/example/samplecrm/deal/DealStage.java
+new file mode 100644
+index 0000000..e155a34
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/deal/DealStage.java
+@@ -0,0 +1,18 @@
++package com.example.samplecrm.deal;
++
++/** Where a deal is in the sales process. A deal starts as a lead; won and lost deals are closed. */
++public enum DealStage {
++    LEAD,
++    QUALIFIED,
++    WON,
++    LOST;
++
++    /** Whether a deal at this stage may move to {@code next}. */
++    boolean canMoveTo(DealStage next) {
++        return switch (this) {
++            case LEAD -> next == QUALIFIED || next == LOST;
++            case QUALIFIED -> next == WON || next == LOST;
++            case WON, LOST -> false;
++        };
++    }
++}
+diff --git a/src/main/java/com/example/samplecrm/deal/StageRequest.java b/src/main/java/com/example/samplecrm/deal/StageRequest.java
+new file mode 100644
+index 0000000..5e889ad
+--- /dev/null
++++ b/src/main/java/com/example/samplecrm/deal/StageRequest.java
+@@ -0,0 +1,3 @@
++package com.example.samplecrm.deal;
++
++public record StageRequest(DealStage stage) {}
+diff --git a/src/main/resources/db/migration/V4__deal_stages.sql b/src/main/resources/db/migration/V4__deal_stages.sql
+new file mode 100644
+index 0000000..3b67c51
+--- /dev/null
++++ b/src/main/resources/db/migration/V4__deal_stages.sql
+@@ -0,0 +1,3 @@
++ALTER TABLE deals
++    ADD COLUMN stage varchar(20) NOT NULL DEFAULT 'LEAD'
++        CHECK (stage IN ('LEAD', 'QUALIFIED', 'WON', 'LOST'));
+diff --git a/src/test/java/com/example/samplecrm/DealStageApiTest.java b/src/test/java/com/example/samplecrm/DealStageApiTest.java
+new file mode 100644
+index 0000000..c5ffd70
+--- /dev/null
++++ b/src/test/java/com/example/samplecrm/DealStageApiTest.java
+@@ -0,0 +1,99 @@
++package com.example.samplecrm;
++
++import static org.assertj.core.api.Assertions.assertThat;
++
++import java.util.Map;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.params.ParameterizedTest;
++import org.junit.jupiter.params.provider.CsvSource;
++import org.springframework.http.HttpMethod;
++import org.springframework.http.MediaType;
++
++class DealStageApiTest extends ApiTestBase {
++
++    private long acme;
++
++    @BeforeEach
++    void createCompany() {
++        acme = create("/companies", body("name", "Acme"));
++    }
++
++    private long deal() {
++        return create("/deals", body("title", "Annual renewal", "amount", 100, "companyId", acme));
++    }
++
++    /** A new deal moved along the allowed path until it reaches {@code stage}. */
++    private long dealAt(String stage) {
++        long id = deal();
++        if (!stage.equals("LEAD")) {
++            put("/deals/" + id + "/stage", body("stage", "QUALIFIED"));
++        }
++        if (stage.equals("WON") || stage.equals("LOST")) {
++            put("/deals/" + id + "/stage", body("stage", stage));
++        }
++        return id;
++    }
++
++    @Test
++    void newDealIsLead() {
++        long id = deal();
++
++        assertThat(get("/deals/" + id)).containsEntry("stage", "LEAD");
++    }
++
++    @ParameterizedTest
++    @CsvSource({"LEAD, QUALIFIED", "QUALIFIED, WON", "QUALIFIED, LOST"})
++    void allowedTransition(String from, String to) {
++        long id = dealAt(from);
++
++        assertThat(put("/deals/" + id + "/stage", body("stage", to))).containsEntry("stage", to);
++        assertThat(get("/deals/" + id)).containsEntry("stage", to);
++    }
++
++    @ParameterizedTest
++    @CsvSource({
++        "LEAD, LEAD", "LEAD, WON",
++        "QUALIFIED, LEAD", "QUALIFIED, QUALIFIED",
++        "WON, LEAD", "WON, QUALIFIED", "WON, WON", "WON, LOST",
++        "LOST, LEAD", "LOST, QUALIFIED", "LOST, WON", "LOST, LOST"})
++    void invalidTransitionIsConflict(String from, String to) {
++        long id = dealAt(from);
++
++        Map<String, Object> problem = json(send(HttpMethod.PUT, "/deals/" + id + "/stage", body("stage", to))
++                .expectStatus().isEqualTo(409)
++                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
++        assertThat(problem).containsEntry("status", 409);
++        assertThat(get("/deals/" + id)).containsEntry("stage", from);
++    }
++
++    @Test
++    void unknownStage() {
++        long id = deal();
++
++        assertThat(badInputFields(send(HttpMethod.PUT, "/deals/" + id + "/stage", body("stage", "CLOSED"))))
++                .containsExactly("stage");
++        assertThat(get("/deals/" + id)).containsEntry("stage", "LEAD");
++    }
++
++    @Test
++    void missingStage() {
++        long id = deal();
++
++        assertThat(badInputFields(send(HttpMethod.PUT, "/deals/" + id + "/stage", body()))).containsExactly("stage");
++    }
++
++    @Test
++    void unknownDeal() {
++        assertNotFound(HttpMethod.PUT, "/deals/999/stage", body("stage", "QUALIFIED"));
++    }
++
++    @Test
++    void updateKeepsStage() {
++        long id = dealAt("QUALIFIED");
++
++        put("/deals/" + id, body("title", "Two-year renewal", "amount", 200, "companyId", acme));
++
++        assertThat(get("/deals/" + id)).containsEntry("title", "Two-year renewal").containsEntry("stage", "QUALIFIED");
++    }
++}
