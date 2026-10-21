@@ -6,7 +6,7 @@ Updated by spike 010 (`specs/010-target-architecture/`, Q26 and Q27): definition
 
 Updated by spike 011 (`specs/011-driver-api-contract/`, Q1): `subject.key` names the run inputs that form the subject key, and the engine derives the key from them.
 
-This is a draft for milestone 1. The formal JSON Schema file and the validator are written there, with the library chosen in spike 9.
+This is a draft for milestone 1. The formal JSON Schema file and the validator are written there, with Jackson 3 YAML and networknt json-schema-validator 3.x (spike 012).
 
 ## Format and validation
 
@@ -16,7 +16,7 @@ This is a draft for milestone 1. The formal JSON Schema file and the validator a
   2. **Semantics:** checks in the engine for what JSON Schema cannot express, listed under "Semantic rules" below.
 - A definition that fails either layer is rejected and never becomes a draft.
 - The file names its format in `schema` (now `ai-workflow/v0`) and its workflow in `workflow`. It never carries its own version number: the engine assigns sequential integers when a human publishes a version.
-- All label and ID values are strings. JSON Schema types them as strings, so an unquoted YAML 1.1 boolean such as `no` is rejected rather than silently read as `false`.
+- All label and ID values are strings. Definitions are read as YAML 1.2 (spike 012), so an unquoted `no`, `yes`, `on`, or `off` is the string it looks like, never a boolean. An unquoted `true` or `false` is a boolean, and JSON Schema rejects it where a string is required.
 
 ## Top-level keys
 
@@ -200,7 +200,7 @@ One rule each, so the validator's error for each can be checked:
 - Rubric bands with a gap, such as `[1, 3]` and `[5, 10]` (rule 10).
 - `pass.min_score` outside the scale (rule 10).
 - A council of 2 (rule 11).
-- A typed question label written as unquoted `no` (structure layer).
+- A typed question label written as unquoted `true` (structure layer; spike 012: YAML 1.2 reads an unquoted `no` as a string).
 - A `field_compare` on a field missing from the evidence type's schema (rule 5).
 - A `field_compare` step with `runs_in: runner` (rule 8).
 - A `command` image given by tag only, such as `postgres:18-alpine` (rule 9).

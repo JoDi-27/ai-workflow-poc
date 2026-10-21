@@ -30,7 +30,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **6b. Jev telemetry**
 - [x] **7. Target architecture** (spec 010, `docs/architecture/`)
 - [x] **8. Driver API contract** (spec 011, `docs/driver-api/`)
-- [ ] **9. Technology stack**
+- [x] **9. Technology stack** (spec 012)
 - [ ] **9b. Engine low-level design**
 - [ ] **10. Local setup**
 
