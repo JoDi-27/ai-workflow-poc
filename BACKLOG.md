@@ -102,7 +102,7 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 | 1. Foundations | 1. Concepts, 2. Test bed | Shared vocabulary and real tasks that every later spike uses |
 | 2. Unknowns | 3. Definition model, 4. Driver feasibility, 5. Telemetry, 6. Laya/Jev role, 6b. Jev telemetry | Settle the domain model and the external facts the architecture depends on |
 | 3. Shape | 7. Target architecture, then 8. Driver API contract | Put the findings together into components, flows, and the provider-neutral boundary |
-| 4. Tools | 9. Technology stack | Choose technology for an architecture that is already known |
+| 4. Tools | 9. Technology stack, then 9b. Engine low-level design | Choose technology for an architecture that is already known, then design the engine's code and schema in it |
 | 5. Running it | 10. Local setup | Can only be designed once the stack is chosen |
 
 ### Wave 1: Foundations
@@ -179,6 +179,18 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
   - OTel Collector distribution, the hook script language (what is reliably installed on a developer laptop), and the test approach (for example, Testcontainers).
 
   Deliverable: a stack table with the choice, the reason, and the alternative rejected for each component, plus a hello-world through the chosen framework and MCP SDK. Depends on: 6, 7 (and 8 for the MCP and HTTP layer). Settles: Engine framework, Database, UI technology, Sandbox technology. Input from spike 6 (spec 007), on hold since Laya left the MVP (spike 010, Q27): Laya serving is settled as `laya-serve` (Python 3.10+, PyTorch, FastAPI, `laya` 0.4.12) with `laya-multilingual` at `max_len` 8192; this spike only picks its image and how the engine calls it. Input from spike 7 (spec 010): the database is relational, with document columns (Q22); pick the MCP gateway's SDK and version (Java SDK 2.1.0 stateful or 2.2.0 stateless, or another language, Q20); pick the broker product (Pub/Sub on GKE; an emulator or a self-hosted broker such as NATS JetStream or RabbitMQ locally) and check the Pub/Sub details recorded under Q23 against current docs; pick the module rule checker (AD-20); no Laya serving (Q27).
+
+- [ ] **9b. Engine low-level design.** Turn the engine part of the target architecture into a design that the Phase 1 engine specs can implement directly. It is 9b because it needs the stack from spike 9 and the contract from spike 8, and it can run alongside spike 10. Questions to answer:
+  - Package and module structure inside the one engine deployable (AD-1): the inbound adapters (`driver-api`, `ui-api`, `telemetry-ingestion`, `event-read`, `scheduler`), the inbound ports (`DriverOperations`, `HumanOperations`, `TelemetryIntake`, `EventFeed`, `DueWork`), the core modules (identity, definitions, runs, checkpoints, evaluation-tasks, scoring, typed-decisions, outbox + deadlines), the outbound ports (`RunnerPort`, `DecisionEngine`, `EventPublisherPort`), and the outbound adapters (`runner-client`, `systemone`, `broker-client`). How the dependency rules (AD-20, AD-25) are written and checked in the build.
+  - The domain model as classes or records and aggregates: the run aggregate and its boundary, checkpoint attempts, step results, typed decision records and tree walks, leases, driver sessions, and evidence references (AD-27). Which state lives in which aggregate, and the invariants each one guards.
+  - The relational schema: tables, keys, and unique constraints (for example, one active run per workflow and subject key), document columns (AD-23), the event table, idempotency records, the outbox, deadlines, and the provider call table (spike 6b). The migration approach, and how operational values that affect an outcome are recorded for replay.
+  - The state machines in code, with their transition guards: run, checkpoint attempt, step result, evaluation task, runner job, definition version, and decision-tree walk.
+  - The transaction and concurrency pattern per use case: the run-row lock, idempotency handling, writing state, events, and outbox rows in one transaction (AD-5, AD-16), and how `DueWork` claims due rows safely when more than one engine replica runs.
+  - The definition validator: how the JSON Schema layer and the 18 semantic rules are structured and reported, and the invalid fixtures (one per rule).
+  - The error and denial model: how a rule failure becomes an actionable denial in the driver contract, and how *not evaluated*, *failed*, and *passed* stay distinct from storage to API (Art. 7).
+  - The testing approach per layer: core use cases without HTTP, adapters against a real database, module-rule tests, and a replay test that rebuilds state and score from events (milestone 2).
+
+  Deliverable: a low-level design document (for example `docs/engine/design.md`) with package or class diagrams, a draft schema DDL, and state machine diagrams, ready for the Phase 1 engine specs. Depends on: 7, 8, 9. Feeds: Phase 1 engine specs. Input from spike 7 (spec 010): start from `docs/architecture/README.md` "Engine modules", the sequences, and decisions AD-1 to AD-29; each port call is one use case and one transaction (AD-25), the core runs no threads, and typed-decision trees belong to `definitions` and are walked by `typed-decisions` (AD-29). Input from spike 3: the semantic rules and invalid fixtures are in `docs/definitions/schema.md`.
 
 ### Wave 5: Running it
 

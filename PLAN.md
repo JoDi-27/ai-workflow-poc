@@ -31,6 +31,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **7. Target architecture** (spec 010, `docs/architecture/`)
 - [ ] **8. Driver API contract**
 - [ ] **9. Technology stack**
+- [ ] **9b. Engine low-level design**
 - [ ] **10. Local setup**
 
 ### Decisions
