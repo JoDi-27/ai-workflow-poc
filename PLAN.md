@@ -7,7 +7,7 @@ Each checklist item is delivered through a spec in `specs/` (see `specs/README.m
 | Phase | Goal | Status |
 | --- | --- | --- |
 | 0. Spikes and scaffolding | Answer the unknowns, confirm the MVP decisions, and stand up empty but connected components | Not started |
-| 1. Execution | Happy path steps 1–7: Claude Code builds and ships code through the engine, with Laya in shadow mode | Not started |
+| 1. Execution | Happy path steps 1–7: Claude Code builds and ships code through the engine, with Jev in shadow mode | Not started |
 | 2. Observability and quality monitoring | Happy path steps 8–10 | Not started |
 | 3. Feedback loop | Happy path steps 11–14 | Not started |
 | 4. MVP validation | Run the whole happy path end to end on real tasks | Not started |
@@ -28,7 +28,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **5. Claude Code telemetry**
 - [x] **6. Laya/Jev role in the workflow**
 - [x] **6b. Jev telemetry**
-- [ ] **7. Target architecture**
+- [x] **7. Target architecture** (spec 010, `docs/architecture/`)
 - [ ] **8. Driver API contract**
 - [ ] **9. Technology stack**
 - [ ] **10. Local setup**
@@ -39,14 +39,14 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 
 ### Scaffolding
 
-- [ ] Repository layout, for example: `engine/` (Java), `ui/`, `driver-kits/claude-code/`, `laya-service/`, `definitions/`, `deploy/`, `docs/`.
+- [ ] Repository layout, for example: `engine/` (Java), `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/claude-code/`, `definitions/`, `deploy/`, `docs/` (spike 010).
 - [ ] Engine skeleton: builds, starts, connects to the database, exposes a health endpoint and a stub MCP `status` operation.
 - [ ] UI skeleton: separately deployed, logs in, and displays data from an engine endpoint.
 - [ ] Claude Code driver kit skeleton: plugin with the engine MCP configuration and a session-start hook that calls the engine.
-- [ ] Laya service stub: reachable from the engine through a stub DecisionEngine adapter.
+- [ ] DecisionEngine stub: a stub adapter in the engine standing in for Jev (Laya is out of the MVP, spike 010).
 - [ ] Runner stub: on an engine request, starts a sandbox that clones a repository at a given SHA and runs a command.
 - [ ] OTel Collector receiving Claude Code telemetry.
-- [ ] Kubernetes manifests in `deploy/` bringing up engine, UI, database, runner, collector, and Laya service on a local cluster, written so that they can later target GKE.
+- [ ] Kubernetes manifests in `deploy/` bringing up engine, MCP gateway, analysis service, UI, database, broker, runner, and collector on a local cluster (spike 010), written so that they can later target GKE.
 - [ ] Build and test commands documented in the README.
 
 ### Exit criteria
@@ -55,22 +55,22 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - One documented command deploys all server-side components to the local Kubernetes cluster.
 - A Claude Code session with the driver kit calls the stub `status` through MCP, and its session-start hook reaches the engine.
 - Telemetry from that session arrives at the collector.
-- The engine gets a response from the Laya service.
+- The engine gets a response from the stub DecisionEngine adapter.
 - The engine gets a check result from the runner for a pushed commit.
 
 ## Phase 1: Execution
 
 Milestones 1–5 from the intent doc, happy path versions only.
 
-- [ ] Definition model and the reference workflow in YAML, with validation. Start from spike 003's draft in `docs/definitions/`: write the formal JSON Schema, implement its 15 semantic rules, and test them with its 10 invalid fixtures.
+- [ ] Definition model and the reference workflow in YAML, with validation. Start from spike 003's draft in `docs/definitions/`: write the formal JSON Schema, implement its semantic rules (18 since spike 010), and test them with its 11 invalid fixtures.
 - [ ] Engine core: runs, state and event tables, evidence, transition protocol, checkpoint execution, scoring with deductions.
 - [ ] Driver API over MCP and HTTP with driver-token auth.
 - [ ] Runner: sandboxed check commands and a headless Claude Code evaluator at the pushed revision, returning engine-verified results.
 - [ ] Claude Code driver kit: instructions (including pushing before a transition request), session binding, activity hook, protected-action hook for the merge.
 - [ ] UI: run list, run detail with score breakdown, human step inbox, UI login for human decisions.
-- [ ] Laya and Jev: DecisionEngine interface, one adapter for both providers over `/v1/systemone`, and `code_quality_band` in shadow mode on both (spike 007). A truncated input records *not evaluated*.
+- [ ] Jev: DecisionEngine interface, one adapter over `/v1/systemone`, and the `code_quality` decision tree (`code_quality_band`, then `has_defect`) in shadow mode, walked by the core `typed-decisions` module with its input from a runner input packet job (spike 007, spike 010 Q26–Q28). A truncated input records *not evaluated*.
 
-**Exit criteria:** happy path steps 1–7 work on a real repository. A run ends with a merged branch and a score whose breakdown includes the runner check, the Claude evaluator in the runner, Laya and Jev in shadow, and the human.
+**Exit criteria:** happy path steps 1–7 work on a real repository. A run ends with a merged branch and a score whose breakdown includes the runner check, the Claude evaluator in the runner, Jev in shadow, and the human.
 
 ## Phase 2: Observability and quality monitoring
 

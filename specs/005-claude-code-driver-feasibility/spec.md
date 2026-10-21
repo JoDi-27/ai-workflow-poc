@@ -364,3 +364,4 @@ Things to try in the prototype (from the briefing):
 - 2026-10-19 G5 answered from the owner's interactive check; every goal question answered.
 - 2026-10-19 Recommendation agreed with the user; ready for /sdd-verify.
 - 2026-10-19 Verified and closed: assumptions settled or moved to Follow-ups; BACKLOG MCP server, Hooks to engine, and Activity recording decided; Model access confirmed; follow-ups recorded in BACKLOG; PLAN spike 4 ticked.
+- 2026-10-21 Note from spike 010 (Q3, Q20): the driver kit maps a tool call to a neutral action name and revision, so the engine no longer reads the full command; the MCP server runs as a separate stateless gateway.

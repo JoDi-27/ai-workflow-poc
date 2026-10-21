@@ -266,3 +266,4 @@ Things to try, proposed by the researcher (all Jev items reuse `prototype/captur
 - 2026-10-19 Q1–Q12 answered (Q9 skipped); Jev and laya-serve captures run; all goal questions answered.
 - 2026-10-19 Recommendation agreed with the user; spike released for verification.
 - 2026-10-19 Verified and closed: BACKLOG.md (Laya / Provider call telemetry, Telemetry pipeline, Quality view, spikes 6b and 7) and PLAN.md updated.
+- 2026-10-21 Note from spike 010: Laya is out of the MVP (Q27), so the Laya parts of these decisions wait until it returns; Jev's input now comes from a runner input packet job (Q26); typed decisions can be decision trees, one provider call per node (Q28).
