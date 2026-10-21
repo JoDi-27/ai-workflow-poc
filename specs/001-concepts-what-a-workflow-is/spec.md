@@ -339,3 +339,4 @@ Handed to later spikes:
 - 2026-10-08 Drafts accepted; G3–G5 resolved; recommendation and follow-ups drafted for agreement.
 - 2026-10-08 Recommendation agreed; ready for /sdd-verify.
 - 2026-10-08 Verified and closed; follow-ups applied to the intent doc, CLAUDE.md, constitution, BACKLOG.md, and PLAN.md. Status done.
+- 2026-10-21 Note from spike 010 (Q8): the engine commits the rework transition itself when the owner directs a rework, replacing the Q24 assumption that the owner tells the driver to take it.

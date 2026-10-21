@@ -67,6 +67,8 @@ Claude drafts the expected results and hidden acceptance tests in a session sepa
 
 ## Laya's first cases
 
+Laya is out of the MVP (spike 010, Q27): it needs training to be useful. These cases stay as the first labeled set for that later training, and spike 007 used them for Jev too.
+
 - Five tasks give Laya's first labeled local cases, each as a hand-made good and flawed variant, so ten cases:
 
   | Task | Good variant | Flawed variant |

@@ -30,9 +30,11 @@ There are two runtime sides: a shared server side and a driver side on each deve
 
 | Component | Runs on | Technology direction | Role |
 | --- | --- | --- | --- |
-| Engine | Shared server side | Java; whether to use Spring is to be decided | Sole authority for definitions, runs, state, event log, checkpoint execution, scoring, and typed decisions. Owns all persistence. Integrates with Laya and Jev. Exposes the driver API (MCP and HTTP) and the UI API. |
+| Engine | Shared server side | Java; whether to use Spring is to be decided | Sole authority for definitions, runs, state, event log, checkpoint execution, scoring, and typed decisions. Owns all authoritative persistence (the analysis service keeps only a derived, rebuildable store). Integrates with Laya and Jev. Exposes the HTTP driver API and the UI API. |
+| MCP gateway | Shared server side, deployed separately from the engine | Depends on the chosen MCP SDK | A stateless gateway that turns MCP tool calls into calls to the engine's HTTP driver API, forwarding the caller's driver token. Holds no state and no credential of its own (spike 010). |
+| Analysis service | Shared server side, deployed separately from the engine | To be decided | Builds its own derived store from engine events delivered through a message broker (published from the engine's outbox), and serves quality monitoring and feedback-loop analysis to the UI and drivers. Reads only; run scores stay in the engine (spike 010). |
 | UI | Shared server side, deployed separately from the engine | To be decided | Definition authoring and publishing, run monitoring, score breakdowns, human step inbox. Talks to the engine only through its API and holds no authoritative state. |
-| Decision model serving | Next to the engine, called only by the engine | Depends on the provider | Serves Laya inference, and later Jev or other providers. |
+| Decision model serving | Next to the engine, called only by the engine | Depends on the provider | Serves Laya inference, and later other providers. Not in the MVP: the MVP uses only Jev, a hosted provider, because Laya needs training first (spike 010). |
 | Runner | Next to the engine, called only by the engine | To be decided; each sandbox is a Kubernetes pod | Runs gate checks for the engine. For each job it starts a throwaway sandbox, fetches the subject at the requested revision (for the SDLC kit, clones the pushed commit), and either runs a check command or runs a fresh-context agent evaluator. It returns raw results and holds no engine credentials or state. Source and evaluator providers are adapters inside the runner. |
 | Driver | Developer laptop | Depends on the agent provider | An agent session (initially Claude Code) plus that provider's driver kit: engine MCP configuration, hooks, instructions, evaluator, CLI. |
 
@@ -111,7 +113,9 @@ The engine owns all persistence. It holds three kinds of data with different lif
 - **Run state:** runs, current stages, leases, checkpoint attempts, step results, pending human steps, decision records, scores, and the append-only event log from which state and scores can be replayed.
 - **Evidence:** evidence metadata (type, provenance, trust level, revision, timestamp) kept with run state, plus large payloads such as artifacts, transcripts, and driver activity kept in referenced, content-addressed storage.
 
-Configuration and run state need transactional, atomic updates, for example from a relational database. Large payloads go to object or file storage and are referenced by hash. The concrete stores are an open decision.
+In the MVP, DecisionEngine provider settings and runner settings are deployment configuration read at startup, and secrets are held outside the database. Operational values that affect an outcome are recorded with the result. See `docs/architecture/README.md`, Configuration (spike 010).
+
+Configuration and run state need transactional, atomic updates from a relational database, with document columns for document-shaped data such as definition YAML and event payloads (spike 010). Large payloads go to object or file storage and are referenced by hash. The concrete stores are an open decision.
 
 ## Evidence and trust
 
@@ -202,7 +206,7 @@ Human step decisions record approver identity, scope, decision, raw score where 
 
 ## Driver integration
 
-The engine exposes a remote MCP server and an equivalent CLI over the same API. Initial operations: `start_run`, `bind_session`, `status`, `allowed_actions`, `submit_evidence`, `request_transition`, `checkpoint_status`, `get_evaluation_task`, `submit_step_result`, `record_activity`, and `authorize_action`. Each has a stable schema and useful denial messages.
+The engine exposes an HTTP driver API. A separately deployed MCP gateway offers it as a remote MCP server, and a CLI offers it too (spike 010). Initial operations: `start_run`, `bind_session`, `status`, `allowed_actions`, `submit_evidence`, `request_transition`, `checkpoint_status`, `get_evaluation_task`, `submit_step_result`, `record_activity`, and `authorize_action`. Each has a stable schema and useful denial messages.
 
 ### Driver contract
 
@@ -270,7 +274,7 @@ Each driver kit configures its provider's telemetry export to a collector associ
 
 ### Quality monitoring
 
-Quality monitoring tracks how runs perform over time and whether the run score, the workflow's own judgment of a run, can be trusted:
+Quality monitoring tracks how runs perform over time and whether the run score, the workflow's own judgment of a run, can be trusted. It is computed by the analysis service from engine events, not by the engine (spike 010):
 
 - **Trends:** run scores, step scores, failure and exclusion rates, rework, tokens, and duration, per step and per definition version.
 - **Facts:** telemetry and events observed directly by the engine, kept separate from the score.
@@ -292,7 +296,7 @@ The output of this loop is a candidate definition version, not an instruction fo
 
 ## Delivery sequence and acceptance criteria
 
-This document describes the target framework. Delivery starts with a PoC/MVP: a happy path through all three pillars, covering simple versions of milestones 1–8. The MVP is ready when a developer can drive the reference workflow with Claude Code to shipped code, with Laya taking part; the run is scored, observed through telemetry, and visible in quality monitoring; and the feedback loop turns run results into an approved, published definition version that is measured against its predecessor. Hardening, edge cases, and milestones 9–10 come afterwards as improvements. `BACKLOG.md` defines the happy path and separates what the MVP needs from what can wait. `PLAN.md` lays out the phases, starting with spikes and scaffolding.
+This document describes the target framework. Delivery starts with a PoC/MVP: a happy path through all three pillars, covering simple versions of milestones 1–8. The MVP is ready when a developer can drive the reference workflow with Claude Code to shipped code, with Laya taking part; the run is scored, observed through telemetry, and visible in quality monitoring; and the feedback loop turns run results into an approved, published definition version that is measured against its predecessor. Hardening, edge cases, and milestones 9–10 come afterwards as improvements. `BACKLOG.md` defines the happy path and separates what the MVP needs from what can wait. `PLAN.md` lays out the phases, starting with spikes and scaffolding. In the MVP, Jev is the only DecisionEngine provider: Laya needs training before it is useful, which is too costly for now (spike 010). Content reaches the system only through git: drivers name revisions, and the runner and the UI read the subject at those revisions (spike 010). Typed decisions can be decision trees declared in the definition, walked by the engine one question at a time, in shadow mode (spike 010).
 
 | Milestone | Deliverable | Done when |
 | --- | --- | --- |

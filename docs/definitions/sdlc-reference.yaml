@@ -1,6 +1,9 @@
 # Draft reference workflow, from spike 003 (specs/003-definition-model-draft/).
 # The schema is described in schema.md; a worked score is in example-run.md.
 # The engine assigns the version number when a human publishes this file.
+# Updated by spike 010 (Q26, Q27): git is the evidence channel, so the driver submits no
+# evidence; the runner reads the subject at the request's revision. Jev is the only provider.
+# Q28: the shadow typed decision on code_quality is a decision tree.
 
 schema: ai-workflow/v0
 workflow: sdlc-reference
@@ -14,49 +17,29 @@ required_capabilities: [core, activity_recording, enforcement]
 run_inputs:
   repository: { description: Repository the change is made in. }
   branch: { description: Branch the change is made on and merged from. }
+  base: { description: Branch the change is compared against and merged into. }
   task: { description: What to build, in the requester's words. }
 
-evidence_types:
-  requirements_doc:
-    description: Requirements written for the task.
-    schema:
-      type: object
-      required: [summary, acceptance_criteria]
-      properties:
-        summary: { type: string }
-        acceptance_criteria: { type: array, items: { type: string } }
-  diff:
-    description: The change against the base branch.
-    schema:
-      type: object
-      required: [base, head, files]
-      properties:
-        base: { type: string }
-        head: { type: string }
-        files: { type: array, items: { type: string } }
-  local_test_summary:
-    description: The driver's own run of the full test suite. Feedback only; no step gates on it.
-    schema:
-      type: object
-      required: [passed, failed, skipped]
-      properties:
-        passed: { type: integer, minimum: 0 }
-        failed: { type: integer, minimum: 0 }
-        skipped: { type: integer, minimum: 0 }
-  merge_receipt:
-    description: Proof that the branch was merged.
-    schema:
-      type: object
-      required: [target, merge_revision]
-      properties:
-        target: { type: string }
-        merge_revision: { type: string }
+# What the runner reads from the subject, at the request's revision. The engine substitutes the
+# templates and passes the values on without interpreting them; the runner's source adapter
+# resolves them. The UI renders `view` as a link for humans.
+subject:
+  base: "{{inputs.base}}"
+  inputs:
+    requirements: { file: "docs/requirements/{{inputs.branch}}.md" }
+    diff: { diff: base }
+  view: "https://github.com/{{inputs.repository}}/compare/{{inputs.base}}...{{revision}}"
 
 typed_questions:
   code_quality_band:
     prompt: Which band of the code quality rubric does this change fall in?
     labels: [poor, weak, good, exemplary]
-    inputs: [requirements_doc, diff]
+    inputs: [requirements, diff]
+  has_defect:
+    # The narrow question from spike 007's battery, which separated good and flawed code.
+    type: noul
+    prompt: The change contains a correctness defect that the requirements or a test would expose.
+    inputs: [requirements, diff]
 
 protected_actions:
   merge:
@@ -73,20 +56,19 @@ stages:
   requirements:
     entry: true
     task:
-      prompt: "Write requirements for this task in {{inputs.repository}}: {{inputs.task}}"
+      prompt: "Write requirements for this task in {{inputs.repository}}, commit them to docs/requirements/{{inputs.branch}}.md on {{inputs.branch}}, and push: {{inputs.task}}"
       acceptance_criteria:
         - Every requirement is testable.
         - Each acceptance criterion is a single sentence.
-      produces: [requirements_doc]
+        - The requirements file is committed and pushed.
       limits: { iterations: 5, wall_time: 1h, failed_checks: 3 }
 
   implementation:
     task:
-      prompt: "Implement on branch {{inputs.branch}}: {{evidence.requirements_doc.summary}}"
+      prompt: "Implement docs/requirements/{{inputs.branch}}.md on branch {{inputs.branch}}."
       acceptance_criteria:
-        - "Meets the acceptance criteria: {{evidence.requirements_doc.acceptance_criteria}}"
+        - Meets the acceptance criteria in the requirements file.
         - The code builds and the tests touched by the change pass.
-      produces: [diff]
       limits: { iterations: 12, wall_time: 3h, failed_checks: 3 }
 
   verification:
@@ -95,15 +77,13 @@ stages:
       acceptance_criteria:
         - The full test suite ran to the end locally.
         - The branch is pushed, so the runner can fetch the revision.
-      produces: [local_test_summary]
       limits: { iterations: 4, wall_time: 1h, failed_checks: 2 }
 
   release:
     task:
-      prompt: "Merge {{inputs.branch}} into the target branch and record the merge."
+      prompt: "Merge {{inputs.branch}} into {{inputs.base}} with a merge commit."
       acceptance_criteria:
-        - The merge succeeded and the merge revision is recorded.
-      produces: [merge_receipt]
+        - The merge succeeded and {{inputs.base}} contains the reviewed revision.
       limits: { iterations: 3, wall_time: 30m, failed_checks: 2 }
 
   complete:
@@ -116,6 +96,19 @@ transitions:
   - id: start_implementation
     from: requirements
     to: implementation
+    checkpoint:
+      label: stage check
+      steps:
+        - id: requirements_present
+          executor: deterministic
+          runs_in: runner
+          role: required
+          points: 0
+          check:
+            command:
+              image: "alpine/git@sha256:<digest>"
+              run: [test, -s, "docs/requirements/{{inputs.branch}}.md"]
+              timeout: 2m
 
   - id: verify
     from: implementation
@@ -129,11 +122,16 @@ transitions:
       steps:
         - id: diff_present
           executor: deterministic
-          runs_in: engine
+          runs_in: runner
           role: required
           points: 0
-          inputs: [diff]
-          check: { min_items: { field: diff.files, min: 1 } }
+          check:
+            command:
+              image: "alpine/git@sha256:<digest>"
+              # Fails when the revision changes nothing against the base.
+              run: [sh, -c, '! git diff --quiet "origin/$BASE"...HEAD']
+              env: { BASE: "{{inputs.base}}" }
+              timeout: 2m
 
         - id: tests_green
           executor: deterministic
@@ -165,7 +163,7 @@ transitions:
           role: required
           points: 20
           council: 3
-          inputs: [requirements_doc, diff]
+          inputs: [requirements, diff]
           instructions: Judge the change against the requirements, not against your own design.
           scale: [1, 10]
           pass: { min_score: 6 }
@@ -184,18 +182,26 @@ transitions:
               descriptor: Meets the requirements; idiomatic, well-factored, and easy to extend.
           typed_decisions:
             - question: code_quality_band
-              provider: laya
-              mode: shadow
-            - question: code_quality_band
               provider: jev
               mode: shadow
+              then:                       # a decision tree; first matching branch wins
+                - when: { label_in: [poor, weak] }
+                  ask: has_defect
+                  then:
+                    - when: { label_in: ["true"], min_confidence: 0.7 }
+                      conclude: likely_defect
+                - when: { max_confidence: 0.5 }
+                  ask: has_defect
+                  then:
+                    - when: { label_in: ["true"], min_confidence: 0.7 }
+                      conclude: likely_defect
 
         - id: docs_updated
           executor: agent_evaluator
           runs_in: runner
           role: optional
           points: 5
-          inputs: [requirements_doc, diff]
+          inputs: [requirements, diff]
           scale: [1, 5]
           rubric:
             - id: none
@@ -213,8 +219,7 @@ transitions:
           role: required
           points: 0
           separation_of_duties: true
-          inputs: [requirements_doc, diff, local_test_summary]
-          prompt: "Approve merging {{inputs.branch}} in {{inputs.repository}}?"
+          prompt: "Approve merging {{inputs.branch}} into {{inputs.base}} in {{inputs.repository}}? Review the change through the subject view."
 
   - id: rework
     from: verification
@@ -233,8 +238,12 @@ transitions:
       steps:
         - id: merge_recorded
           executor: deterministic
-          runs_in: engine
+          runs_in: runner
           role: required
           points: 0
-          inputs: [merge_receipt]
-          check: { evidence_exists: merge_receipt }
+          check:
+            command:
+              image: "alpine/git@sha256:<digest>"
+              # Holds when the base branch contains the revision the release checkpoint reviewed.
+              run: [git, merge-base, --is-ancestor, "{{revision}}", "origin/{{inputs.base}}"]
+              timeout: 2m

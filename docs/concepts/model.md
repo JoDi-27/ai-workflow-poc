@@ -79,7 +79,7 @@ stateDiagram-v2
   paused --> working : driver resumes
   working --> exhausted : a limit reached
   exhausted --> working : owner extends the budget in the UI
-  exhausted --> [*] : owner directs a rework, or abandons the run
+  exhausted --> [*] : owner directs a rework (engine commits it, spike 010), or abandons the run
   met --> [*] : driver requests a transition (its checkpoint runs)
 ```
 
@@ -237,7 +237,7 @@ The major checkpoint `fact_check → editorial_review`:
 1. Required, deterministic: evidence `source_list` exists and has at least 3 entries (minimum trust: driver-reported).
 2. Required, agent evaluator: "claims supported by sources", scale 1–10 with a rubric, pass at 6, council of 3.
 3. Optional, agent evaluator: "readability", scale 1–5 with a rubric.
-4. Shadow, Laya: typed question "publication risk" with labels `low`, `medium`, `high`, alongside step 2.
+4. Shadow, a DecisionEngine provider: typed question "publication risk" with labels `low`, `medium`, `high`, alongside step 2.
 
 Protected action `publish` is allowed only in stage `ready`. The driver's hook calls `authorize_action` with the current revision. After publishing, the driver submits `publication_receipt` and requests `ready → published`.
 

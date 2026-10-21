@@ -22,6 +22,10 @@ Progress counts the checkboxes in Goal questions, Questions for you, and Deliver
 
 <!-- Drop notes, links, constraints, or decisions here at any time, in any form. The next /sdd-spike session moves them into the Log and Findings and clears this section. -->
 
+- 2026-10-21, from spike 010 (target architecture), decided by the user and relevant here:
+  - **Q27:** Laya is out of the MVP, and Jev is the only DecisionEngine provider. G4 (what Laya exposes) is now only about keeping the telemetry shape open for a later provider.
+  - **Q26:** Jev's input now comes from a runner "input packet job". It clones the revision and returns bounded text (the diff and the requirements file), which the engine sends to Jev and stores with the typed decision record. That packet and its job are part of what a Jev call can be correlated with.
+  - Also relevant: Q23 (engine events and telemetry go to a separate analysis service through a broker) and Q21 (the Jev key is a Kubernetes Secret, and the Jev model version an operational setting recorded on each result). See `specs/010-target-architecture/` and `docs/architecture/`.
 - 2026-10-19, from the session that created this spike (before the interview, which the user wants run in its own session): `prototype/capture.py` called Jev once per case and saved status, headers (minus cookies and auth), body, and timing to `prototype/results/capture.json`. The key is read from the git-ignored `prototype/.env`. Raw findings, not yet in Log or Findings:
   - Success (`jev-1.13.0`, and `jev-latest`, which resolved to `jev-1.13.0`): HTTP 200 in 255–271 ms; body `model`, `answers`, `usage` (`input_tokens`, `output_tokens`); headers include `x-typesafe-request-id` and Cloudflare's `CF-RAY`, with no rate-limit or timing headers.
   - Every response, errors included, carries `x-typesafe-request-id`.
