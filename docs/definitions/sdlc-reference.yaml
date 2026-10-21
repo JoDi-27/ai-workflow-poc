@@ -4,6 +4,7 @@
 # Updated by spike 010 (Q26, Q27): git is the evidence channel, so the driver submits no
 # evidence; the runner reads the subject at the request's revision. Jev is the only provider.
 # Q28: the shadow typed decision on code_quality is a decision tree.
+# Updated by spike 011 (Q1): subject.key names the run inputs the engine derives the subject key from.
 
 schema: ai-workflow/v0
 workflow: sdlc-reference
@@ -24,6 +25,7 @@ run_inputs:
 # templates and passes the values on without interpreting them; the runner's source adapter
 # resolves them. The UI renders `view` as a link for humans.
 subject:
+  key: [repository, branch]
   base: "{{inputs.base}}"
   inputs:
     requirements: { file: "docs/requirements/{{inputs.branch}}.md" }
