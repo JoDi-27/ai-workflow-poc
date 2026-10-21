@@ -151,7 +151,7 @@ sequenceDiagram
   E->>E: store joined rows + outbox rows (one transaction), published as in sequence 8
 ```
 
-Runner evaluator usage arrives in the job result, not through the collector. DecisionEngine call telemetry follows spike 008.
+Runner evaluator usage arrives in the job result, not through the collector. DecisionEngine calls are not exported through OTel: the engine records each call attempt in its own table (spike 008).
 
 ## 6. Exhaustion escalation and rework
 

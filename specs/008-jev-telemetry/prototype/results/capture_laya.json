@@ -1,0 +1,350 @@
+[
+ {
+  "case": "startup",
+  "seconds_to_health": 6.1
+ },
+ {
+  "case": "health, no key",
+  "status": 200,
+  "ms": 1,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "content-length": "15",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "status": "ok"
+  }
+ },
+ {
+  "case": "health, with key",
+  "status": 200,
+  "ms": 1,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "content-length": "265",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "status": "ok",
+   "loaded": [
+    "multilingual"
+   ],
+   "revisions": {
+    "multilingual": "7b928d828b7b0e022f929d9bd2e44165aa270148"
+   },
+   "device": "mps",
+   "device_is_preference": false,
+   "checkpoint_devices": {
+    "multilingual": "mps"
+   },
+   "cpu_fallbacks": {
+    "multilingual": {
+     "count": 0,
+     "last_reason": null
+    }
+   }
+  }
+ },
+ {
+  "case": "success, no model (auto-route)",
+  "status": 200,
+  "ms": 637,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "server-timing": "inference;dur=636.23",
+   "x-inference-time-ms": "636.23",
+   "content-length": "790",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "model": "laya-rl-agent",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "probabilities": {
+      "billing": 0.9223,
+      "technical": 0.0777
+     },
+     "confidence": 0.6058,
+     "answer_confidence": 0.9223,
+     "action": {
+      "act_probability": 1.0
+     },
+     "x_jev_confidence": 0.8446
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.8787,
+     "confidence": 0.8787,
+     "answer_confidence": 0.8787,
+     "action": {
+      "act_probability": 1.0
+     }
+    }
+   },
+   "usage": {
+    "input_tokens": 75,
+    "output_tokens": 0,
+    "state_tokens": 11,
+    "state_tokens_dropped": 0,
+    "truncated": false,
+    "truncated_questions": []
+   },
+   "routing": {
+    "model": "english",
+    "repo": "convaiinnovations/laya",
+    "reason": "English Latin text",
+    "detection": {
+     "script": "latin",
+     "script_profile": {
+      "latin": 1.0
+     },
+     "language": "en",
+     "is_english": true,
+     "language_undecided": false,
+     "diacritic_rate": 0.0,
+     "non_latin_fraction": 0.0,
+     "mixed_segment": null
+    },
+    "workflow": null
+   }
+  }
+ },
+ {
+  "case": "success again (warm)",
+  "status": 200,
+  "ms": 25,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "server-timing": "inference;dur=24.53",
+   "x-inference-time-ms": "24.53",
+   "content-length": "790",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "model": "laya-rl-agent",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "probabilities": {
+      "billing": 0.9223,
+      "technical": 0.0777
+     },
+     "confidence": 0.6058,
+     "answer_confidence": 0.9223,
+     "action": {
+      "act_probability": 1.0
+     },
+     "x_jev_confidence": 0.8446
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.8787,
+     "confidence": 0.8787,
+     "answer_confidence": 0.8787,
+     "action": {
+      "act_probability": 1.0
+     }
+    }
+   },
+   "usage": {
+    "input_tokens": 75,
+    "output_tokens": 0,
+    "state_tokens": 11,
+    "state_tokens_dropped": 0,
+    "truncated": false,
+    "truncated_questions": []
+   },
+   "routing": {
+    "model": "english",
+    "repo": "convaiinnovations/laya",
+    "reason": "English Latin text",
+    "detection": {
+     "script": "latin",
+     "script_profile": {
+      "latin": 1.0
+     },
+     "language": "en",
+     "is_english": true,
+     "language_undecided": false,
+     "diacritic_rate": 0.0,
+     "non_latin_fraction": 0.0,
+     "mixed_segment": null
+    },
+    "workflow": null
+   }
+  }
+ },
+ {
+  "case": "over window (~47k chars)",
+  "status": 200,
+  "ms": 154,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "server-timing": "inference;dur=152.68",
+   "x-inference-time-ms": "152.68",
+   "content-length": "811",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "model": "laya-rl-agent",
+   "answers": {
+    "band": {
+     "type": "choice",
+     "choice": "billing",
+     "probabilities": {
+      "billing": 0.6503,
+      "technical": 0.3497
+     },
+     "confidence": 0.0662,
+     "answer_confidence": 0.6503,
+     "action": {
+      "act_probability": 1.0
+     },
+     "x_jev_confidence": 0.3006
+    },
+    "refund": {
+     "type": "noul",
+     "noul": 0.4211,
+     "confidence": 0.5789,
+     "answer_confidence": 0.5789,
+     "action": {
+      "act_probability": 1.0
+     }
+    }
+   },
+   "usage": {
+    "input_tokens": 1024,
+    "output_tokens": 0,
+    "state_tokens": 8841,
+    "state_tokens_dropped": 8360,
+    "truncated": true,
+    "truncated_questions": [
+     "band",
+     "refund"
+    ]
+   },
+   "routing": {
+    "model": "english",
+    "repo": "convaiinnovations/laya",
+    "reason": "English Latin text",
+    "detection": {
+     "script": "latin",
+     "script_profile": {
+      "latin": 1.0
+     },
+     "language": "en",
+     "is_english": true,
+     "language_undecided": false,
+     "diacritic_rate": 0.0,
+     "non_latin_fraction": 0.0,
+     "mixed_segment": null
+    },
+    "workflow": null
+   }
+  }
+ },
+ {
+  "case": "over 50,000 characters",
+  "status": 413,
+  "ms": 1,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "content-length": "50",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "detail": "state too large (54000 > 50000 chars)"
+  }
+ },
+ {
+  "case": "bad model",
+  "status": 422,
+  "ms": 1,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "content-length": "285",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "detail": "unknown model 'nope/nothing'; choose one of ['english', 'multilingual', 'typed-decisions'] (or an alias: ['decisions', 'default', 'en', 'laya', 'laya-multilingual', 'laya-typed-decisions', 'ml', 'multi', 'typed', 'typed_decisions']), or omit model to let the router choose"
+  }
+ },
+ {
+  "case": "no key",
+  "status": 401,
+  "ms": 0,
+  "headers": {
+   "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+   "server": "uvicorn",
+   "content-length": "44",
+   "content-type": "application/json",
+   "Connection": "close"
+  },
+  "body": {
+   "detail": "invalid or missing bearer token"
+  }
+ },
+ {
+  "case": "burst of 24 concurrent",
+  "statuses": [
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   200,
+   503,
+   503,
+   503,
+   503,
+   503,
+   503,
+   503,
+   503
+  ],
+  "rejected_sample": {
+   "case": "burst 16",
+   "status": 503,
+   "ms": 2,
+   "headers": {
+    "date": "Mon, 19 Oct 2026 14:24:18 GMT",
+    "server": "uvicorn",
+    "retry-after": "1",
+    "content-length": "41",
+    "content-type": "application/json",
+    "Connection": "close"
+   },
+   "body": {
+    "detail": "server busy, try again later"
+   }
+  }
+ }
+]
