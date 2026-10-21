@@ -1,6 +1,6 @@
 # Happy path sequences
 
-From spike 010. Components and rules are in `README.md`. The examples use the reference workflow (`docs/definitions/sdlc-reference.yaml`), but the engine only sees neutral concepts: stages, transitions, checkpoints, steps, evidence, and action names. Operation names are placeholders until spike 8 fixes the driver API contract.
+From spike 010. Components and rules are in `README.md`. The examples use the reference workflow (`docs/definitions/sdlc-reference.yaml`), but the engine only sees neutral concepts: stages, transitions, checkpoints, steps, evidence, and action names. Spike 011 fixed the driver API contract: operations, schemas, and a full run as calls are in `docs/driver-api/`.
 
 MCP calls go through the MCP gateway, which forwards them with the caller's driver token to the engine's HTTP driver API (Q20). Hooks call that API directly. Every mutating call carries an idempotency key. Every request on a run locks the run's row for its transaction, and writes its state change and events together.
 
@@ -16,7 +16,7 @@ sequenceDiagram
   E-->>CC: unbound, or status of the bound run (injected as context)
   CC->>G: MCP start_run(subject inputs)
   G->>E: HTTP driver API (same token)
-  E->>E: derive subject key, refuse if an active run exists
+  E->>E: derive subject key from the inputs in subject.key, refuse if an active run exists
   E->>E: create run on the current definition version, bind session, acquire lease for the user
   E-->>G: run status: stage task, permitted transitions
   G-->>CC: run status: stage task, permitted transitions
@@ -163,7 +163,7 @@ sequenceDiagram
   participant O as Owner (UI)
   CC->>E: report iteration (stage task limit reached before acceptance criteria)
   E->>E: stage task exhausted: open escalation, write event
-  E-->>CC: status: waiting for the owner
+  E-->>CC: verdict stop: waiting for the owner
   O->>E: UI API: resolve escalation (extend | rework | abandon)
   alt rework
     E->>E: commit the rework transition (no checkpoint on the edge) (Q8)

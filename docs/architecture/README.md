@@ -288,7 +288,7 @@ Each call is one use case and one transaction. The use case authenticates throug
 
 | Inbound port | Use cases | Called by |
 | --- | --- | --- |
-| `DriverOperations` | Register and bind a session, `start_run`, `status`, `submit_evidence`, `request_transition`, `checkpoint_status`, `get_evaluation_task`, `submit_step_result`, `record_activity`, `authorize_action`, `submit_draft`. Schemas come in PLAN spike 8 | `driver-api`; later a CLI |
+| `DriverOperations` | Register and bind a session, `start_run`, `status`, `submit_evidence`, `request_transition`, `checkpoint_status`, `get_evaluation_task`, `submit_step_result`, `record_activity`, `authorize_action`, `submit_draft`. Schemas and the MVP subset are in `docs/driver-api/` (spike 011): `checkpoint_status` folds into `status`, and `report_iteration`, `get_definition`, and `get_analysis` are added | `driver-api`; later a CLI |
 | `HumanOperations` | Log in, decide a human step, override, resolve an escalation (Q8), approve and publish a definition, take over a lease (Q14), view runs and scores | `ui-api` |
 | `TelemetryIntake` | Accept a neutral telemetry batch, check the driver token, join records to runs by session ID within binding windows, and drop unbound sessions (spec 006) | `telemetry-ingestion` |
 | `EventFeed` | Paged, ordered read of events and joined telemetry for rebuilds, and credential introspection (Q23) | `event-read` |

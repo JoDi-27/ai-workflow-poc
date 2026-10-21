@@ -4,6 +4,8 @@ From spike 003 (`specs/003-definition-model-draft/`), where each choice is decid
 
 Updated by spike 010 (`specs/010-target-architecture/`, Q26 and Q27): definitions can declare a `subject` that the runner reads from git, so a workflow like the reference one needs no driver-submitted evidence; and Jev is the only DecisionEngine provider in the MVP.
 
+Updated by spike 011 (`specs/011-driver-api-contract/`, Q1): `subject.key` names the run inputs that form the subject key, and the engine derives the key from them.
+
 This is a draft for milestone 1. The formal JSON Schema file and the validator are written there, with the library chosen in spike 9.
 
 ## Format and validation
@@ -25,7 +27,7 @@ This is a draft for milestone 1. The formal JSON Schema file and the validator a
 | `title`, `description` | `title` yes | Text for humans. |
 | `required_capabilities` | no | Driver capabilities a session must declare: `core`, `activity_recording`, `evaluation`, `enforcement`, `telemetry`. |
 | `run_inputs` | no | Map of input name to `{ description }`. Stored by the engine without interpretation. |
-| `subject` | no | What the runner reads from the subject at a request's revision: `base` (a reference the runner also fetches), `inputs` (map of name to a source the runner's source adapter resolves, such as `{ file: <path> }` or `{ diff: base }`), and `view` (a link the UI shows humans). Templates are substituted; the engine interprets nothing else (spike 010, Q26). |
+| `subject` | no | `key` (list of run input names that form the subject key, in order; the engine derives a canonical key from their values, spike 011, Q1). What the runner reads from the subject at a request's revision: `base` (a reference the runner also fetches), `inputs` (map of name to a source the runner's source adapter resolves, such as `{ file: <path> }` or `{ diff: base }`), and `view` (a link the UI shows humans). Templates are substituted; the engine interprets nothing else (spike 010, Q26). |
 | `evidence_types` | no | Map of type name to `{ description, schema? }`. `schema` is an optional embedded JSON Schema for the payload. Driver-submitted evidence, for workflows whose content does not live in the subject. |
 | `typed_questions` | no | Map of question ID to `{ type?, prompt, labels, inputs }`. `type` is `choice` (the default, with `labels`) or `noul` (a statement answered `true` or `false`, with no `labels`). `inputs` name subject inputs or evidence types. |
 | `protected_actions` | no | Map of action name to `{ description, allowed_in: [stage, ...] }`. |
@@ -186,6 +188,7 @@ The engine rejects a definition when any of these fails.
 16. A `subject` source is either `{ file: <path> }` or `{ diff: base }`, and `{ diff: base }` requires `subject.base` (spike 010).
 17. In a decision tree, every `ask` names a declared question, and no question appears twice on one path from the root. A path holds at most 3 questions, and a tree at most 5. Each branch has a `when` and exactly one of `ask` or `conclude`, and only an `ask` branch may have `then`. `label_in` values are labels of the question whose answer is tested (`"true"` or `"false"` for `noul`). Confidences lie between 0 and 1, and `min_confidence` ≤ `max_confidence` when both appear. Conclusion IDs are strings (spike 010, Q28).
 18. A `noul` question has no `labels`, and a `choice` question has at least two.
+19. `subject.key` is present when `subject` is, is not empty, and names declared run inputs, each at most once (spike 011).
 
 ## Invalid fixtures for milestone 1
 
@@ -202,3 +205,4 @@ One rule each, so the validator's error for each can be checked:
 - A `field_compare` step with `runs_in: runner` (rule 8).
 - A `command` image given by tag only, such as `postgres:18-alpine` (rule 9).
 - A decision tree path that asks the same question twice (rule 17).
+- A `subject.key` naming an undeclared run input (rule 19).
