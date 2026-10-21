@@ -145,7 +145,7 @@ The engine is hexagonal on both sides (Q24):
 
 - **Inbound adapters:** turn an outside trigger into a call on an inbound port. The triggers are an HTTP request, or a timer tick from the `scheduler`.
 - **Inbound ports:** the use cases the core offers. Each call is one use case and one transaction.
-- **Core:** implements the inbound ports (arrows from a port point to the modules that carry out its use cases), holds every rule and all state, and has no technology or provider names. It runs no threads.
+- **Core:** implements the inbound ports (arrows from a port point to the modules that carry out its use cases), holds every rule and all state, and has no provider or domain-specific names (SDLC, git, Claude Code, the broker product); it may use Spring annotations (AD-20, refined by spike 012). It runs no threads.
 - **Outbound ports:** interfaces the core defines for what it needs from outside.
 - **Outbound adapters:** implement the outbound ports for a specific runner, provider, or broker.
 

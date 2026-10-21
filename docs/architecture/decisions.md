@@ -121,6 +121,7 @@ From spike 010 (`specs/010-target-architecture/`). Each record names the questio
 - **Decision:** module dependency rules, checked in the build, keep core modules free of edges, adapters, and SDLC, git, and Claude Code names. The toy workflow test stays "Next".
 - **Alternatives:** separate deployables; a toy workflow test now.
 - **Why:** follows from AD-1. Spike 9 picks the rule checker. (G7)
+- **Refined (spike 012, Q3, Q4):** the core may use Spring annotations such as `@Service` and `@Transactional`; neutrality covers domain and provider names (SDLC, git, Claude Code, the broker product), not the framework. The rules are enforced by separate Maven modules for the core, the ports, and each adapter, so a wrong dependency does not compile, plus ArchUnit tests for the banned names and the broker-only-in-`broker-client` rule.
 
 ## AD-21 · A separate MCP gateway
 

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Partial structure schema for the trial only; the formal schema is written in milestone 1.",
+  "type": "object",
+  "required": ["schema", "workflow", "title", "scoring", "stages", "transitions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "ai-workflow/v0" },
+    "workflow": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "required_capabilities": { "type": "array", "items": { "enum": ["core", "activity_recording", "evaluation", "enforcement", "telemetry"] } },
+    "run_inputs": { "type": "object", "additionalProperties": { "type": "object", "required": ["description"] } },
+    "subject": { "type": "object" },
+    "evidence_types": { "type": "object" },
+    "typed_questions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["prompt"],
+        "properties": { "labels": { "type": "array", "items": { "type": "string" }, "minItems": 2 } }
+      }
+    },
+    "protected_actions": { "type": "object" },
+    "scoring": { "type": "object" },
+    "stages": { "type": "object" },
+    "transitions": { "type": "array", "items": { "type": "object", "required": ["id", "from", "to"] } }
+  }
+}
