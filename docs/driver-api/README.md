@@ -216,7 +216,8 @@ Status:
     id: string
     workflow: string
     version: integer
-    state: active | completed | failed | excluded
+    state: active | completed | failed | abandoned
+    classification: provisional | scored | overridden | excluded   # score classification, separate from state (spec 013 Q7)
     subject_key: string
     run_inputs: { <name>: string }
     owner: string
@@ -249,7 +250,7 @@ Status:
     id: string
     transition: string
     revision: string
-    steps: [{ id, state: pending | running | passed | failed | not_evaluated }]
+    steps: [{ id, state: pending | running | passed | failed | not_evaluated | overridden }]
     waiting_on: runner | human | null
   last_decision:                # the most recent attempt outcome, transition, or escalation resolution
     kind: attempt_failed | attempt_not_evaluated | transition_committed | override | escalation_resolved

@@ -69,12 +69,12 @@ public class JpaTrialApplication {
     }
 
     public interface Runs extends JpaRepository<Run, UUID> {
-        /** The per-run row lock every use case takes: SELECT ... FOR UPDATE. */
+        /** The per-run row lock every use case takes: Hibernate emits SELECT ... FOR NO KEY UPDATE (spec 013 lock trial). */
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("select r from Run r where r.id = :id")
         Optional<Run> lockById(UUID id);
 
-        /** Same lock, failing at once instead of waiting: FOR UPDATE NOWAIT. */
+        /** Same lock, failing at once instead of waiting: FOR NO KEY UPDATE NOWAIT. */
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "0"))
         @Query("select r from Run r where r.id = :id")
@@ -85,7 +85,7 @@ public class JpaTrialApplication {
     }
 
     public interface Outbox extends JpaRepository<OutboxRow, Long> {
-        /** DueWork's claim: FOR UPDATE SKIP LOCKED (lock timeout -2 is Hibernate's SKIP_LOCKED). */
+        /** DueWork's claim: FOR NO KEY UPDATE SKIP LOCKED (lock timeout -2 is Hibernate's SKIP_LOCKED). */
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "-2"))
         @Query("select o from OutboxRow o where o.publishedAt is null order by o.id")

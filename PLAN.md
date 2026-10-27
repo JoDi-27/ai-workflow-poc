@@ -31,7 +31,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **7. Target architecture** (spec 010, `docs/architecture/`)
 - [x] **8. Driver API contract** (spec 011, `docs/driver-api/`)
 - [x] **9. Technology stack** (spec 012)
-- [ ] **9b. Engine low-level design**
+- [x] **9b. Engine low-level design** (spec 013, `docs/engine/`)
 - [ ] **10. Local setup**
 
 ### Decisions
@@ -41,7 +41,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 ### Scaffolding
 
 - [ ] Repository layout, for example: `engine/` (Java), `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/claude-code/`, `definitions/`, `deploy/`, `docs/` (spike 010).
-- [ ] Engine skeleton: builds, starts, connects to the database, exposes a health endpoint and a stub MCP `status` operation.
+- [ ] Engine skeleton: builds, starts, connects to the database, exposes a health endpoint and a stub MCP `status` operation. Use the six Maven modules, the ArchUnit and `analyze-only` rules, the project Maven settings (Maven Central), and the JDK 25 pin from `docs/engine/design.md` section 1 and spike 013's `prototype/module-rules/`.
 - [ ] UI skeleton: separately deployed, logs in, and displays data from an engine endpoint.
 - [ ] Claude Code driver kit skeleton: plugin with the engine MCP configuration and a session-start hook that calls the engine. First, confirm that the PreToolUse hook can inject `session_id` into an engine MCP tool's arguments with `updatedInput` (spike 011, Q3); if it cannot, bind every registered session of the same user on the subject instead, and update `docs/driver-api/`.
 - [ ] DecisionEngine stub: a stub adapter in the engine standing in for Jev (Laya is out of the MVP, spike 010).
@@ -63,9 +63,9 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 
 Milestones 1–5 from the intent doc, happy path versions only.
 
-- [ ] Definition model and the reference workflow in YAML, with validation. Start from spike 003's draft in `docs/definitions/`: write the formal JSON Schema, implement its semantic rules (19 since spike 011), and test them with its 12 invalid fixtures.
-- [ ] Engine core: runs, state and event tables, evidence, transition protocol, checkpoint execution, scoring with deductions.
-- [ ] Driver API over MCP and HTTP with driver-token auth, as specified in `docs/driver-api/` (spike 011): the MVP operations, denials, and idempotency keys.
+- [ ] Definition model and the reference workflow in YAML, with validation. Start from spike 003's draft in `docs/definitions/`: write the formal JSON Schema, implement its semantic rules (19 since spike 011), and test them with its 12 invalid fixtures plus one each for rules 1, 6, 7, 12, 13, 14, 15, 16, and 18 and a duplicate key (validator design in `docs/engine/design.md` section 7, spike 013).
+- [ ] Engine core: runs, state and event tables, evidence, transition protocol, checkpoint execution, scoring with deductions. Built to `docs/engine/design.md` and `schema-draft.sql` (spike 013), with the scenario tests T01, T05, T06, and T07 each followed by the replay check.
+- [ ] Driver API over MCP and HTTP with driver-token auth, as specified in `docs/driver-api/` (spike 011): the MVP operations, denials, and idempotency keys. Confirm by a test that deleting a denial's idempotency row before commit lets a waiting retry run again, as the tested rollback did (spike 013).
 - [ ] Runner: sandboxed check commands and a headless Claude Code evaluator at the pushed revision, returning engine-verified results.
 - [ ] Claude Code driver kit: instructions (including pushing before a transition request), session binding, activity hook, protected-action hook for the merge.
 - [ ] UI: run list, run detail with score breakdown, human step inbox, UI login for human decisions.

@@ -97,6 +97,7 @@ From spike 010 (`specs/010-target-architecture/`). Each record names the questio
 - **Decision:** every mutating driver call and every human decision takes an idempotency key. Each request locks the run's row. Runner dispatch goes through a transactional outbox, and Kubernetes Jobs are named after the engine's job ID.
 - **Alternatives:** keys on transitions only; defer to spike 9.
 - **Why:** retries are safe end to end. (Q16)
+- **Refined by spike 013:** only committed results are stored under a key, so a retried denial is evaluated again; a retry that arrives while the first request runs waits for it instead of getting `409`; records are kept 7 days (`docs/engine/design.md` section 6).
 
 ## AD-17 · Shadow typed decisions run in parallel
 
@@ -185,6 +186,7 @@ From spike 010 (`specs/010-target-architecture/`). Each record names the questio
   - Use cases can be tested without HTTP.
 
   Raised by the user. (Q24)
+- **Refined by spike 013:** `DueWork` runs one short transaction per due item and phase (claim, call with no lock, apply under the run lock), so the runner and Jev are never called while a run is locked. A `usecases` package in the core implements the ports and is the only caller of outbound ports (`docs/engine/design.md` sections 1 and 6).
 
 ## AD-26 · Kubernetes Jobs for sandboxes; no Cloud Tasks
 
