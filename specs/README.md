@@ -80,7 +80,7 @@ Claude Code hooks in `.claude/settings.json` (scripts in `.claude/hooks/`) keep 
 | --- | --- | --- |
 | `SessionStart` | `session-start.sh` | Prints `sdd status` and `sdd claims` into the session's context |
 | `PostToolUse` (Edit, Write) | `post-edit-status.sh` | Runs `sdd status --write` when a `specs/NNN-*/spec.md` or `tasks.md` changed |
-| `PreToolUse` (Bash) | `pre-commit-message.sh` | Blocks `git commit` unless the message starts with `[NNN]` or `[NNN] Tn` (exit 2) |
+| `PreToolUse` (Bash) | `pre-commit-message.sh` | Blocks `git commit` unless the message starts with `[NNN]`, `[NNN] Tn`, or `[meta]` (exit 2) |
 | `Stop` | `stop-claims.sh` | Warns when this session still holds claims (owner equals the hook's session ID); never blocks |
 
 The settings file also allows `specs/_kit/sdd`, read-only git commands, and `mvn`, `npm`, `kubectl`, and `kind` without a prompt.

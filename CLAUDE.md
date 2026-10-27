@@ -66,7 +66,7 @@ The full list is in `specs/constitution.md`. The ones most easily broken while c
 - Unknowns are written as `[NEEDS CLARIFICATION: …]`, never guessed; they must be resolved before `/sdd-plan`.
 - Real choices between alternatives get a row in the plan's Decisions table (or a spike's Recommendation).
 - Tasks are half a day at most and leave the build green. One task is about one commit.
-- Commit only when asked. Messages start with the spec and task ID, for example `[003] T2 Add run state table`.
+- Commit only when asked. Messages start with the spec and task ID, for example `[003] T2 Add run state table`. Use `[meta]` only for housekeeping that changes no behavior or requirements (hooks, settings, kit scripts, doc fixes); anything else needs a spec.
 - Docs are written in plain, short sentences, consistent with the existing Markdown files.
 
 ## Glossary
