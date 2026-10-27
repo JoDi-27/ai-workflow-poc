@@ -32,7 +32,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [x] **8. Driver API contract** (spec 011, `docs/driver-api/`)
 - [x] **9. Technology stack** (spec 012)
 - [x] **9b. Engine low-level design** (spec 013, `docs/engine/`)
-- [ ] **10. Local setup**
+- [x] **10. Local setup** (spec 014, `docs/local-setup/`)
 
 ### Decisions
 
@@ -45,9 +45,9 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [ ] UI skeleton: separately deployed, logs in, and displays data from an engine endpoint.
 - [ ] Claude Code driver kit skeleton: plugin with the engine MCP configuration and a session-start hook that calls the engine. First, confirm that the PreToolUse hook can inject `session_id` into an engine MCP tool's arguments with `updatedInput` (spike 011, Q3); if it cannot, bind every registered session of the same user on the subject instead, and update `docs/driver-api/`.
 - [ ] DecisionEngine stub: a stub adapter in the engine standing in for Jev (Laya is out of the MVP, spike 010).
-- [ ] Runner stub: on an engine request, starts a sandbox that clones a repository at a given SHA and runs a command.
+- [ ] Runner stub: on an engine request, starts a sandbox that clones a repository at a given SHA and runs a command. Include spike 014's open checks: the Job classification prototype (spec 010 Q13) and fabric8's 409 on a repeated Job name, token isolation between the clone init container and the main container, and evaluator authentication behind the `ipBlock` policy without `platform.claude.com`.
 - [ ] OTel Collector receiving Claude Code telemetry.
-- [ ] Kubernetes manifests in `deploy/` bringing up engine, MCP gateway, analysis service, UI, database, broker, runner, and collector on a local cluster (spike 010), written so that they can later target GKE.
+- [ ] Kubernetes manifests in `deploy/` bringing up engine, MCP gateway, analysis service, UI, database, broker, runner, and collector on a local cluster (spike 010), written so that they can later target GKE. Start from spike 014's draft in `docs/local-setup/` (Docker Desktop kind mode, Kubernetes 1.36, Kustomize, Envoy Gateway). Confirm there: Envoy Gateway installs from its `install.yaml` and its LoadBalancer is published on localhost; kind mode runs images built locally without a push; routing `/v1` and the MCP gateway to `host.docker.internal` while the engine runs natively; choose the clone proxy product; install a matching `kubectl` and pre-pull images; confirm `sample-crm` allows merge commits (spec 010 Q26).
 - [ ] Build and test commands documented in the README.
 
 ### Exit criteria

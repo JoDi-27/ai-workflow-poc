@@ -1,0 +1,59 @@
+# Spike 014 prototype: does Docker Desktop's kind mode enforce NetworkPolicy?
+# Throwaway. Apply with: kubectl apply -f netpol-test.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awf-runner
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awf-sandbox
+---
+# Stand-in for the Maven proxy.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: maven-proxy
+  namespace: awf-runner
+  labels: {app: maven-proxy}
+spec:
+  containers:
+    - name: web
+      image: nginx:1.27-alpine
+      ports: [{containerPort: 80}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: maven-proxy
+  namespace: awf-runner
+spec:
+  selector: {app: maven-proxy}
+  ports: [{port: 80, targetPort: 80}]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: check
+  namespace: awf-sandbox
+  labels: {awf/sandbox: check}
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: c
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "3600"]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: evaluator
+  namespace: awf-sandbox
+  labels: {awf/sandbox: evaluator}
+spec:
+  automountServiceAccountToken: false
+  containers:
+    - name: c
+      image: curlimages/curl:8.11.1
+      command: ["sleep", "3600"]

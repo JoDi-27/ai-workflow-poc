@@ -1,0 +1,48 @@
+# The runner: creates one Job per runner job in awf-sandbox, with fabric8 (spec 012 G5). No rights on Secrets (spike 014 Q6).
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: runner, namespace: awf-runner}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: runner, namespace: awf-sandbox}
+rules:
+  - apiGroups: [batch]
+    resources: [jobs]
+    verbs: [create, get, list, watch, delete]
+  - apiGroups: [""]
+    resources: [pods, pods/log]
+    verbs: [get, list, watch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: runner, namespace: awf-sandbox}
+subjects: [{kind: ServiceAccount, name: runner, namespace: awf-runner}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: runner}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: runner, namespace: awf-runner}
+spec:
+  selector: {app: runner}
+  ports: [{port: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: runner, namespace: awf-runner}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: runner}}
+  template:
+    metadata: {labels: {app: runner}}
+    spec:
+      serviceAccountName: runner
+      containers:
+        - name: runner
+          image: awf/runner
+          ports: [{containerPort: 8080}]
+          env:
+            - {name: AWF_SANDBOX_NAMESPACE, value: awf-sandbox}
+            - {name: AWF_MAVEN_PROXY_URL, value: http://maven-proxy.awf-runner:8080}
+            - {name: AWF_CLONE_PROXY_URL, value: http://clone-proxy.awf-runner:3128}
+          resources: {limits: {cpu: 500m, memory: 512Mi}}

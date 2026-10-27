@@ -1,0 +1,18 @@
+# Draft from spike 014. The Phase 0 scaffolding moves this to deploy/base.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespaces.yaml
+  - postgres.yaml
+  - pubsub-emulator.yaml
+  - engine.yaml
+  - mcp-gateway.yaml
+  - analysis.yaml
+  - ui.yaml
+  - collector.yaml
+  - runner.yaml
+  - maven-proxy.yaml
+  - clone-proxy.yaml
+  - sandbox.yaml
+  - gateway.yaml
+  - bootstrap-job.yaml

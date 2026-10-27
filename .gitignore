@@ -57,3 +57,6 @@ tmp/
 
 # graphify output
 graphify-out/
+
+# Local secrets for the local cluster overlay (spike 014)
+.local/

@@ -1,0 +1,31 @@
+# One PostgreSQL 18 instance with schemas `engine` and `analysis` and separate credentials (spec 010 Q22).
+# A reset deletes only this StatefulSet's PVC.
+apiVersion: v1
+kind: Service
+metadata: {name: postgres, namespace: awf}
+spec:
+  selector: {app: postgres}
+  ports: [{port: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: postgres, namespace: awf}
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector: {matchLabels: {app: postgres}}
+  template:
+    metadata: {labels: {app: postgres}}
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18-alpine            # pinned by digest in the overlay
+          envFrom: [{secretRef: {name: postgres}}]
+          ports: [{containerPort: 5432}]
+          volumeMounts: [{name: data, mountPath: /var/lib/postgresql}]
+          resources: {limits: {cpu: "1", memory: 1Gi}}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: {requests: {storage: 5Gi}}

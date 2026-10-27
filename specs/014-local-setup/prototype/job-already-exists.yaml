@@ -1,0 +1,17 @@
+# Spike 014 prototype: does a repeated Job name return AlreadyExists (spec 010 Q16)?
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: rj-0001
+  namespace: awf-sandbox
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 60
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      containers:
+        - name: main
+          image: curlimages/curl:8.11.1
+          command: ["sh", "-c", "echo ok"]

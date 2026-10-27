@@ -1,0 +1,28 @@
+# Local broker. The emulator keeps no state, so topics and subscriptions are created on every start (spec 012 G6).
+apiVersion: v1
+kind: Service
+metadata: {name: pubsub, namespace: awf}
+spec:
+  selector: {app: pubsub}
+  ports: [{port: 8085}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: pubsub, namespace: awf}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: pubsub}}
+  template:
+    metadata: {labels: {app: pubsub}}
+    spec:
+      containers:
+        - name: emulator
+          image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+          command: [gcloud, beta, emulators, pubsub, start, --host-port=0.0.0.0:8085, --project=awf-local]
+          ports: [{containerPort: 8085}]
+          readinessProbe: {tcpSocket: {port: 8085}}
+          resources: {limits: {cpu: 500m, memory: 512Mi}}
+        - name: init-topics                    # creates topics and subscriptions idempotently, then idles
+          image: curlimages/curl:8.11.1
+          command: [sh, -c, "until curl -sf -X PUT http://localhost:8085/v1/projects/awf-local/topics/engine-events; do sleep 2; done; curl -s -X PUT -H 'Content-Type: application/json' -d '{\"topic\":\"projects/awf-local/topics/engine-events\"}' http://localhost:8085/v1/projects/awf-local/subscriptions/analysis; sleep infinity"]
+          resources: {limits: {cpu: 50m, memory: 32Mi}}

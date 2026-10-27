@@ -1,0 +1,36 @@
+# The engine: one replica in the MVP (spec 013 Q10). Settings from a ConfigMap, secrets from Secrets (spec 010 Q21).
+---
+apiVersion: v1
+kind: Service
+metadata: {name: engine, namespace: awf}
+spec:
+  selector: {app: engine}
+  ports: [{port: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: engine, namespace: awf}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: engine}}
+  template:
+    metadata: {labels: {app: engine}}
+    spec:
+      containers:
+        - name: engine
+          image: awf/engine
+          ports: [{containerPort: 8080}]
+          envFrom:
+            - configMapRef: {name: engine-settings}
+            - secretRef: {name: engine}          # database credentials, Jev key
+          readinessProbe: {httpGet: {path: /actuator/health/readiness, port: 8080}}
+          resources: {limits: {cpu: "2", memory: 1536Mi}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: engine-settings, namespace: awf}
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://postgres.awf:5432/awf?currentSchema=engine
+  AWF_RUNNER_URL: http://runner.awf-runner:8080
+  AWF_PUBSUB_EMULATOR_HOST: pubsub.awf:8085
+  AWF_JEV_URL: https://api.typesafe.ai

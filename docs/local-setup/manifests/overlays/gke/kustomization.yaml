@@ -1,0 +1,9 @@
+# GKE overlay, a stub: GKE Gateway class, Pub/Sub instead of the emulator, Artifact Registry or GHCR images,
+# and GKE Sandbox (gVisor) for awf-sandbox. Decided in BACKLOG "GCP deployment".
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: [../../base]
+patches:
+  - target: {kind: Gateway, name: awf}
+    patch: |-
+      - {op: replace, path: /spec/gatewayClassName, value: gke-l7-regional-external-managed}

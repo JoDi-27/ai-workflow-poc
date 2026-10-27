@@ -1,0 +1,34 @@
+# Reposilite: the check sandboxes' only route to Maven Central (spec 002 Q21).
+---
+apiVersion: v1
+kind: Service
+metadata: {name: maven-proxy, namespace: awf-runner}
+spec:
+  selector: {app: maven-proxy}
+  ports: [{port: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: maven-proxy, namespace: awf-runner}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: maven-proxy}}
+  template:
+    metadata: {labels: {app: maven-proxy}}
+    spec:
+      containers:
+        - name: maven-proxy
+          image: dzikoysk/reposilite:3.5.28
+          ports: [{containerPort: 8080}]
+          volumeMounts: [{name: data, mountPath: /app/data}]
+          resources: {limits: {cpu: 500m, memory: 256Mi}}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: maven-cache}   # kept across resets
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: maven-cache, namespace: awf-runner}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: {requests: {storage: 10Gi}}

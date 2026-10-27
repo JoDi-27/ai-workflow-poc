@@ -1,0 +1,25 @@
+# MCP gateway: one replica, since MCP Java SDK 2.1.0 keeps sessions in memory (spec 012).
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mcp-gateway, namespace: awf}
+spec:
+  selector: {app: mcp-gateway}
+  ports: [{port: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mcp-gateway, namespace: awf}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: mcp-gateway}}
+  template:
+    metadata: {labels: {app: mcp-gateway}}
+    spec:
+      containers:
+        - name: mcp-gateway
+          image: awf/mcp-gateway
+          ports: [{containerPort: 8080}]
+          env:
+            - {name: AWF_ENGINE_URL, value: http://engine.awf:8080}
+          resources: {limits: {cpu: "1", memory: 768Mi}}
