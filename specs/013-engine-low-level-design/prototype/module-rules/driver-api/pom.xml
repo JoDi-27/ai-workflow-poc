@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>spike013</groupId>
+    <artifactId>module-rules</artifactId>
+    <version>0</version>
+  </parent>
+  <artifactId>driver-api</artifactId>
+  <dependencies>
+    <dependency><groupId>spike013</groupId><artifactId>engine-ports-in</artifactId></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-web</artifactId></dependency>
+  </dependencies>
+  <profiles>
+    <profile>
+      <id>plant-1b</id>
+      <activation><property><name>plant</name><value>1b</value></property></activation>
+      <dependencies>
+    <dependency><groupId>spike013</groupId><artifactId>engine-core</artifactId></dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>

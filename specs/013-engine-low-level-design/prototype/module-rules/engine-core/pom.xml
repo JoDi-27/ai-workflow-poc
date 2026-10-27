@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>spike013</groupId>
+    <artifactId>module-rules</artifactId>
+    <version>0</version>
+  </parent>
+  <artifactId>engine-core</artifactId>
+  <dependencies>
+    <dependency><groupId>spike013</groupId><artifactId>engine-ports-in</artifactId></dependency>
+    <dependency><groupId>spike013</groupId><artifactId>engine-ports-out</artifactId></dependency>
+    <dependency><groupId>org.springframework</groupId><artifactId>spring-context</artifactId></dependency>
+    <dependency><groupId>jakarta.persistence</groupId><artifactId>jakarta.persistence-api</artifactId></dependency>
+  </dependencies>
+  <profiles>
+    <profile>
+      <id>plant-2b</id>
+      <activation><property><name>plant</name><value>2b</value></property></activation>
+      <dependencies>
+    <dependency><groupId>spike013</groupId><artifactId>runner-client</artifactId></dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>plant-6</id>
+      <activation><property><name>plant</name><value>6</value></property></activation>
+      <dependencies>
+    <dependency><groupId>com.google.cloud</groupId><artifactId>google-cloud-pubsub</artifactId></dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+</project>
