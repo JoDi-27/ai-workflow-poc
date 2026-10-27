@@ -1,80 +1,40 @@
 # ai-workflow-poc
 
-A PoC/MVP of a governed workflow engine for coding-agent drivers. The engine (Java) is the single authority for workflow definitions, runs, state, checkpoints, and scoring. A separately deployed UI handles human decisions and monitoring. Drivers are interactive coding agents on developer laptops (Claude Code first) that reach the engine through MCP and HTTP. A runner next to the engine validates gates: it runs checks and fresh-context evaluators in throwaway sandboxes against the revision the driver pushed, so the driver only builds. Jev, a hosted typed decision model, is called by the engine in shadow mode; Laya is out of the MVP until it can be trained (spike 010). The SDLC reference workflow only exists to exercise the framework; the framework is the product.
+Working rules for Claude Code sessions in this repository. What the project is, its stack, and where to read are in `README.md`; this file only says how to work here.
 
 ## Current state
 
-Phase 0 (spikes and scaffolding), not started. There is no code yet: no build, no tests, no runnable components. Server-side components run on Kubernetes: a local cluster for development and the MVP, and GCP (GKE) later (decided by the user, 2026-10-18). The stack is settled by spike 012 (`specs/012-technology-stack/`): Java 25, Spring Boot 4.1, and Maven for every server-side service; PostgreSQL 18 with JPA / Hibernate and Flyway; MCP Java SDK 2.1.0 in the gateway; fabric8 in the runner; Pub/Sub (the emulator locally); React, Vite, and TypeScript for the UI; JUnit 5 and Testcontainers for tests. When scaffolding lands, add the build, test, and run commands to this file.
+Phase 0, scaffolding not started: no product code, no build, no tests. `PLAN.md` has the phase table and `specs/STATUS.md` the board. When scaffolding lands, add the build, test, and run commands to this file.
 
 ## Where things live
 
 | File | Read it for |
 | --- | --- |
-| `WORKFLOW_ENGINE_INTENT.md` | Product intent, concepts, and design guardrails (long; read the relevant section, not all of it) |
+| `README.md` | What the project is, the stack, and the read-first table for `docs/` |
+| `WORKFLOW_ENGINE_INTENT.md` | Product intent and design guardrails (long; read the relevant section, not all of it) |
 | `PLAN.md` | Phases, their checklists, and exit criteria |
-| `BACKLOG.md` | The 14-step happy path, MVP decisions with suggested defaults, spike details and dependencies, and post-MVP items |
-| `specs/constitution.md` | The rules every spec and plan must respect |
-| `specs/README.md` | How the spec kit works |
-| `specs/NNN-slug/` | One work item: `spec.md`, `plan.md`, `tasks.md` |
-| `specs/STATUS.md` | Generated progress board; never edit by hand |
+| `BACKLOG.md` | Happy path, MVP decisions, the checks carried over from the spikes, and post-MVP items |
+| `docs/concepts/glossary.md` | The terms used everywhere (run, subject, checkpoint, evidence, runner, DecisionEngine) |
+| `specs/constitution.md` | The rules every spec, plan, and piece of code must respect; read it before planning or coding |
+| `specs/README.md` | How the spec kit works: commands, shell helpers, claims, file layout, and the practices it enforces |
 | `.claude/skills/sdd-*` | The six spec-kit skills |
 | `.claude/agents/spike-researcher.md` | Prepares spike briefings and questions for the user |
-
-The planned repository layout (not created yet) is `engine/`, `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/claude-code/`, `definitions/`, `deploy/`, `docs/`.
 
 ## How work is done
 
 All work goes through the spec-driven kit in `specs/`.
 
-- Do not implement anything that has no spec in `specs/`. Create one with `/sdd-specify` first, even for small items; a spike or a short feature spec is fine.
+- Do not implement anything that has no spec in `specs/`. Create one with `/sdd-specify` first, even for small items; a short feature spec is fine.
 - Features follow `/sdd-specify` → `/sdd-plan` → `/sdd-implement` → `/sdd-verify`. Stop at the end of each step for the user's review; running the next command is the approval.
-- Spikes follow `/sdd-spike` → `/sdd-verify`: an interview with the user, prepared by the `spike-researcher` agent. Whenever the user shares information about an active spike, even outside the command, record it in that spike's Log and Findings.
-- Parallel sessions are fine: claim a spec or task with `specs/_kit/sdd claim` before working on it, and never pick work by reading the files. The skills do this.
+- Spikes follow `/sdd-spike` → `/sdd-verify`. Whenever the user shares information about an active spike, even outside the command, record it in that spike's Log and Findings.
+- Claim a spec or task with `specs/_kit/sdd claim` before working on it, and never pick work by reading the files. The skills do this.
 - Keep the spec's status, its task checkboxes, and `specs/STATUS.md` up to date whenever work moves (`specs/_kit/sdd status --write`).
-- When code and spec disagree, update the spec or plan first, then the code (Article 13).
-- `/sdd-status` or `specs/_kit/sdd next` shows what to work on next.
+- When code and spec disagree, update the spec or plan first, then the code (constitution, article 13).
 - When a spec settles a `BACKLOG.md` item or finishes a `PLAN.md` checklist item, update those files in place.
-
-Shell helpers:
-
-```sh
-specs/_kit/sdd new feature "Title"    # or: new spike "Title"
-specs/_kit/sdd status                 # board and next up
-specs/_kit/sdd status --write         # also regenerates specs/STATUS.md
-specs/_kit/sdd next                   # only what can be worked on now
-specs/_kit/sdd claim <ID> [next|Tn]   # claim a spec, or its next free task, before working on it
-specs/_kit/sdd release <ID> [Tn] [--done]
-specs/_kit/sdd claims [--prune]       # what other sessions hold
-```
-
-## Rules to keep in mind
-
-The full list is in `specs/constitution.md`. The ones most easily broken while coding:
-
-- **The engine is the sole authority.** Only the engine writes state, applies pass conditions, and computes scores. The UI and drivers are API clients and never touch storage.
-- **Humans decide human steps.** Human decisions and definition approvals come only from human-authenticated UI sessions. Driver tokens never carry approval scopes. Model output (driver agent or a DecisionEngine provider such as Jev) can inform a human step but never satisfy it.
-- **The engine is neutral.** No SDLC concepts and no Claude Code concepts in engine code; those belong in workflow definitions and driver kits.
-- **Subscription-compatible drivers.** The engine core invokes models only through DecisionEngine adapters (Jev in the MVP), and nothing relies on API-key orchestration. Only the runner runs unattended evaluations, and on the owner's subscription only while the owner is the only user.
-- **No orchestrator.** The engine is reactive and never pushes work to drivers; drivers pull it through `status`. Workflow knowledge stays in the definition, not in a coordinating agent or the driver kit.
-- **Fail closed.** If the engine, the runner, an evaluator, or a decision provider is unavailable, protected actions and required steps do not pass.
-- **Happy path first.** Build the simplest thing that advances a happy path step. Anything else goes to `BACKLOG.md` "Next", not into the current spec.
-- **Verify current docs.** Check the current documentation of any library, SDK, or tool before using it, and record the version in the plan.
+- Check the current documentation of any library, SDK, or tool before using it, and record the version in the plan (article 15).
 
 ## Conventions
 
-- Specs: `spec.md` holds what and why with no technology; `plan.md` holds how with no new requirements. Requirements use EARS, every requirement maps to an acceptance criterion, and every criterion to a test or recorded manual check.
-- Unknowns are written as `[NEEDS CLARIFICATION: …]`, never guessed; they must be resolved before `/sdd-plan`.
-- Real choices between alternatives get a row in the plan's Decisions table (or a spike's Recommendation).
-- Tasks are half a day at most and leave the build green. One task is about one commit.
 - Commit only when asked. Messages start with the spec and task ID, for example `[003] T2 Add run state table`. Use `[meta]` only for housekeeping that changes no behavior or requirements (hooks, settings, kit scripts, doc fixes); anything else needs a spec.
 - Docs are written in plain, short sentences, consistent with the existing Markdown files.
-
-## Glossary
-
-- **Run:** one execution of a pinned workflow definition version on a subject; at most one active run per workflow and subject key. The SDLC driver kit uses repository + branch as the subject.
-- **Checkpoint:** an ordered sequence of steps (deterministic, reasoning, or human) that gates a transition and earns points.
-- **Evidence:** data a driver submits or a runner check produces for a step, with its provenance and trust level (driver submissions are *driver-reported*; runner results are *engine-verified*).
-- **Protected action:** an action, such as the merge, that a driver hook must get the engine to authorize.
-- **Driver kit:** the per-provider package (MCP config, hooks, instructions, optional evaluator subagent) that turns an agent into a driver.
-- **Runner:** the server-side component, called only by the engine, that runs gate checks and agent evaluators in throwaway sandboxes at a pushed revision. Provider and git specifics live in its adapters, not in the engine.
-- **DecisionEngine:** the engine-side interface for typed decision models. Jev is the only provider in the MVP (shadow mode); Laya returns later, once fine-tuned (spike 010).
+- Specs, plans, and tasks follow the practices in `specs/README.md` ("Good practices this kit enforces").

@@ -205,6 +205,68 @@ Spikes are listed in the order to run them. Spikes in the same wave can run in p
 
   Deliverable: draft Kubernetes manifests and a README section that takes a fresh clone to a stub `status` call from Claude Code. Input from spike 9b (spec 013): the build needs the repository's own Maven settings pointing at Maven Central, since the owner's global settings mirror to a corporate Nexus, and a JDK 25 pin, since the laptop's default JDK is newer; the engine is one Deployment running one replica in the MVP, though `DueWork` claims stay safe with more. The Phase 0 scaffolding then implements it. Depends on: 9. Settles: Local cluster, Sandbox technology. Input from spike 2 (G4): the Mac has no container runtime yet, so pick one together with the cluster (Testcontainers actively supports only Docker Desktop and Docker on Linux); run an in-cluster Maven proxy as the sandboxes' only egress; decide where the runner image is built and pushed. Input from spike 3: bootstrapping creates two human UI users, an owner and an approver, because the reference workflow's human step requires separation of duties. Also: build the `sample-crm` check image and set its digest and the PostgreSQL image digest in `docs/definitions/sdlc-reference.yaml`; its database variables (`SPRING_DATASOURCE_URL`, `_USERNAME`, `_PASSWORD`) must match what spec 004's plan reads. Input from spike 5: the collector receives OTLP/HTTP JSON from the host on port 4318; it needs contrib's `attributes` processor (delete `tool_input`, `tool_parameters`, `error`, `full_command`) and a secret-pattern redaction of `prompt`, `prompt_text`, `response`, and the `user_prompt` span attribute, both tested on a captured session; plus a `file` exporter next to the engine exporter. Runner sandboxes need no route to the collector. Input from spike 6 (spec 007), narrowed by spike 010 (Q27, no Laya in the MVP): the engine needs egress to `api.typesafe.ai` and the Jev key as a secret. Input from spike 7 (spec 010): workloads are engine, MCP gateway, analysis service, UI, broker (local), database instance with an engine schema and an analysis schema, runner, Maven proxy, and collector, plus the sandbox namespace (Q20–Q23); operational settings in a ConfigMap and secrets in Kubernetes Secrets (Q21); evaluator sandboxes get egress to Anthropic's API hosts only, check sandboxes to the Maven proxy only (Q10); the runner holds a fine-grained read-only repository token used in a clone step before subject code runs (Q11); `sample-crm` must allow merge commits, since `merge_recorded` checks that the base branch contains the reviewed revision (Q26, to confirm); run the Job classification prototype (Q13), including a check that a repeated Job name returns AlreadyExists (Q16). Input from spike 9 (spec 012): Docker Engine 29.5.2 (Docker Desktop app 4.75.0, since updated to 4.97.0 with Engine 29.9.2) on the owner's Mac runs Testcontainers 2.0.5 (PostgreSQL 18 and the Pub/Sub emulator); the Pub/Sub emulator (`google-cloud-cli:emulators`) keeps no state across restarts, so the local setup must create its topics and subscriptions idempotently each time it starts; the MCP gateway runs as one replica, since MCP Java SDK 2.1.0 keeps sessions in memory; the collector is `otelcol-contrib` v0.163.1, pinned by digest.
 
+## Carried-over checks
+
+Every spike's Follow-ups section lists what it handed on. This is the one list of what is still open from them, as of 2026-10-27, so nobody has to read the twelve sections again. Each item names the spike it came from and where it is settled. Tick an item here when its check is done; the spike files stay as they are.
+
+### Before the runner and driver kit are built
+
+These can change the design if they fail, so run them first, as the opening tasks of the runner stub and driver kit specs.
+
+- [ ] **Session ID injection (spike 011, Q3):** a PreToolUse hook's `updatedInput` can add `session_id` to an engine MCP tool's arguments. If not, bind every registered session of the same user on the subject and update `docs/driver-api/`. In PLAN Phase 0, driver kit skeleton.
+- [ ] **Evaluator authentication behind the egress policy (spike 014):** `claude -p` with `CLAUDE_CODE_OAUTH_TOKEN` and `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` authenticates behind the `ipBlock` policy that allows only Anthropic's API range, without `platform.claude.com`. In PLAN Phase 0, runner stub.
+- [ ] **Clone token isolation (spike 014):** after an init container clones with the token from a `secretKeyRef` and `git -c http.extraHeader`, the main container finds nothing in its env, `/proc`, `.git/config`, or through the API. In PLAN Phase 0, runner stub.
+- [ ] **Job classification (spike 010 Q13, spike 014):** with fabric8 8.x, Jobs that pull a missing image, request 64 CPUs, OOM the main container, leave a sidecar never ready, exit 1, exceed `activeDeadlineSeconds`, and get evicted; record the pod and container state the runner reads, so it reports *could not run* and *failed* apart (spike 003 Q32). Also that fabric8 surfaces a repeated Job name as HTTP 409 (plain `kubectl` did: `specs/014-local-setup/prototype/RESULTS.md`). In PLAN Phase 0, runner stub.
+- [ ] **Merge commits on `sample-crm` (spike 010, Q26):** the repository allows merge commits, since `merge_recorded` checks that the target branch contains the reviewed revision. Five minutes on GitHub. In PLAN Phase 0, manifests.
+
+### Local setup and manifests
+
+Plumbing from spike 014 that its draft assumes. In PLAN Phase 0, Kubernetes manifests, unless noted.
+
+- [ ] **Envoy Gateway on localhost:** installs from its release `install.yaml` without Helm, and `desktop-cloud-provider-kind` publishes its LoadBalancer on localhost.
+- [ ] **Native engine routing:** `/v1` and the MCP gateway route to `host.docker.internal` while the engine runs from the terminal (`docs/local-setup/README.md`, Development loop).
+- [ ] **Clone proxy product:** a forward proxy that allows only `github.com`.
+- [ ] **Local images without a push:** kind mode runs images built into Docker Desktop's containerd store.
+- [ ] **Tooling:** a `kubectl` matching the 1.36 cluster (the owner's is 1.34.1); pre-pull images, since first pulls through the VM network can take over an hour.
+- [ ] **One origin (spike 014, not run):** UI, engine, gateway, and analysis behind one localhost ingress; log in, confirm the cookie reaches `/v1`, and connect Claude Code to `http://localhost/mcp` without a validate warning.
+- [ ] **Emulator restart (spike 012, spike 014, not run):** topics and subscriptions are recreated idempotently on every Pub/Sub emulator start, and the engine and analysis recover after a restart.
+- [ ] **Check image by digest (spike 014, not run):** build and push the `sample-crm` check image, run a Job pinned to `image@sha256:…`, and set its digest and the PostgreSQL image digest in `docs/definitions/sdlc-reference.yaml`.
+- [ ] **Sidecar check timing (spike 002 G4, spike 014, not run):** a `postgres:18-alpine` native sidecar with a startup probe next to `eclipse-temurin:25-jdk` running `./mvnw -B verify`, cold and warm, through the Maven proxy; the wrapper download goes through the proxy too. Gives the 15-minute budget its first real number.
+
+### Collector
+
+In PLAN Phase 0, OTel Collector.
+
+- [ ] **Redaction (spike 006):** an `attributes` processor deletes `tool_input`, `tool_parameters`, `error`, and `full_command`, and secret patterns are redacted in `prompt`, `prompt_text`, `response`, and the `user_prompt` span attribute; agent, skill, and MCP names survive.
+- [ ] **Engine tool names in telemetry (spike 006):** with `OTEL_LOG_TOOL_DETAILS` on, confirm how the engine's MCP tools appear (plugin servers register as `plugin:<plugin>:<server>`).
+- [ ] **`/clear` (spikes 005 and 006, never tried):** a `/clear` fires SessionStart with `source: clear`, and the new session ID shows up in telemetry. Ten minutes, interactive.
+
+### Driver kit
+
+Checked when the kit is built (spikes 005 and 011). In PLAN Phase 1, Claude Code driver kit.
+
+- [ ] **MCP result visibility:** what the model sees of a tool result with `structuredContent` plus `outputSchema` against text only, and whether the `outputSchema` validation bug appears.
+- [ ] **Stop hook while a subagent runs:** use `background_tasks` so an early stop is not counted while a subagent is still working (spike 006 saw the Stop hook fire and the hand-back arrive as a `user_prompt`).
+- [ ] **Status size:** the reference workflow's `status` at an open `approve_release` attempt, with the kit instructions, stays under the 10,000-character cap.
+- [ ] **Plugin options reach hooks:** with a marketplace install at local scope, `userConfig` options with a default are exported to hook processes (with `--plugin-dir` they were not, spike 005 G6).
+
+### Engine and providers
+
+- [ ] **Denial idempotency (spike 013):** deleting a denial's idempotency row before commit lets a waiting retry run again, as the tested rollback did. In PLAN Phase 1, driver API.
+- [ ] **Jev error shapes (spike 008):** the real 429 and 529 bodies and whether they carry `retry-after`; the adapter uses its own backoff until then. Only if it matters at more than shadow-mode volume, and the burst only with the user's go-ahead.
+
+### Test bed and Phase 4
+
+- [ ] **Task records (spike 002, Q10):** draft each task's expected result and hidden acceptance tests under `docs/`, in a session separate from any run, for the user's review. See Seed data. Not in PLAN yet; needed before Phase 4.
+- [ ] **Test-bed fixes (spike 005):** the three undecided fixes under "Test-bed fixes from spike 005" above. Needed before Phase 1's exit run on a real repository.
+- [ ] **Plan usage (spike 005, G7):** a status-line script logs `rate_limits` before and after each Phase 4 task, since headless runs show no plan percentages.
+- [ ] **Hidden tests as an outcome (spike 003, Q21):** measure each task's hidden acceptance tests after the run, outside the score, and show them next to it in the quality view.
+- [ ] **Weakest step (spike 002, Q8):** if no weakest step stands out after the first seed runs, plant one before the v2 cycle. See Detection.
+
+### Closed without action
+
+Listed once so they are not re-read as open: Kubedock, Docker-in-Docker, and gVisor comparisons (spike 002 G4; sandbox technology settled by spike 014); offline `./mvnw -o verify` and the `~/.m2` size (replaced by the in-cluster Maven proxy); OTel export from a headless evaluator in a container (runner evaluators do not export OTel, spike 006); a `/goal` turn limit (the kit uses a Stop hook, spike 005 Q7); the validator slice, the mini replay, and the paper replay of the example run (Phase 1 tests, spike 013); the stateless MCP SDK trial, the evaluator token proxy, the Laya adapter conventions, and the article toy workflow ("Next" items below).
+
 ## Next: improvements after the MVP
 
 - [ ] **Stateless MCP gateway:** move the gateway to a stateless MCP SDK (Java SDK 2.2.x `modern` server, protocol `2026-07-28`) once it is GA and a trial shows Claude Code connects without claude-code#39790, so the gateway can run more than one replica (spike 012, Q8).
