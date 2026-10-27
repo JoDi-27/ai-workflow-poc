@@ -104,7 +104,7 @@ Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 001's decisions
 
 ### Researched
 
-- networknt json-schema-validator: 2.x for Java 8+ and Jackson 2 (e.g. 2.0.4); 3.x for Java 17+ and Jackson 3 (e.g. 3.0.8). Supports draft-04 to 2020-12 (default 2020-12); reads YAML schemas and input via jackson-dataformat-yaml. ([GitHub](https://github.com/networknt/json-schema-validator), Context7 `/networknt/json-schema-validator`, checked 2026-10-18)
+- networknt json-schema-validator: 2.x for Java 8+ and Jackson 2 (e.g. 2.0.4); 3.x for Java 17+ and Jackson 3 (e.g. 3.0.8). Supports draft-04 to 2020-12 (default 2020-12); reads YAML schemas and input via jackson-dataformat-yaml. ([GitHub](https://github.com/networknt/json-schema-validator), checked 2026-10-18)
 - networknt 2.0: remote `$ref`s no longer fetched by default (classpath refs still load); errors are a `List` without codes; line and column positions are opt-in (`LocationJsonNodeFactory`) and cost performance. ([upgrading](https://github.com/networknt/json-schema-validator/blob/master/doc/upgrading.md), checked 2026-10-18)
 - networknt reports 100% on the official 2020-12 test suite. json-sKema (erosb) also implements 2020-12; Everit is reported as maintenance-only, superseded by json-sKema (third-party listing, not checked on the repos). ([json-sKema](https://github.com/erosb/json-sKema), checked 2026-10-18)
 - Since 2019-09, `format` is annotation-only by default. (networknt README, checked 2026-10-18)
@@ -154,7 +154,7 @@ Q1–Q19 stand except where the conflicts below say otherwise.
 
 #### Researched
 
-- Kubernetes native sidecar: an init container with `restartPolicy: Always`; later containers start once its `startupProbe` succeeds; sidecars do not block Job completion. A sidecar whose startup probe never succeeds restarts until the Job's `activeDeadlineSeconds`, and the main container never starts; the runner must read that as "could not run". Probe handlers: exec, httpGet, tcpSocket, grpc. (kubernetes.io Sidecar containers, Probes, Jobs; Context7 `/websites/kubernetes_io`, checked 2026-10-18)
+- Kubernetes native sidecar: an init container with `restartPolicy: Always`; later containers start once its `startupProbe` succeeds; sidecars do not block Job completion. A sidecar whose startup probe never succeeds restarts until the Job's `activeDeadlineSeconds`, and the main container never starts; the runner must read that as "could not run". Probe handlers: exec, httpGet, tcpSocket, grpc. (kubernetes.io Sidecar containers, Probes, Jobs, checked 2026-10-18)
 - GitHub Actions `services`: map of label to `{image, env, ports, options}`; readiness via Docker health options (`--health-cmd pg_isready …`). ([docs](https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers), checked 2026-10-18)
 - GitLab CI: job `image` plus `services` (`name`, `alias`, `entrypoint`, `command`); readiness waits on exposed ports and only warns on timeout, which is not fail-closed. ([docs](https://docs.gitlab.com/ci/services/), checked 2026-10-18)
 - Anthropic: Pro and Max follow the Consumer Terms; developers may not route requests through Free, Pro, or Max credentials on behalf of their users; a product hosting Claude Code must have each end user authenticate with their own key or subscription; limits assume ordinary, individual usage. ([legal-and-compliance](https://code.claude.com/docs/en/legal-and-compliance), checked 2026-10-18)

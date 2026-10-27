@@ -23,7 +23,7 @@ You write the HOW for one spec. You do not implement.
 
 - Read `specs/constitution.md` and the spec.
 - Read the code, configuration, and specs that the work touches. Read `plan.md` of the specs it depends on.
-- Check current documentation for every library, SDK, or tool the plan relies on (Context7 first), and note the versions (Article 15).
+- Check current documentation for every library, SDK, or tool the plan relies on, and note the versions (Article 15).
 
 ## 3. Write the plan and tasks
 

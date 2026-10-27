@@ -27,7 +27,7 @@ All work in `sample-crm` happens in that repository (`/Users/jodi/repos/personal
 | 14. Decisions are written down | Decisions below. |
 | 15. Verify current docs | Versions below, checked 2026-10-19. |
 
-Versions, from `sample-crm`'s `pom.xml` and current docs (Context7): Spring Boot 4.1.1 (Spring Data JPA 4.x, `JpaSpecificationExecutor`, `@ConditionalOnExpression`), Testcontainers 2.0.5 with `postgres:18-alpine`, springdoc-openapi 3.1.1, GitHub Actions `services:` with `pg_isready` health checks on `ubuntu-latest`, `actions/checkout@v7` and `actions/setup-java@v6` as already used. The check script needs `bash`, `curl`, and `jq` 1.7 or later.
+Versions, from `sample-crm`'s `pom.xml` and current docs: Spring Boot 4.1.1 (Spring Data JPA 4.x, `JpaSpecificationExecutor`, `@ConditionalOnExpression`), Testcontainers 2.0.5 with `postgres:18-alpine`, springdoc-openapi 3.1.1, GitHub Actions `services:` with `pg_isready` health checks on `ubuntu-latest`, `actions/checkout@v7` and `actions/setup-java@v6` as already used. The check script needs `bash`, `curl`, and `jq` 1.7 or later.
 
 ## Design
 

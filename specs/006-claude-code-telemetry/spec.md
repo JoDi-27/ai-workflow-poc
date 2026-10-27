@@ -56,7 +56,7 @@ Prepared by the spike-researcher agent on 2026-10-19 from the repository and the
 
 ### Researched
 
-Sources: [monitoring](https://code.claude.com/docs/en/monitoring-usage), [env-vars](https://code.claude.com/docs/en/env-vars), [hooks](https://code.claude.com/docs/en/hooks), [cli-reference](https://code.claude.com/docs/en/cli-reference), [plugins-reference](https://code.claude.com/docs/en/plugins-reference), [costs](https://code.claude.com/docs/en/costs), [statusline](https://code.claude.com/docs/en/statusline), [headless](https://code.claude.com/docs/en/headless), checked 2026-10-19; [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) v0.163.1 (2026-10-16) via Context7.
+Sources: [monitoring](https://code.claude.com/docs/en/monitoring-usage), [env-vars](https://code.claude.com/docs/en/env-vars), [hooks](https://code.claude.com/docs/en/hooks), [cli-reference](https://code.claude.com/docs/en/cli-reference), [plugins-reference](https://code.claude.com/docs/en/plugins-reference), [costs](https://code.claude.com/docs/en/costs), [statusline](https://code.claude.com/docs/en/statusline), [headless](https://code.claude.com/docs/en/headless), checked 2026-10-19; [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) v0.163.1 (2026-10-16).
 
 **G1 · Signals.**
 - Enabled by `CLAUDE_CODE_ENABLE_TELEMETRY=1` plus `OTEL_METRICS_EXPORTER` (`otlp|prometheus|console|none`) and `OTEL_LOGS_EXPORTER` (`otlp|console|none`). `OTEL_EXPORTER_OTLP_PROTOCOL` (`grpc|http/json|http/protobuf`) has no default and must be set.

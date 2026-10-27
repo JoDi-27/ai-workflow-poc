@@ -109,7 +109,7 @@ All checked 2026-10-19.
 - An unreachable HTTP server is retried 3 times at startup, then marked failed; a server that drops mid-session is reconnected up to 5 times with backoff. SSE is deprecated. `headersHelper` produces headers dynamically and reruns on 401/403. (same)
 - Plugin servers register as `plugin:<plugin>:<server>`, with tools named `mcp__plugin_<plugin>_<server>__<tool>`. Hook matchers written against the bare server name never fire for them. (same)
 - MCP Java SDK 2.1.0 is the latest stable; 2.2.0-M1 adds a stateless server for protocol 2026-07-28. 2.x tracks protocol 2025-11-25; 2.1.0 dropped 2024-11-05 from Streamable HTTP. Java 17 baseline. ([releases](https://github.com/modelcontextprotocol/java-sdk/releases); [Maven](https://repo1.maven.org/maven2/io/modelcontextprotocol/sdk/mcp/maven-metadata.xml))
-- The core `mcp` module ships `HttpServletStreamableServerTransportProvider`, a plain servlet with no framework; its `contextExtractor` reads the `Authorization` header. The WebMVC and WebFlux transports moved to Spring AI 2.0+. ([server docs](https://java.sdk.modelcontextprotocol.io/latest-snapshot/server), via Context7)
+- The core `mcp` module ships `HttpServletStreamableServerTransportProvider`, a plain servlet with no framework; its `contextExtractor` reads the `Authorization` header. The WebMVC and WebFlux transports moved to Spring AI 2.0+. ([server docs](https://java.sdk.modelcontextprotocol.io/latest-snapshot/server))
 - Known issue: from 2.1.84, Claude Code failed to connect to POST-only stateless servers that answer GET with 405 (Spring AI WebMVC stateless); closed unfixed. Workaround: the stateful Streamable HTTP transport. ([anthropics/claude-code#39790](https://github.com/anthropics/claude-code/issues/39790))
 
 **G2**

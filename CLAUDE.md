@@ -58,7 +58,7 @@ The full list is in `specs/constitution.md`. The ones most easily broken while c
 - **No orchestrator.** The engine is reactive and never pushes work to drivers; drivers pull it through `status`. Workflow knowledge stays in the definition, not in a coordinating agent or the driver kit.
 - **Fail closed.** If the engine, the runner, an evaluator, or a decision provider is unavailable, protected actions and required steps do not pass.
 - **Happy path first.** Build the simplest thing that advances a happy path step. Anything else goes to `BACKLOG.md` "Next", not into the current spec.
-- **Verify current docs.** Check the current documentation of any library, SDK, or tool before using it (Context7), and record the version in the plan.
+- **Verify current docs.** Check the current documentation of any library, SDK, or tool before using it, and record the version in the plan.
 
 ## Conventions
 
