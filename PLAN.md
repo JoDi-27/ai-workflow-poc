@@ -6,7 +6,7 @@ Each checklist item is delivered through a spec in `specs/` (see `specs/README.m
 
 | Phase | Goal | Status |
 | --- | --- | --- |
-| 0. Spikes and scaffolding | Answer the unknowns, confirm the MVP decisions, and stand up empty but connected components | Not started |
+| 0. Spikes and scaffolding | Answer the unknowns, confirm the MVP decisions, and stand up empty but connected components | In progress: spikes done (2026-10-27); decisions and scaffolding open |
 | 1. Execution | Happy path steps 1–7: Claude Code builds and ships code through the engine, with Jev in shadow mode | Not started |
 | 2. Observability and quality monitoring | Happy path steps 8–10 | Not started |
 | 3. Feedback loop | Happy path steps 11–14 | Not started |
@@ -39,6 +39,8 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 - [ ] Confirm or replace each suggested default in the `BACKLOG.md` MVP section, using the spike results. Record each decision and its rationale in place.
 
 ### Scaffolding
+
+Each item below becomes a feature spec (`/sdd-specify`), split if it takes more than a few days. The checks the spikes handed to scaffolding are collected in `BACKLOG.md` "Carried-over checks"; the ones that can change the design (session ID injection, evaluator authentication behind the egress policy, clone token isolation, Job classification) go first, as the opening tasks of the runner stub and driver kit specs.
 
 - [ ] Repository layout, for example: `engine/` (Java), `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/claude-code/`, `definitions/`, `deploy/`, `docs/` (spike 010).
 - [ ] Engine skeleton: builds, starts, connects to the database, exposes a health endpoint and a stub MCP `status` operation. Use the six Maven modules, the ArchUnit and `analyze-only` rules, the project Maven settings (Maven Central), and the JDK 25 pin from `docs/engine/design.md` section 1 and spike 013's `prototype/module-rules/`.

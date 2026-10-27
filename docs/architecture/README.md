@@ -540,10 +540,14 @@ Accepted MVP risks:
 - One person holds both UI accounts (owner and approver), so separation of duties is exercised but not enforced between real people.
 - Evaluator sandboxes hold the `setup-token` while reading agent-written code. This is mitigated by read-only tools, spec 005's isolation flags, and egress to Anthropic's API hosts only (Q10).
 
-## Open items for later spikes
+## Items handed to later spikes
 
-- PLAN spike 8 (driver API contract): the analysis read API, the engine's introspection endpoint, and its paged event read (Q23); the HTTP driver API as the one contract, which the MCP gateway's tool schemas mirror (Q20); operation schemas, the `authorize_action` input as a neutral action name plus revision (Q3), idempotency key placement, denial format, and the evaluation task packet.
-- PLAN spike 9 (technology stack): the framework, the relational database product (and its row-lock, outbox, and document-column implementation), the module rule checker, the runner's Kubernetes client, and the MCP gateway's SDK and version (Java SDK 2.1.0 stateful or 2.2.0 stateless, or another language) (Q20).
-- PLAN spikes 9 and 10: the broker product (Pub/Sub on GKE; the emulator or a self-hosted broker such as NATS JetStream or RabbitMQ locally), with the Pub/Sub details recorded under Q23 checked against current docs.
-- PLAN spike 10 (local setup): the namespaces, network policies for both sandbox kinds, secrets, and the collector config with the neutral name mapping.
-- Spike 008 (Jev telemetry, closed): its decisions are taken in above. Provider calls are recorded in the engine's own table, with no OTel export. The engine keeps the correlation itself and stores `x-typesafe-request-id`. Costs are list-price estimates, and a deployment-config allow-list limits Jev to `sample-crm`. Its Laya parts wait until Laya returns (Q27).
+Everything this spike left open was settled by the spikes that followed, all closed by 2026-10-27:
+
+- Spike 011 (`docs/driver-api/`): the HTTP driver API as the one contract, mirrored by the MCP gateway's tool schemas; the operation schemas, the neutral `authorize_action` input, idempotency keys, the denial format, the evaluation task packet, and the analysis read API with the engine's introspection and paged event read.
+- Spike 012 (`specs/012-technology-stack/`): Java 25, Spring Boot 4.1, PostgreSQL 18 with JPA and Flyway, ArchUnit and `analyze-only` as the module rule checkers, fabric8 for the runner, MCP Java SDK 2.1.0 stateful for the gateway, and Pub/Sub with the emulator locally.
+- Spike 013 (`docs/engine/`): the engine's modules, ports, schema, state machines, locking, and validator.
+- Spike 014 (`docs/local-setup/`): the namespaces, network policies, secrets, and the collector config.
+- Spike 008 (Jev telemetry): provider calls are recorded in the engine's own table, with no OTel export. The engine keeps the correlation itself and stores `x-typesafe-request-id`. Costs are list-price estimates, and a deployment-config allow-list limits Jev to `sample-crm`. Its Laya parts wait until Laya returns (Q27).
+
+The checks those spikes deferred to scaffolding are listed in `BACKLOG.md`, "Carried-over checks".
