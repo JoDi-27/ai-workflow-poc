@@ -1,0 +1,53 @@
+# Sandbox namespace rules: default-deny egress, limits on every container, at most 4 jobs at once (spike 014; spec 010 Q10).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny, namespace: awf-sandbox}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-dns-and-proxies, namespace: awf-sandbox}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+          podSelector: {matchLabels: {k8s-app: kube-dns}}
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: awf-runner}}
+          podSelector: {matchExpressions: [{key: app, operator: In, values: [maven-proxy, clone-proxy]}]}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-evaluator-anthropic, namespace: awf-sandbox}
+spec:
+  podSelector: {matchLabels: {awf/sandbox: evaluator}}
+  policyTypes: [Egress]
+  egress:
+    - to: [{ipBlock: {cidr: 160.79.104.0/23}}]
+      ports: [{protocol: TCP, port: 443}]
+---
+apiVersion: v1
+kind: LimitRange
+metadata: {name: defaults, namespace: awf-sandbox}
+spec:
+  limits:
+    - type: Container
+      default: {cpu: "1", memory: 1Gi}
+      defaultRequest: {cpu: 250m, memory: 256Mi}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata: {name: sandbox, namespace: awf-sandbox}
+spec:
+  hard:
+    count/jobs.batch: "4"
+    limits.cpu: "8"
+    limits.memory: 12Gi
+---
+# Read only by the clone init container (repository token) and the evaluator container (setup-token).
+# Created by the overlay's secretGenerator from untracked files in .local/.

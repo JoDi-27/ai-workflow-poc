@@ -1,0 +1,23 @@
+# Local overlay: Docker Desktop kind mode, Kubernetes 1.36, Envoy Gateway, the Pub/Sub emulator.
+# Secrets come from untracked files in .local/ next to this file (Kustomize only reads files under its root) (see docs/local-setup/README.md).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources: [../../base]
+images:
+  - {name: awf/engine, newTag: dev}
+  - {name: awf/mcp-gateway, newTag: dev}
+  - {name: awf/analysis, newTag: dev}
+  - {name: awf/ui, newTag: dev}
+  - {name: awf/runner, newTag: dev}
+patches:
+  - target: {kind: Gateway, name: awf}
+    patch: |-
+      - {op: replace, path: /spec/gatewayClassName, value: envoy}
+generatorOptions: {disableNameSuffixHash: true}
+secretGenerator:
+  - {name: postgres, namespace: awf, envs: [.local/postgres.env]}
+  - {name: engine, namespace: awf, envs: [.local/engine.env]}
+  - {name: analysis, namespace: awf, envs: [.local/analysis.env]}
+  - {name: bootstrap, namespace: awf, envs: [.local/bootstrap.env]}
+  - {name: repo-token, namespace: awf-sandbox, files: [token=.local/repo-token]}
+  - {name: setup-token, namespace: awf-sandbox, files: [token=.local/setup-token]}

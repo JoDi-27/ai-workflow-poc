@@ -1,0 +1,20 @@
+# Idempotent bootstrap: the engine image in its `bootstrap` profile creates the owner and the approver,
+# stores the hash of the fixed driver token, and loads definitions/sdlc-reference.yaml as the initial version (spike 014 Q8, Q9).
+apiVersion: batch/v1
+kind: Job
+metadata: {name: bootstrap, namespace: awf}
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: bootstrap
+          image: awf/engine
+          args: [--spring.profiles.active=bootstrap]
+          envFrom:
+            - configMapRef: {name: engine-settings}
+            - secretRef: {name: engine}
+            - secretRef: {name: bootstrap}     # owner and approver passwords, driver token
+          resources: {limits: {cpu: "1", memory: 1Gi}}

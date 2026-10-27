@@ -1,0 +1,28 @@
+# Analysis service, fed by engine events through the broker; rebuilds from the engine's event read (AD-24).
+---
+apiVersion: v1
+kind: Service
+metadata: {name: analysis, namespace: awf}
+spec:
+  selector: {app: analysis}
+  ports: [{port: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: analysis, namespace: awf}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: analysis}}
+  template:
+    metadata: {labels: {app: analysis}}
+    spec:
+      containers:
+        - name: analysis
+          image: awf/analysis
+          ports: [{containerPort: 8080}]
+          envFrom: [{secretRef: {name: analysis}}]
+          env:
+            - {name: SPRING_DATASOURCE_URL, value: "jdbc:postgresql://postgres.awf:5432/awf?currentSchema=analysis"}
+            - {name: AWF_PUBSUB_EMULATOR_HOST, value: pubsub.awf:8085}
+            - {name: AWF_ENGINE_URL, value: http://engine.awf:8080}
+          resources: {limits: {cpu: "1", memory: 1Gi}}

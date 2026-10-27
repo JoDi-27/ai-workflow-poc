@@ -1,0 +1,33 @@
+# Spike 014 prototype: sandbox egress rules (spec 010 Q10).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: default-deny-egress, namespace: awf-sandbox}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-dns-and-proxy, namespace: awf-sandbox}
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: kube-system}}
+          podSelector: {matchLabels: {k8s-app: kube-dns}}
+      ports: [{protocol: UDP, port: 53}, {protocol: TCP, port: 53}]
+    - to:
+        - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: awf-runner}}
+          podSelector: {matchLabels: {app: maven-proxy}}
+      ports: [{protocol: TCP, port: 80}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-evaluator-anthropic, namespace: awf-sandbox}
+spec:
+  podSelector: {matchLabels: {awf/sandbox: evaluator}}
+  policyTypes: [Egress]
+  egress:
+    - to: [{ipBlock: {cidr: 160.79.104.0/23}}]
+      ports: [{protocol: TCP, port: 443}]

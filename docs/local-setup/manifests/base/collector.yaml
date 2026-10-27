@@ -1,0 +1,51 @@
+# otelcol-contrib v0.163.1, pinned by digest in the overlay. Receives OTLP/HTTP from the host on 4318 (spec 006).
+---
+apiVersion: v1
+kind: Service
+metadata: {name: collector, namespace: awf}
+spec:
+  selector: {app: collector}
+  ports: [{port: 4318}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: collector, namespace: awf}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: collector}}
+  template:
+    metadata: {labels: {app: collector}}
+    spec:
+      containers:
+        - name: collector
+          image: otel/opentelemetry-collector-contrib:0.163.1
+          ports: [{containerPort: 4318}]
+          args: [--config=/etc/otelcol/config.yaml]
+          volumeMounts: [{name: config, mountPath: /etc/otelcol}]
+          resources: {limits: {cpu: 500m, memory: 512Mi}}
+      volumes: [{name: config, configMap: {name: collector-config}}]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: collector-config, namespace: awf}
+data:
+  config.yaml: |
+    receivers:
+      otlp: {protocols: {http: {endpoint: 0.0.0.0:4318}}}
+    processors:
+      attributes/drop:
+        actions:
+          - {key: tool_input, action: delete}
+          - {key: tool_parameters, action: delete}
+          - {key: error, action: delete}
+          - {key: full_command, action: delete}
+      # Secret-pattern redaction of prompt, prompt_text, response, and the user_prompt span attribute,
+      # and the mapping to neutral names, follow spec 006; tested on a captured session in scaffolding.
+    exporters:
+      otlphttp/engine: {endpoint: http://engine.awf:8080/v1/telemetry}
+      file: {path: /tmp/telemetry.jsonl}
+    service:
+      pipelines:
+        logs: {receivers: [otlp], processors: [attributes/drop], exporters: [otlphttp/engine, file]}
+        metrics: {receivers: [otlp], processors: [attributes/drop], exporters: [otlphttp/engine, file]}
+        traces: {receivers: [otlp], processors: [attributes/drop], exporters: [otlphttp/engine, file]}

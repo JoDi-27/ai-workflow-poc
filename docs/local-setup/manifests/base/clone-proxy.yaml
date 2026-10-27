@@ -1,0 +1,23 @@
+# Forward proxy allowing only github.com, used by the clone init container (spike 014 Q7). Product chosen in scaffolding.
+---
+apiVersion: v1
+kind: Service
+metadata: {name: clone-proxy, namespace: awf-runner}
+spec:
+  selector: {app: clone-proxy}
+  ports: [{port: 3128}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: clone-proxy, namespace: awf-runner}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: clone-proxy}}
+  template:
+    metadata: {labels: {app: clone-proxy}}
+    spec:
+      containers:
+        - name: clone-proxy
+          image: CLONE_PROXY_IMAGE
+          ports: [{containerPort: 3128}]
+          resources: {limits: {cpu: 200m, memory: 128Mi}}
