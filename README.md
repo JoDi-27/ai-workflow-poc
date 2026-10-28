@@ -16,6 +16,7 @@ Phase 0: the spikes are done and scaffolding is next. There is no product code y
 | `specs/` | The spec-driven kit: one folder per work item. Start at `specs/README.md` |
 | `deploy/` | Draft Kubernetes manifests: `base/` and the `local` and `gke` overlays |
 | `scripts/` | Helper scripts |
+| `.claude/` | Claude Code skills, agents, hooks, and permissions. Start at `.claude/README.md` |
 | `CLAUDE.md` | Working rules for Claude Code sessions in this repository |
 
 ## Stack
