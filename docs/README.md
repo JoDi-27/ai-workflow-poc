@@ -2,7 +2,7 @@
 
 The design of the workflow engine, as settled by the Phase 0 spikes. Each document says which spike wrote it; that spike's `specs/NNN-*/spec.md` holds the questions, the user's answers, and the reasons. When a document and a spec disagree, the document is the current state and the spec is the history.
 
-No product code exists yet, so everything here is design. The plan and the open decisions are in `PLAN.md` and `BACKLOG.md` at the repository root.
+No product code exists yet, so everything here is design. For the rest of the repository (the plan, the backlog, the stack, and the spec kit), start from the root `README.md`.
 
 ## Where to start
 
@@ -16,7 +16,7 @@ No product code exists yet, so everything here is design. The plan and the open 
 | Build part of the engine | `engine/design.md`, the section for that part, and `engine/schema-draft.sql` |
 | Build a driver kit or the MCP gateway | `driver-api/README.md` |
 | Build the runner or its sandboxes | `architecture/README.md`, Runner interface, then `local-setup/README.md` |
-| Run the system on a laptop | `local-setup/README.md` and the manifests in `deploy/` |
+| Run the system on a laptop | `local-setup/README.md` |
 | Pick or check a test task | `test-bed/README.md` |
 | Know why a design choice was made | `architecture/decisions.md` (AD-1 to AD-29), then the spike's spec |
 
@@ -39,21 +39,6 @@ No product code exists yet, so everything here is design. The plan and the open 
 | `engine/schema-draft.sql` | The draft engine schema DDL | 013 |
 | `local-setup/README.md` | How the whole system runs on one laptop's Kubernetes cluster | 014 |
 | `test-bed/README.md` | The `sample-crm` repository, its baseline, and tasks T01–T12 with their expected results | 002, 004 |
-
-The technology stack is in the repository `README.md`, and the full stack decision is in spike 012's spec.
-
-## Elsewhere in the repository
-
-| Path | What it holds |
-| --- | --- |
-| `README.md` | What the project is, its status, and the stack |
-| `CLAUDE.md` | Working rules for Claude Code sessions |
-| `PLAN.md` | Phases, their checklists, and exit criteria |
-| `BACKLOG.md` | The happy path, MVP decisions, a summary of each spike, carried-over checks, and later work |
-| `specs/` | One folder per spec; `specs/README.md` explains the kit and `specs/STATUS.md` is the board |
-| `specs/constitution.md` | The rules every spec, plan, and piece of code must respect |
-| `deploy/` | Draft Kubernetes manifests: `base/` and the `local` and `gke` overlays (spike 014) |
-| `scripts/` | Helper scripts, such as `baseline-checks.sh` for the test bed (spec 004) |
 
 ## Rules for these documents
 
