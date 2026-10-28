@@ -5,7 +5,7 @@ type: feature
 status: done
 phase: 0
 depends_on: [002]
-refs: ["PLAN Phase 0 / Spikes / 2. Test bed", "BACKLOG Feedback loop / Seed data", "docs/test-bed.md / Repository / Baseline"]
+refs: ["PLAN Phase 0 / Spikes / 2. Test bed", "BACKLOG Feedback loop / Seed data", "docs/test-bed/README.md / Repository / Baseline"]
 updated: 2026-10-19
 ---
 
@@ -13,7 +13,7 @@ updated: 2026-10-19
 
 ## Problem
 
-Spike 002 chose `sample-crm` as the repository where runs do real work, along with twelve tasks, T01 to T12 (`docs/test-bed.md`). The repository has only a README. The task records, the hidden acceptance tests, and Laya's first cases all need a baseline to start from, and four tasks only take their expected path if the baseline contains certain defects and tests on purpose: T02, T04, T06, and T07.
+Spike 002 chose `sample-crm` as the repository where runs do real work, along with twelve tasks, T01 to T12 (`docs/test-bed/README.md`). The repository has only a README. The task records, the hidden acceptance tests, and Laya's first cases all need a baseline to start from, and four tasks only take their expected path if the baseline contains certain defects and tests on purpose: T02, T04, T06, and T07.
 
 `sample-crm` is developed with its own copy of the spec kit. Its spec 001 (`sample-crm/specs/001-crm-service-baseline/`) describes the service as a normal product. Drivers will work in that repository and can read everything in it, so the planted defects must not appear there. This spec holds what only the test bed needs: the planted defects, the tests the tasks rely on, the guarantee that nothing gives them away, and the recorded baseline commit. It is verified from this repository.
 
@@ -27,11 +27,11 @@ Spike 002 chose `sample-crm` as the repository where runs do real work, along wi
 - The planted defects and existing tests that T02, T04, T06, and T07 rely on.
 - No feature that a task asks for exists yet, and nothing in `sample-crm` names a planted defect or a task.
 - CI that runs the tests and reports on the commit.
-- The baseline tag, recorded in `docs/test-bed.md` as T01's base commit.
+- The baseline tag, recorded in `docs/test-bed/README.md` as T01's base commit.
 
 **Out:**
 
-- Task records, expected results, and hidden acceptance tests: a later spec, which needs this baseline (`docs/test-bed.md` / Task records).
+- Task records, expected results, and hidden acceptance tests: a later spec, which needs this baseline (`docs/test-bed/README.md` / Task records).
 - Laya's first cases: a later spec, after spike 6 settles the typed question.
 - Running any task, and the branch scheme for reruns: they belong to the runs themselves.
 - Planted setups that are not in the baseline code (T08's low iteration limit, T10's scripted early merge): they belong to the task records.
@@ -42,7 +42,7 @@ Spike 002 chose `sample-crm` as the repository where runs do real work, along wi
 
 The owner wants to start T01 from a known commit, so that every run and rerun begins from the same code.
 
-1. They look up the baseline tag and T01's base commit in `docs/test-bed.md`.
+1. They look up the baseline tag and T01's base commit in `docs/test-bed/README.md`.
 2. They check out `sample-crm` at that commit, and the tests pass locally and in CI.
 
 ### S2 · A planted task takes its expected path
@@ -63,7 +63,7 @@ A driver explores `sample-crm`, including its specs and git history, and finds n
 Baseline:
 
 - **R1** The test bed baseline shall be `sample-crm` at a commit on `main` where its spec 001 is verified.
-- **R2** If a task in `docs/test-bed.md` asks for a behavior, then the baseline shall not already have that behavior.
+- **R2** If a task in `docs/test-bed/README.md` asks for a behavior, then the baseline shall not already have that behavior.
 - **R3** The baseline's CI shall run every test on each push and pull request with `./mvnw -B verify` against a PostgreSQL service container given by environment variables, and report the result on the commit, identified by its SHA.
 - **R13** Where a PostgreSQL is given by environment variables, the baseline's tests shall use it and start no Testcontainers database; otherwise they shall start PostgreSQL with Testcontainers.
 
@@ -83,7 +83,7 @@ Nothing gives it away:
 
 Baseline commit:
 
-- **R12** When the baseline is verified, `docs/test-bed.md` shall record the baseline tag (`baseline`), its commit SHA, and that commit as T01's base commit.
+- **R12** When the baseline is verified, `docs/test-bed/README.md` shall record the baseline tag (`baseline`), its commit SHA, and that commit as T01's base commit.
 
 ## Acceptance criteria
 
@@ -98,7 +98,7 @@ Baseline commit:
 - **AC-9** (R9) Given the baseline tests, when every email address they use to create contacts is listed, then no two differ only in case or surrounding whitespace. Recorded as a manual check.
 - **AC-10** (R10) Given the baseline tests, when they are searched, then one test deletes a company and asserts that its contacts still exist with no company, and it passes.
 - **AC-11** (R11) Given `sample-crm` at the baseline tag, when its files and full git history (messages, branches, tags) are searched for the task IDs in their two-digit form (T01 to T12), the task titles, "planted", "defect", "off-by-one", "test bed", and this repository's name, then nothing is found. Recorded as a manual check with the search commands used.
-- **AC-12** (R12) Given the baseline verified, when `docs/test-bed.md` is read, then it names the baseline tag, the commit SHA, and that SHA as T01's base commit, and the SHA matches the tag in `sample-crm`.
+- **AC-12** (R12) Given the baseline verified, when `docs/test-bed/README.md` is read, then it names the baseline tag, the commit SHA, and that SHA as T01's base commit, and the SHA matches the tag in `sample-crm`.
 - **AC-13** (R13) Given the baseline and a running PostgreSQL given by environment variables, when `./mvnw -B verify` runs on a machine with no container runtime, then every test passes; and given no such variables on a machine with Docker, the same command passes using Testcontainers. Recorded as a manual check.
 
 ## Open questions

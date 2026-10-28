@@ -46,7 +46,7 @@ This spike answers that, so that spike 7 (target architecture) can place Jev tel
 
 <!-- Prepared by the spike-researcher agent: what the repository and current docs already say, with sources. -->
 
-Prepared 2026-10-19 by the spike-researcher agent. Sources: INTENT = `WORKFLOW_ENGINE_INTENT.md`; spike 006 and spike 007 = their `spec.md`; capture = `prototype/results/capture.json`. External sources were checked on 2026-10-19. The laya-serve facts come from reading the installed `laya` 0.4.12 source in spike 007's prototype venv (`laya/serve.py`, in the `next-available-spike-ec239e` worktree), not from a live capture.
+Prepared 2026-10-19 by the spike-researcher agent. Sources: INTENT = `docs/intent.md`; spike 006 and spike 007 = their `spec.md`; capture = `prototype/results/capture.json`. External sources were checked on 2026-10-19. The laya-serve facts come from reading the installed `laya` 0.4.12 source in spike 007's prototype venv (`laya/serve.py`, in the `next-available-spike-ec239e` worktree), not from a live capture.
 
 What changes what the spike assumed:
 

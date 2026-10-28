@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks the planted baseline behaviors of sample-crm (spec 004, AC-4 and AC-8).
 #
-# Usage: docs/test-bed/baseline-checks.sh [BASE_URL]
+# Usage: scripts/baseline-checks.sh [BASE_URL]
 #
 # BASE_URL defaults to http://localhost:8080. The service must run with an empty
 # database, for example `./mvnw spring-boot:test-run` in sample-crm. The script

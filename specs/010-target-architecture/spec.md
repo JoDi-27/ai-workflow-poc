@@ -48,7 +48,7 @@ Spike 008 (Jev telemetry) feeds this spike but is not a dependency. It runs in p
 
 <!-- Prepared by the spike-researcher agent: what the repository and current docs already say, with sources. -->
 
-Prepared 2026-10-19 by spike-researcher. INTENT = `WORKFLOW_ENGINE_INTENT.md`. Spike 008's Inbox findings are raw and marked "008 (unsettled)".
+Prepared 2026-10-19 by spike-researcher. INTENT = `docs/intent.md`. Spike 008's Inbox findings are raw and marked "008 (unsettled)".
 
 ### G1 · Components and boundaries
 
@@ -72,7 +72,7 @@ Prepared 2026-10-19 by spike-researcher. INTENT = `WORKFLOW_ENGINE_INTENT.md`. S
 
   (schema.md; spec 003 Q32; spec 005)
 - Known: the result carries provenance (runner, image, command, revision), the log, and evaluator usage from `modelUsage`. In the MVP, runner checks produce no evidence. (spec 003 Q23; spec 006 Q7)
-- Known: services run as native sidecars gated by a startup probe, pods are unprivileged, and the only egress is the in-cluster Maven proxy. Each check gets 15 minutes at most. (spec 002 G4; `docs/test-bed.md`)
+- Known: services run as native sidecars gated by a startup probe, pods are unprivileged, and the only egress is the in-cluster Maven proxy. Each check gets 15 minutes at most. (spec 002 G4; `docs/test-bed/README.md`)
 - Known: evaluation task states are `issued → submitted | failed_to_run | cancelled`. Cancelling an attempt cancels its jobs, and late results are rejected. (`docs/concepts/model.md`) Timeouts and retries for hung jobs are BACKLOG "Next".
 - Gap: `agent_evaluator` steps have no `timeout`. Conflict: model.md has `RUNNER_JOB produces EVIDENCE`, but spec 003 Q23 says none in the MVP. Treat it as target only.
 - Open: push or pull of results, a council with a member that cannot run (spec 003 follow-up), job ID and dispatch idempotency, where logs live, and how OOM, eviction, and similar failures are classified.
@@ -467,6 +467,6 @@ Things to try, proposed by the researcher (not run in this spike; candidates for
 - 2026-10-19 Reopened for Q24: inbound ports and a `scheduler` inbound adapter. Spec and `docs/architecture/` updated.
 - 2026-10-21 Reopened for Q25: Cloud Tasks researched and not used; GKE Sandbox as target; Cloud Run Jobs as a later adapter. Spec, `docs/architecture/`, and BACKLOG updated.
 - 2026-10-21 Q25 follow-ups: Cloud Tasks only as an optional delivery leg after the outbox; Cloud Run functions rejected as a sandbox.
-- 2026-10-21 Reopened for Q26 (git as the evidence channel) and Q27 (Laya out of the MVP). Spec, `docs/definitions/`, `docs/architecture/`, `docs/concepts/`, `docs/test-bed.md`, BACKLOG, PLAN, INTENT, CLAUDE.md, and the constitution updated.
+- 2026-10-21 Reopened for Q26 (git as the evidence channel) and Q27 (Laya out of the MVP). Spec, `docs/definitions/`, `docs/architecture/`, `docs/concepts/`, `docs/test-bed/README.md`, BACKLOG, PLAN, INTENT, CLAUDE.md, and the constitution updated.
 - 2026-10-21 Reopened for Q28: typed-decision trees in the MVP. Spec, `docs/definitions/`, `docs/architecture/`, BACKLOG, PLAN, and INTENT updated.
 - 2026-10-21 Verified and closed: G1–G7 and Q1–Q28 answered, recommendation agreed, BACKLOG settled items updated (State and events, Auth, Result delivery, Runs and repositories, Evidence), follow-ups filed, PLAN spike 7 ticked.

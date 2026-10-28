@@ -92,7 +92,7 @@ Findings that go against what the spike assumed:
 
 ### G7 · Usage on Max 5x
 
-- Known: runs are driven on Max 5x; the task set is designed for coverage, not sized to the plan (002 Q9). The `sample-crm` baseline, including T06's planted exact-match tests, is specified in spec 004 but not built yet (`docs/test-bed.md`).
+- Known: runs are driven on Max 5x; the task set is designed for coverage, not sized to the plan (002 Q9). The `sample-crm` baseline, including T06's planted exact-match tests, is specified in spec 004 but not built yet (`docs/test-bed/README.md`).
 - Unknown: the usage cost per task and per checkpoint attempt.
 
 ### G8 · Driver-side evaluator subagent
@@ -237,7 +237,7 @@ All checked 2026-10-19.
 - **decision** (user, Q8) The runner evaluator does not read the subject repository's `CLAUDE.md`, skills, hooks, or MCP servers: only the rubric, the step's instructions, and the evidence shape its judgment.
 - **decision** (user, Q12) The prototype uses Docker Desktop, which the user already has (server 29.5.2, checked 2026-10-19). Provisional for spike 10.
 - **decision** (user, Q2) The user generates a dedicated `claude setup-token` for the runner prototype, kept outside the repository.
-- **fact** The laptop needs a Docker-compatible runtime anyway, for `sample-crm`'s Testcontainers tests (`docs/test-bed.md`, Repository).
+- **fact** The laptop needs a Docker-compatible runtime anyway, for `sample-crm`'s Testcontainers tests (`docs/test-bed/README.md`, Repository).
 - **fact** (trial 21) Without isolation flags, `claude -p` in the hostile fixture ran the fixture's SessionStart and PreToolUse hooks, started its `.mcp.json` server, and loaded its `CLAUDE.md` (the model said it ignored a "score 5" line).
 - **fact** (trial 22) `--restricted --safe-mode --strict-mcp-config --tools Read,Grep,Glob --permission-mode dontAsk --no-session-persistence` ran none of them and loaded no `CLAUDE.md`. `--json-schema` with a draft-07 schema returned `structured_output` (`raw_score` 2, the rubric-correct band for an exact-match check), in 4 turns, $0.030 list price with Sonnet against $0.049 without the flags.
 - **fact** (container, no token) The image (`node:24-bookworm-slim`, Claude Code 2.1.302, non-root) runs the evaluator. Without a token the result is `subtype: "success"`, `is_error: true`, "Not logged in". The runner must treat `is_error` or a missing `structured_output` as a job that did not run (*not evaluated*), not as a result.
@@ -273,7 +273,7 @@ All checked 2026-10-19.
 - **assumption** (pilot only, nothing depends on it) The T05 rejection reason was written by Claude, standing in for the human: the change does not say what "better" means or show that it is better.
 - **decision** (user, Q4) This spike's pilots and evaluator trials may use about 10% of one week's Max 5x allowance, measured as before/after deltas of `rate_limits.seven_day.used_percentage`.
 - **fact** (container trial; was an assumption) A council of 3 cost $0.013 in total, so the 10% budget did not require a smaller council.
-- **fact** (note from the user, 2026-10-19; checked on GitHub) The user implemented spec 004. `sample-crm` has the tag `baseline` at `0916dbf` (its `main`), with green CI (`build`). In this repository, spec 004's own files are not on `main` yet (still `draft` there), so `docs/test-bed.md` does not yet record T01's base commit. The pilot (Q3) can run from `baseline`.
+- **fact** (note from the user, 2026-10-19; checked on GitHub) The user implemented spec 004. `sample-crm` has the tag `baseline` at `0916dbf` (its `main`), with green CI (`build`). In this repository, spec 004's own files are not on `main` yet (still `draft` there), so `docs/test-bed/README.md` does not yet record T01's base commit. The pilot (Q3) can run from `baseline`.
 - **fact** `sample-crm`'s own spec 001 (the service) is built and merged to its `main` (PR #1, `1340ae7`, 2026-10-19): Spring Boot, contacts, companies, deals, CI, OpenAPI. Spec 004 here (planted defects for T02, T04, T06, T07, and the `baseline` tag) is still `draft`, and no tag exists yet (GitHub API, 2026-10-19).
 - **fact** (pilot, `prototype/pilot/`) Plain Claude Code, headless, default model Opus 5.5, fresh `sample-crm` clones at `baseline`. Client-side list-price estimates (`total_cost_usd`), not plan usage:
 
@@ -286,7 +286,7 @@ All checked 2026-10-19.
 - **fact** (pilot) One evaluator run costs $0.003–0.030 (G4), so a checkpoint attempt's ~4 runner sessions cost well under 10% of a driver session ($0.50–2.70 per task). Runner evaluations are a small share of a run's usage; the driver sessions dominate, and a rework roughly triples a task's cost.
 - **fact** (pilot) Total pilot spend, all trials included, was about $5 at list price. Plan percentages were not measured, because headless runs show no status line (Q13).
 - **assumption** (Follow-up: Phase 4) At these sizes, the 12-task seed set plus reruns fits in Max 5x's weekly limit. Phase 4 measures plan percentages with a status-line logger.
-- **fact** (pilot, T06) With Opus 5.5, the T06 quality trap does not fire: the driver normalizes case and whitespace unprompted. The expected failed checkpoint and rework (spike 002, `docs/test-bed.md`) will not happen with this model.
+- **fact** (pilot, T06) With Opus 5.5, the T06 quality trap does not fire: the driver normalizes case and whitespace unprompted. The expected failed checkpoint and rework (spike 002, `docs/test-bed/README.md`) will not happen with this model.
 - **fact** (pilot, T05) The driver found T02's planted defect through git history: it named commit `41883f6` as the one that introduced the offset and "also deleted the test assertion that would have caught it". The planting gives itself away in `sample-crm`'s history, against spec 004 S3 ("nothing gives it away").
 - **fact** (trials) Cost estimates per headless session, list price from `total_cost_usd`: a Haiku mechanics trial $0.003–0.016; one Sonnet session driving two stages $0.13, a resuming session $0.04–0.10; one isolated Sonnet evaluator run $0.030. These are client-side estimates, not plan usage.
 
@@ -337,7 +337,7 @@ Where each follow-up went (verified 2026-10-19): the test-bed items are one BACK
 From the pilot:
 
 - Spec 004 / spike 002: the planting is visible in `sample-crm`'s git history (T05 found T02's defect through commit `41883f6`). Consider squashing the history before `baseline`, so the planted state arrives in one neutral commit.
-- Spike 002 / `docs/test-bed.md`: T06's trap does not fire with Opus 5.5. Make the trap subtler, or accept that T06 tests a passing case and pick another task for the failed checkpoint.
+- Spike 002 / `docs/test-bed/README.md`: T06's trap does not fire with Opus 5.5. Make the trap subtler, or accept that T06 tests a passing case and pick another task for the failed checkpoint.
 - Spike 002: T05's vague task led the driver to fix T02's defect and to edit `sample-crm`'s own spec kit. Decide whether runs may touch `sample-crm/specs/`, and whether reruns of T05 must start after T02.
 - Spike 8: `status` must carry the last decision on the run and its reason (G9).
 - Phase 4: log the status line's `rate_limits` before and after each task to measure plan percentages.

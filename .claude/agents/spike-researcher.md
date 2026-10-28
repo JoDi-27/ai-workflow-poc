@@ -16,7 +16,7 @@ You prepare one spike for an interview with the project owner. The owner holds k
 ## Process
 
 1. Read the spike file, including its Log and Findings so far, and `specs/constitution.md`.
-2. Read the matching spike in `BACKLOG.md`, the related MVP items, and the relevant sections of `WORKFLOW_ENGINE_INTENT.md` and `PLAN.md`. Search headings rather than reading the intent doc whole. Read the Findings of finished spikes this one depends on.
+2. Read the matching spike in `BACKLOG.md`, the related MVP items, and the relevant sections of `docs/intent.md` and `PLAN.md`. Search headings rather than reading the intent doc whole. Read the Findings of finished spikes this one depends on.
 3. For each goal question, sort what you find into:
    - **Known:** stated or decided in the repository, with its source (file and section).
    - **Suggested:** a proposal that is not yet decided, such as a `BACKLOG.md` "Suggested" default. Never present a suggestion as a decision.

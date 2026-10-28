@@ -1,6 +1,6 @@
 # Plan
 
-Phased plan toward the MVP described in `WORKFLOW_ENGINE_INTENT.md`. Open questions and their suggested defaults live in `BACKLOG.md`; happy path step numbers below refer to the happy path defined there.
+Phased plan toward the MVP described in `docs/intent.md`. Open questions and their suggested defaults live in `BACKLOG.md`; happy path step numbers below refer to the happy path defined there.
 
 Each checklist item is delivered through a spec in `specs/` (see `specs/README.md`); `specs/STATUS.md` shows progress.
 
@@ -19,20 +19,20 @@ Mostly learning and wiring. No workflow logic beyond stubs.
 
 ### Spikes
 
-Each spike is a spike spec in `specs/`, whose findings and recommendation are its write-up, and ends with updates to the affected `BACKLOG.md` items. They are listed in the order to run them; the details, waves, and dependencies are in `BACKLOG.md`.
+Each spike is a spike spec in `specs/`, whose findings and recommendation are its write-up, and ends with updates to the affected `BACKLOG.md` items. They are named by spec ID and listed in the order they ran; `BACKLOG.md` "Spikes" has a one-line outcome for each.
 
-- [x] **1. Concepts: what a workflow is**
-- [x] **2. Test bed: target repository and task set** (baseline built and tagged by spec 004)
-- [x] **3. Definition model draft**
-- [x] **4. Claude Code driver feasibility**
-- [x] **5. Claude Code telemetry**
-- [x] **6. Laya/Jev role in the workflow**
-- [x] **6b. Jev telemetry**
-- [x] **7. Target architecture** (spec 010, `docs/architecture/`)
-- [x] **8. Driver API contract** (spec 011, `docs/driver-api/`)
-- [x] **9. Technology stack** (spec 012)
-- [x] **9b. Engine low-level design** (spec 013, `docs/engine/`)
-- [x] **10. Local setup** (spec 014, `docs/local-setup/`)
+- [x] **001. Concepts: what a workflow is** (`docs/concepts/`)
+- [x] **002. Test bed: target repository and task set** (`docs/test-bed/`; baseline built and tagged by feature spec 004)
+- [x] **003. Definition model draft** (`docs/definitions/`)
+- [x] **005. Claude Code driver feasibility**
+- [x] **006. Claude Code telemetry**
+- [x] **007. Laya/Jev role in the workflow**
+- [x] **008. Jev telemetry**
+- [x] **010. Target architecture** (`docs/architecture/`)
+- [x] **011. Driver API contract** (`docs/driver-api/`)
+- [x] **012. Technology stack**
+- [x] **013. Engine low-level design** (`docs/engine/`)
+- [x] **014. Local setup** (`docs/local-setup/`, `deploy/`)
 
 ### Decisions
 
@@ -49,7 +49,7 @@ Each item below becomes a feature spec (`/sdd-specify`), split if it takes more 
 - [ ] DecisionEngine stub: a stub adapter in the engine standing in for Jev (Laya is out of the MVP, spike 010).
 - [ ] Runner stub: on an engine request, starts a sandbox that clones a repository at a given SHA and runs a command. Include spike 014's open checks: the Job classification prototype (spec 010 Q13) and fabric8's 409 on a repeated Job name, token isolation between the clone init container and the main container, and evaluator authentication behind the `ipBlock` policy without `platform.claude.com`.
 - [ ] OTel Collector receiving Claude Code telemetry.
-- [ ] Kubernetes manifests in `deploy/` bringing up engine, MCP gateway, analysis service, UI, database, broker, runner, and collector on a local cluster (spike 010), written so that they can later target GKE. Start from spike 014's draft in `docs/local-setup/` (Docker Desktop kind mode, Kubernetes 1.36, Kustomize, Envoy Gateway). Confirm there: Envoy Gateway installs from its `install.yaml` and its LoadBalancer is published on localhost; kind mode runs images built locally without a push; routing `/v1` and the MCP gateway to `host.docker.internal` while the engine runs natively; choose the clone proxy product; install a matching `kubectl` and pre-pull images; confirm `sample-crm` allows merge commits (spec 010 Q26).
+- [ ] Kubernetes manifests in `deploy/` bringing up engine, MCP gateway, analysis service, UI, database, broker, runner, and collector on a local cluster (spike 010), written so that they can later target GKE. Start from spike 014's draft manifests in `deploy/` and the design in `docs/local-setup/` (Docker Desktop kind mode, Kubernetes 1.36, Kustomize, Envoy Gateway). Confirm there: Envoy Gateway installs from its `install.yaml` and its LoadBalancer is published on localhost; kind mode runs images built locally without a push; routing `/v1` and the MCP gateway to `host.docker.internal` while the engine runs natively; choose the clone proxy product; install a matching `kubectl` and pre-pull images; confirm `sample-crm` allows merge commits (spec 010 Q26).
 - [ ] Build and test commands documented in the README.
 
 ### Exit criteria

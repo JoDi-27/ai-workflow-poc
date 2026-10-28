@@ -47,7 +47,7 @@ This spike defines that contract. It unblocks spike 9 (the MCP and HTTP layer of
 
 <!-- Prepared by the spike-researcher agent: what the repository and current docs already say, with sources. -->
 
-Prepared 2026-10-21 by spike-researcher. INTENT = `WORKFLOW_ENGINE_INTENT.md`, ARCH = `docs/architecture/README.md`, SEQ = `docs/architecture/sequences.md`.
+Prepared 2026-10-21 by spike-researcher. INTENT = `docs/intent.md`, ARCH = `docs/architecture/README.md`, SEQ = `docs/architecture/sequences.md`.
 
 ### G1 · MCP operations and schemas
 

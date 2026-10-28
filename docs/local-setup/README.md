@@ -1,6 +1,6 @@
 # Local setup
 
-Draft from spike 014 (`specs/014-local-setup/`). It describes how the whole system runs on one laptop, on a local Kubernetes cluster, with manifests that carry over to GKE. The Phase 0 scaffolding moves `manifests/` to `deploy/` and this section into the repository README, then implements the scripts it names. Nothing here runs yet: the service images do not exist.
+Draft from spike 014 (`specs/014-local-setup/`). It describes how the whole system runs on one laptop, on a local Kubernetes cluster, with manifests that carry over to GKE. The draft manifests are in `deploy/` (`base/` and the `local` and `gke` overlays). The Phase 0 scaffolding moves this section into the repository README, then implements the scripts it names. Nothing here runs yet: the service images do not exist.
 
 ## What runs where
 
@@ -23,7 +23,7 @@ The laptop reaches everything through one origin, `http://localhost`: `/` UI, `/
 
 ## From a fresh clone to a `status` call
 
-1. **Secrets.** Create the untracked folder `docs/local-setup/manifests/overlays/local/.local/` (later `deploy/overlays/local/.local/`) with:
+1. **Secrets.** Create the untracked folder `deploy/overlays/local/.local/` with:
    - `postgres.env`, `engine.env`, `analysis.env`: database credentials, and `AWF_JEV_KEY` in `engine.env`.
    - `bootstrap.env`: the owner's and the approver's passwords, and `AWF_DRIVER_TOKEN`, the fixed driver token.
    - `repo-token`: the fine-grained read-only token for `sample-crm`.

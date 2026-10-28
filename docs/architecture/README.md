@@ -2,7 +2,7 @@
 
 From spike 010 (`specs/010-target-architecture/`), where every decision is recorded in the Log and its question (Q1–Q28). Terms are defined in `docs/concepts/glossary.md`. The happy path sequences are in `sequences.md`, and a short record of each key choice is in `decisions.md`.
 
-The architecture is technology-neutral. Spike 9 picks the framework, the database product, UI technology, and build tools. The database is relational (Q22), and where a choice depends on the product, this document names a pattern, not a product.
+The architecture is technology-neutral. Spike 012 picked the framework, the database product, UI technology, and build tools (the Stack section of the repository `README.md`). The database is relational (Q22), and where a choice depends on the product, this document names a pattern, not a product.
 
 **MVP** marks what the MVP builds. **Target** marks what the architecture leaves room for but the MVP does not build.
 
@@ -114,7 +114,7 @@ flowchart LR
 
 Colors, used the same way in every diagram here: gray for the laptop and callers, blue for edge workloads and inbound adapters, teal for inbound ports, orange for the engine and core modules, green for analysis, purple for the broker, outbound ports, and configuration sources, yellow for data, red for the runner, sandboxes, and outbound adapters, and dashed gray for external systems.
 
-Each box inside the cluster is its own workload, deployed and scaled on its own. The engine schema and the analysis schema share one database instance in the MVP, with separate credentials (Q22, Q23). Namespaces, apart from the sandbox namespace, are settled in PLAN spike 10.
+Each box inside the cluster is its own workload, deployed and scaled on its own. The engine schema and the analysis schema share one database instance in the MVP, with separate credentials (Q22, Q23). Namespaces, apart from the sandbox namespace, were settled in spike 014 (`docs/local-setup/`).
 
 | Component | MVP role | Holds | Never |
 | --- | --- | --- | --- |
@@ -122,7 +122,7 @@ Each box inside the cluster is its own workload, deployed and scaled on its own.
 | MCP gateway | Translates MCP tool calls into calls to the engine's public HTTP driver API, the same API the hooks call (Q20), and analysis read tools into calls to the analysis API (Q23) | Nothing: no state, no credential of its own; it forwards the caller's driver token unchanged | Decides anything, caches run state, or reaches the database; when the engine is down, it returns an error (fail closed) |
 | Database (relational, Q22) | Engine schema: workflow configuration, identity (users, roles, human accounts, hashed driver tokens), state tables, the event table, idempotency records, the outbox, deadlines, telemetry rows, small evidence payloads. Analysis schema: analysis's derived store, with separate credentials (Q23) | | Engine schema reachable by anything but the engine |
 | Analysis service | Consumes engine events and joined telemetry from the broker, builds its own projections, and serves the quality view and cross-run analysis (rates, agreement, weakest step, version comparison, typed decision tree paths and conclusions) through a read API (Q23, Q28) | Its own schema credentials and a broker subscription credential | Writes engine state, computes run scores (Art. 1), reads the engine's tables, or accepts approvals or drafts |
-| Message broker | Durable, at-least-once delivery of engine events to analysis; topic keyed by run ID. Product chosen in PLAN spikes 9 and 10 (Pub/Sub on GKE; an emulator or self-hosted broker locally) | Messages for a limited retention | Being the record: the engine's events are the source for rebuilds |
+| Message broker | Durable, at-least-once delivery of engine events to analysis; topic keyed by run ID. Product chosen in spikes 012 and 014: Pub/Sub on GKE, the Pub/Sub emulator locally | Messages for a limited retention | Being the record: the engine's events are the source for rebuilds |
 | UI | One static or thin client of two APIs: the engine's UI API (inbox, human steps, escalations, runs, scores, definition approval) and the analysis API (quality view). Shows the change itself through the subject view the definition declares, read in the browser from the git host at the reviewed revision, with the human's own login (Q26) | Nothing authoritative | Holds a credential that can approve (Q4) |
 | Runner | Turns a job packet into a sandbox, classifies the outcome, keeps the result until the engine fetches it. Reads all content from git at the revision: for checks, evaluators, and typed-decision input packets (Q26) | The repository read token, the `setup-token`, a service account limited to the sandbox namespace | Calls the engine or holds an engine credential (Q2) |
 | Check sandbox | Runs a `command` step's image and argv at the revision, with service sidecars | Nothing beyond the job's literal `env` | Egress beyond the Maven proxy |
@@ -139,7 +139,9 @@ The laptop reaches three endpoints, all with the driver token: the MCP gateway, 
 
 ## Engine modules
 
-One deployable (Q1). Two things are not part of it. The MCP gateway is its own Deployment and calls the `driver-api` adapter over HTTP like any other client (Q20). Analysis is its own service, fed through the broker (Q23). Neutrality is enforced by module dependency rules checked in the build (G7). Spike 9 picks the tool.
+One deployable (Q1). Two things are not part of it. The MCP gateway is its own Deployment and calls the `driver-api` adapter over HTTP like any other client (Q20). Analysis is its own service, fed through the broker (Q23). Neutrality is enforced by module dependency rules checked in the build (G7), with Maven and ArchUnit (spike 012).
+
+This section is the logical view: what each engine module does and what it calls. The physical view (Maven modules, Java packages, the allowed calls inside the core, and how each rule is checked) is `docs/engine/design.md` section 1, from spike 013. Where the two differ, the engine design wins; the one known difference is noted below the diagram.
 
 The engine is hexagonal on both sides (Q24):
 
@@ -445,7 +447,7 @@ An attempt cannot hang. Every runner job has an engine deadline, and every shado
   - Runs, stage visits, attempts, step results, decisions, leases, idempotency records, the outbox, deadlines, identity, and telemetry are ordinary tables.
   - Analysis has its own schema in the same instance (MVP), with separate credentials. Its projections are relational, so cross-run analysis is joins and aggregates (Q23).
 
-  The product is chosen in PLAN spike 9.
+  The product, PostgreSQL 18, was chosen in spike 012.
 - **Source of truth:** state tables. Every state change writes its events in the same transaction (Art. 7, Q5).
 - **Events:** append-only, with actor, actor type, timestamp, run, definition version, correlation ID, session, evidence references, and reason (INTENT, Transition protocol). They must carry everything replay needs, including the revision on each transition request and every lease holder.
 - **Replay** is a check, not the read path. It rebuilds runs, attempts, step results, decisions, leases, and scores from the events alone and compares them with the tables (milestone 2). Telemetry is joined to runs but is not run state, and it is not replayed.

@@ -1,6 +1,6 @@
 # Happy path as calls: test-bed task T01
 
-From spike 011. Test-bed task T01 (`docs/test-bed.md`) is "Add `GET /contacts/count`, optionally filtered by company". It passes every checkpoint on the first attempt. It runs on the reference workflow (`docs/definitions/sdlc-reference.yaml`) in `JoDi-27/sample-crm`, on branch `task/T01/v1` from base `main`. The contract is in `README.md`.
+From spike 011. Test-bed task T01 (`docs/test-bed/README.md`) is "Add `GET /contacts/count`, optionally filtered by company". It passes every checkpoint on the first attempt. It runs on the reference workflow (`docs/definitions/sdlc-reference.yaml`) in `JoDi-27/sample-crm`, on branch `task/T01/v1` from base `main`. The contract is in `README.md`.
 
 Every call carries the driver token. Responses are trimmed to the fields that matter at that point. `→` marks a hook or the agent calling the engine; `⇢` marks something that happens without the driver.
 

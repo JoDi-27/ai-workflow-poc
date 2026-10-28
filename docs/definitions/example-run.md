@@ -1,6 +1,6 @@
 # Example run, scored by hand
 
-From spike 003 (`specs/003-definition-model-draft/`), updated by spike 010 (Q26: git is the evidence channel; Q27: Jev is the only provider). One run of `sdlc-reference.yaml`, with a failed checkpoint attempt, a rework loop, and an override, scored with the rules in `schema.md`. It follows the shape of test-bed tasks T06 (failed checkpoint, rework) and T07 (override) in `docs/test-bed.md`.
+From spike 003 (`specs/003-definition-model-draft/`), updated by spike 010 (Q26: git is the evidence channel; Q27: Jev is the only provider). One run of `sdlc-reference.yaml`, with a failed checkpoint attempt, a rework loop, and an override, scored with the rules in `schema.md`. It follows the shape of test-bed tasks T06 (failed checkpoint, rework) and T07 (override) in `docs/test-bed/README.md`.
 
 ## Accounts
 

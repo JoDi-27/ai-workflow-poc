@@ -13,7 +13,7 @@ You write the WHAT and WHY of one slice of work. You do not plan or implement.
 ## 1. Load context
 
 - Read `specs/README.md` (the workflow) and `specs/constitution.md`.
-- Read the parts of `PLAN.md`, `BACKLOG.md`, and `WORKFLOW_ENGINE_INTENT.md` that relate to the input. Use grep on headings rather than reading the intent doc whole.
+- Read the parts of `PLAN.md`, `BACKLOG.md`, and `docs/intent.md` that relate to the input. Use grep on headings rather than reading the intent doc whole.
 - Run `specs/_kit/sdd status` to see existing specs, so you can set `depends_on` and avoid duplicates.
 
 ## 2. Create or open the spec

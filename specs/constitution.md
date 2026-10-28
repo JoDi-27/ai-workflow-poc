@@ -2,7 +2,7 @@
 
 The non-negotiable rules every spec and plan is checked against. Each plan has a "Constitution check" that names the articles it touches.
 
-`WORKFLOW_ENGINE_INTENT.md` stays the source of product intent; the product articles below distill the parts of it that constrain day-to-day design. To change an article, record the decision in the amendments log at the bottom, and update the intent doc if the product intent changed too.
+`docs/intent.md` stays the source of product intent; the product articles below distill the parts of it that constrain day-to-day design. To change an article, record the decision in the amendments log at the bottom, and update the intent doc if the product intent changed too.
 
 ## Product articles
 

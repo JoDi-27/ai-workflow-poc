@@ -2,7 +2,7 @@
 
 From spike 011 (`specs/011-driver-api-contract/`), where every decision is in the Log. This is the provider-neutral boundary that every driver kit is written against. The engine's HTTP driver API is the contract. The MCP gateway mirrors part of it as MCP tools and forwards the caller's driver token unchanged (spec 010 Q20). The components and flows around it are in `docs/architecture/`. A worked run is in `happy-path.md`.
 
-Schemas are drafts. They name fields and types, not final JSON Schema. Spike 9 picks the libraries, and milestone 1 turns these into JSON Schema files with tests.
+Schemas are drafts. They name fields and types, not final JSON Schema. Spike 012 picked the libraries (hand-written contract records, spec 012 Q13), and milestone 1 turns these into JSON Schema files with tests.
 
 ## Principles
 

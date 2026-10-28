@@ -43,7 +43,7 @@ It settles all Laya items in `BACKLOG.md`. Spikes 7 (target architecture) and 9 
 
 <!-- Prepared by the spike-researcher agent: what the repository and current docs already say, with sources. -->
 
-Prepared 2026-10-19. Sources: INTENT = `WORKFLOW_ENGINE_INTENT.md`; spike 002 = `specs/002-*/spec.md`; spike 003 = `specs/003-*/spec.md`. External sources were checked on 2026-10-19.
+Prepared 2026-10-19. Sources: INTENT = `docs/intent.md`; spike 002 = `specs/002-*/spec.md`; spike 003 = `specs/003-*/spec.md`. External sources were checked on 2026-10-19.
 
 Findings that go against what the spike assumed:
 
@@ -77,7 +77,7 @@ Findings that go against what the spike assumed:
 - `code_quality_band` is a `typed_decisions` block on the `code_quality` council-of-3 runner evaluator. It is not in the ordered steps, earns no points, and never blocks. Its result is recorded next to the council's median band and the human decision. (`docs/definitions/sdlc-reference.yaml`, `example-run.md`)
 - In advisory mode, the output is never shown to a fresh-context evaluator, to avoid anchoring it. (INTENT, Modes)
 - Transition guidance fits only where several transitions are permitted. The reference workflow has one such point: `verification`, with `approve_release`, `rework`, and `discard`.
-- Human step assist would sit on `release_approval`. T11's injection risk is the planted case that a human should catch. (`docs/test-bed.md`)
+- Human step assist would sit on `release_approval`. T11's injection risk is the planted case that a human should catch. (`docs/test-bed/README.md`)
 
 ### G4 · Typed questions, labels, and labelling
 
@@ -136,7 +136,7 @@ Findings that go against what the spike assumed:
 - 2026-10-19 · answer to Q7 · Fine-tuning Laya on our own labelled cases comes after the MVP, once real runs supply labels; it goes to BACKLOG "Next".
 - 2026-10-19 · answer to Q8 · The order of later roles: human step assist (narrow risk flags at `release_approval`), then run categorization, then transition guidance, with typed step evaluation last.
 - 2026-10-19 · answer to Q9 · Claude drafts the ten variants, each in a session separate from any evaluation; the user reviews the code, then labels the cases without seeing any evaluator output.
-- 2026-10-19 · answer to Q11 · The user pointed out that spec 004 is built. Confirmed: `sample-crm` has the tag `baseline` at `0916dbf` (`docs/test-bed.md`), so the token count and the trial use the real baseline, with no mini project. This worktree was brought up to date with `main` to get spec 004 and spec 006.
+- 2026-10-19 · answer to Q11 · The user pointed out that spec 004 is built. Confirmed: `sample-crm` has the tag `baseline` at `0916dbf` (`docs/test-bed/README.md`), so the token count and the trial use the real baseline, with no mini project. This worktree was brought up to date with `main` to get spec 004 and spec 006.
 - 2026-10-19 · answer to Q10 · The user labels each case with a raw 1–10 score; the band follows from it.
 - 2026-10-19 · note from the user · Approved downloading the `laya` package from PyPI into a git-ignored venv under `prototype/`, and the `laya-typed-decisions` and `laya-multilingual` checkpoints from Hugging Face. For Jev, the user sets the API key in an environment variable, which the trial script reads and never prints.
 - 2026-10-19 · research · Installed `laya` 0.4.12 in `prototype/.venv` and downloaded `laya`, `laya-typed-decisions`, and `laya-multilingual`. Ran `prototype/probe.py` on the M5 Pro (MPS) with a synthetic diff of 40 and 400 lines:
@@ -204,7 +204,7 @@ Findings that go against what the spike assumed:
 
 - **Decision (Q9):** Claude drafts the ten variants (a good and a flawed one each for T01, T03, T04, T06, and T11), each in a session separate from any evaluation. The user reviews the code, then labels the cases without seeing any evaluator output.
 - **Decision (Q10):** the user labels each case with a raw 1–10 score; the band follows from it (poor 1–3, weak 4–5, good 6–8, exemplary 9–10), so it compares directly with the council's median score.
-- **Fact (Q11; `docs/test-bed.md`):** the `sample-crm` baseline exists (tag `baseline`, `0916dbf`, spec 004 done), so the variants branch from it, and the trial runs on real diffs.
+- **Fact (Q11; `docs/test-bed/README.md`):** the `sample-crm` baseline exists (tag `baseline`, `0916dbf`, spec 004 done), so the variants branch from it, and the trial runs on real diffs.
 - **Decision (Q2):** whole packets go to `laya-multilingual` with `max_len` up to 8192, so the full diff, tests included, fits instead of being cut. Its English is weaker and it has no fitted temperatures. **Fact (`prototype/tokens.py`):** all ten full packets fit in 8192 tokens on `laya-multilingual` (1,315–6,666), and none fits in the 1024-token checkpoints (the smallest is 1,172 on `laya-typed-decisions`). The briefing's estimates were too low: T04 is about 6,700 tokens, not 3,000.
 - **Fact (probe, 2026-10-19):** `laya` 0.4.12 reports truncation in `usage.truncated` and `state_tokens_dropped`. So the adapter can return *not evaluated* whenever `usage.truncated` is true, without counting tokens itself. `laya-multilingual` at `max_len=8192` took a 7,224-token state in 1.1 s warm on MPS.
 - **Fact (probe):** Java diff lines cost about 17 tokens each, so the 1024-token checkpoints hold only about 50 diff lines after the question head and the requirements.
@@ -262,10 +262,10 @@ Where each follow-up went (agreed with the user on 2026-10-19 as part of the rec
 - **New spike (user, after closing):** Jev telemetry, spec 008.
 
 - **Done:** `docs/definitions/schema.md` (rule 12 and the typed-decisions example) and `sdlc-reference.yaml` now allow provider `jev` beside `laya`, with a second shadow entry for `code_quality_band`. The `max_len: 8192` checkpoint setting belongs to the adapter's configuration, not the definition.
-- **Done:** `WORKFLOW_ENGINE_INTENT.md` (Components, Hosting, Phases 5 and 9) and `PLAN.md` (Phase 1 Laya item and exit criteria) now have Jev as a shadow provider in the MVP.
+- **Done:** `docs/intent.md` (Components, Hosting, Phases 5 and 9) and `PLAN.md` (Phase 1 Laya item and exit criteria) now have Jev as a shadow provider in the MVP.
 - **BACKLOG "Next":** "Laya fine-tuning" (including fitted temperatures) and "Human step assist with risk flags" (starting from the T11 injection check).
 - **BACKLOG spikes 7, 9, 10:** inputs added for the multi-provider adapter, the truncation rule, the Jev key and egress, the `laya-serve` image, and running it natively or in the cluster.
-- **Later, no new item:** the ten cases and labels join the held-out set when real runs of the same tasks exist, as `docs/test-bed.md` ("Laya's first cases") already plans.
+- **Later, no new item:** the ten cases and labels join the held-out set when real runs of the same tasks exist, as `docs/test-bed/README.md` ("Laya's first cases") already plans.
 - **Checked, no change:** the constitution. Jev is a DecisionEngine provider called only by the engine (art. 4), and art. 2 bars it from deciding human steps just like Laya.
 
 Things to try, from the briefing (all done on 2026-10-19 except where noted):

@@ -95,7 +95,7 @@ From spike 010 (`specs/010-target-architecture/`). Each record names the questio
 ## AD-16 · Idempotency, serialization, and dispatch
 
 - **Decision:** every mutating driver call and every human decision takes an idempotency key. Each request locks the run's row. Runner dispatch goes through a transactional outbox, and Kubernetes Jobs are named after the engine's job ID.
-- **Alternatives:** keys on transitions only; defer to spike 9.
+- **Alternatives:** keys on transitions only; defer to spike 012.
 - **Why:** retries are safe end to end. (Q16)
 - **Refined by spike 013:** only committed results are stored under a key, so a retried denial is evaluated again; a retry that arrives while the first request runs waits for it instead of getting `409`; records are kept 7 days (`docs/engine/design.md` section 6).
 
@@ -121,7 +121,7 @@ From spike 010 (`specs/010-target-architecture/`). Each record names the questio
 
 - **Decision:** module dependency rules, checked in the build, keep core modules free of edges, adapters, and SDLC, git, and Claude Code names. The toy workflow test stays "Next".
 - **Alternatives:** separate deployables; a toy workflow test now.
-- **Why:** follows from AD-1. Spike 9 picks the rule checker. (G7)
+- **Why:** follows from AD-1. Spike 012 picks the rule checker. (G7)
 - **Refined (spike 012, Q3, Q4):** the core may use Spring annotations such as `@Service` and `@Transactional`; neutrality covers domain and provider names (SDLC, git, Claude Code, the broker product), not the framework. The rules are enforced by separate Maven modules for the core, the ports, and each adapter, so a wrong dependency does not compile, plus ArchUnit tests for the banned names and the broker-only-in-`broker-client` rule.
 
 ## AD-21 · A separate MCP gateway
@@ -148,7 +148,7 @@ From spike 010 (`specs/010-target-architecture/`). Each record names the questio
   - a definition version stores its YAML exactly as approved, plus a parsed document;
   - event and evidence payloads are documents.
 
-  Everything else is ordinary tables. The product (PostgreSQL is the obvious candidate) is chosen in spike 9.
+  Everything else is ordinary tables. The product (PostgreSQL is the obvious candidate) is chosen in spike 012.
 - **Alternatives:** MongoDB for everything; MongoDB for definitions plus a relational database for run state.
 - **Why:**
   - Definitions are small (the reference workflow is about 8 KB), immutable once published, and read whole by (workflow, version), so a document column is enough.
@@ -164,12 +164,12 @@ From spike 010 (`specs/010-target-architecture/`). Each record names the questio
   - **Store:** the analysis service subscribes, deduplicates by event ID, and keeps its own derived store (a separate schema in the MVP, with separate credentials). It stores its progress in the same transaction as each projection update.
   - **Rebuilds:** the engine offers a paged event read, since broker retention is limited.
   - **Auth:** analysis checks credentials by introspection against the engine and accepts no writes. Run scores stay in the engine.
-  - **Broker:** sits behind an engine port. The product is chosen in spikes 9 and 10 (Pub/Sub on GKE; an emulator or a self-hosted broker locally).
+  - **Broker:** sits behind an engine port. The product is chosen in spikes 012 and 014 (Pub/Sub on GKE; an emulator or a self-hosted broker locally).
 - **Alternatives:**
   - analysis as an engine module (AD-1 as first drafted);
   - a cursor feed that analysis long-polls (proposed first in the spike);
   - read-only access to the engine's tables.
-- **Why:** analysis only reads and changes on its own cadence. A durable broker with an outbox ensures delivery without burdening the engine (the user's point). It also keeps two rules: only the engine accesses its persistence, and only the engine computes scores (Art. 1). The Pub/Sub details are still to be checked against current docs in spike 9. (Q23)
+- **Why:** analysis only reads and changes on its own cadence. A durable broker with an outbox ensures delivery without burdening the engine (the user's point). It also keeps two rules: only the engine accesses its persistence, and only the engine computes scores (Art. 1). The Pub/Sub details are still to be checked against current docs in spike 012. (Q23)
 
 ## AD-25 · Inbound ports and a scheduler adapter
 

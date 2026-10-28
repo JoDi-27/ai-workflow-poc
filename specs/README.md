@@ -6,7 +6,7 @@ A lightweight spec-driven development (SDD) kit. Every piece of work, spike or f
 
 | Level | File | Answers |
 | --- | --- | --- |
-| Product intent | `WORKFLOW_ENGINE_INTENT.md` | What we are building and why, long term |
+| Product intent | `docs/intent.md` | What we are building and why, long term |
 | Roadmap | `PLAN.md`, `BACKLOG.md` | Which phase we are in, what the MVP needs, which decisions are open |
 | Rules | `specs/constitution.md` | What every design must respect |
 | Work items | `specs/NNN-slug/` | What one slice of work does, how, and how far along it is |
@@ -54,7 +54,7 @@ flowchart LR
 
 Spikes go `draft → in-progress → done`, with no plan step.
 
-1. `/sdd-spike 1` (or a topic, or a spec ID) creates the spike from its `BACKLOG.md` entry, with one **goal question** per question there.
+1. `/sdd-spike <topic>` (or a spec ID) creates the spike from its `BACKLOG.md` "Spikes" entry, with one **goal question** per question there.
 2. The `spike-researcher` agent (`.claude/agents/`) reads the repository and current docs and writes a **briefing** (what is known, what is only suggested, and what is unknown, with sources). It looks up the facts it can and drafts **questions for you**, only about what you know or decide, each with why it matters, options, and a suggested answer.
 3. Claude asks the questions a few at a time. Every answer goes into the **Log** and the **Findings** of the goal questions it affects, labelled as a decision, a fact, or an assumption. Answers that raise new questions get researched or added to the queue.
 4. You can add information at any time: in chat during a session, as `/sdd-spike <ID> <notes>`, or by writing in the spike's **Inbox** section between sessions. The next session processes the Inbox and clears it.

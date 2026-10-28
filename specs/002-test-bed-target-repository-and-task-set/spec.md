@@ -41,7 +41,7 @@ It informs the `BACKLOG.md` items Feedback loop / Seed data and Laya / Model che
 
 <!-- Prepared by the spike-researcher agent: what the repository and current docs already say, with sources. -->
 
-Prepared 2026-10-18. INTENT = `WORKFLOW_ENGINE_INTENT.md`; 001 = `specs/001-concepts-what-a-workflow-is/spec.md`.
+Prepared 2026-10-18. INTENT = `docs/intent.md`; 001 = `specs/001-concepts-what-a-workflow-is/spec.md`.
 
 ### G1 · Sandbox repository and CI
 
@@ -186,7 +186,7 @@ Prepared 2026-10-18, after the intent review and the Kubernetes decision.
 - 2026-10-18 · answer to Q12 · Both: hand-made good and flawed variants now, real-run cases later as a held-out set.
 - 2026-10-18 · research · Recast the draft task set for a Spring Boot CRM (contacts, companies, deals) with planted failures, a coverage matrix, a rerun set, and Laya case pairs; proposed to the user for agreement.
 - 2026-10-18 · note from the user · Agreed the task set T01–T12, the v2 rerun set, and the Laya case selection as proposed.
-- 2026-10-18 · note from the user · Agreed the recommendation and follow-ups; task list written to `docs/test-bed.md`.
+- 2026-10-18 · note from the user · Agreed the recommendation and follow-ups; task list written to `docs/test-bed/README.md`.
 - 2026-10-18 · note from the user (via the baseline spec session, after close) · `sample-crm` is developed with its own copy of the spec kit (specs, sdd skills, spike-researcher) and its own PRODUCT_INTENT.md, PLAN.md, BACKLOG.md, constitution, and CLAUDE.md. That kit covers baseline and maintenance work only; work on `task/*` and `base/*` branches follows the run's instructions, and whether the reference workflow uses the kit inside runs is left to spike 003. Nothing in `sample-crm` names a planted defect or a task; the planted-defect requirements live only in this repository's spec 004. Deleting a company keeps its deals and clears their company, as for contacts. The baseline tag is `baseline`. T04's duplicated validation sits in each create and update of the three record types (six places).
 - 2026-10-18 · main (intent review, PR #2) · Added a question to this spike after it closed: "Which toolchain the runner's sandbox image needs to build and test it." Gate checks now run server side in a runner that starts a throwaway sandbox per job, with no engine or database credentials.
 - 2026-10-18 · note from the user · Infrastructure will be done using Kubernetes, both locally and eventually on GCP. Reopened this spike with G4: the runner sandbox toolchain for `sample-crm`, including how Testcontainers gets Docker inside a runner sandbox.
@@ -305,7 +305,7 @@ Prepared 2026-10-18, after the intent review and the Kubernetes decision.
 ## Deliverables
 
 - [x] Every goal question answered, and the recommendation agreed with the user
-- [x] The repository chosen, and a task list with expected results in `docs/` (`docs/test-bed.md`)
+- [x] The repository chosen, and a task list with expected results in `docs/` (`docs/test-bed/README.md`)
 - [x] BACKLOG.md items settled by this spike updated
 
 ## Follow-ups
@@ -352,12 +352,12 @@ Things to try (from research; not yet run):
 - 2026-10-18 Q7, Q8, Q15, Q16 answered (planted failures + scripted merge, weakness emerges, throwaway rerun target, PostgreSQL + Testcontainers); G1 answered.
 - 2026-10-18 Q9–Q12 answered; task set T01–T12 and Laya cases proposed for agreement.
 - 2026-10-18 Task set agreed; G2 and G3 answered; recommendation and follow-ups drafted.
-- 2026-10-18 Recommendation agreed; `docs/test-bed.md` written; ready for /sdd-verify.
+- 2026-10-18 Recommendation agreed; `docs/test-bed/README.md` written; ready for /sdd-verify.
 - 2026-10-18 Verified and closed: BACKLOG Seed data settled, spike inputs added to spikes 3, 4, 6, 10 and Feedback loop / Detection; PLAN spike 2 ticked.
-- 2026-10-18 Logged the user's decisions from the baseline spec session (spec 004); `docs/test-bed.md` updated to match.
+- 2026-10-18 Logged the user's decisions from the baseline spec session (spec 004); `docs/test-bed/README.md` updated to match.
 - 2026-10-18 Reopened: G4 added for the runner sandbox toolchain on Kubernetes; status in-progress.
 - 2026-10-18 G4 briefing and questions Q17–Q26 prepared.
 - 2026-10-18 Q17–Q20 answered (external-DB switch, same command with env database in CI and runner, never privileged, GKE mode undecided).
 - 2026-10-18 Q21–Q24 answered (Maven proxy only, generic JDK 25 image, Dockerfile in this repo, 15-minute budget).
 - 2026-10-18 Q25–Q26 answered; G4 answered; G4 recommendation rows and follow-ups drafted.
-- 2026-10-18 G4 recommendation agreed; BACKLOG, `docs/test-bed.md`, and spec 004 updated; verified and closed again.
+- 2026-10-18 G4 recommendation agreed; BACKLOG, `docs/test-bed/README.md`, and spec 004 updated; verified and closed again.

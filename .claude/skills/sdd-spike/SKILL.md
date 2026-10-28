@@ -1,7 +1,7 @@
 ---
 name: sdd-spike
 description: Run a spike as an interview with the user. Prepares a briefing and questions with the spike-researcher agent, asks them in small batches, records answers and any information the user adds as it comes, and keeps going until the spike's goal questions are resolved. Use for any spike spec, any PLAN.md Phase 0 spike, or whenever the user adds information about an active spike.
-argument-hint: <spike ID | PLAN spike number or topic> [new information]
+argument-hint: <spike ID | topic> [new information]
 ---
 
 # Spike
@@ -13,7 +13,7 @@ A spike is resolved together with the user. You and the spike-researcher agent f
 ## 1. Open the spike
 
 - If the input starts with the ID of a spike spec, open `specs/<ID>-*/spec.md`.
-- Otherwise find the matching spike in the `BACKLOG.md` "Spikes" section, by number or topic. Check `specs/_kit/sdd status` for an existing spec on it. If there is none, create one with `specs/_kit/sdd new spike "<title>"` and fill in the frontmatter (`phase: 0`, `depends_on` with the spec IDs of the spikes it depends on, if they exist, and `refs` with the BACKLOG and PLAN items), Why, and Goal questions (one checkbox per question from BACKLOG.md, numbered G1, G2, …).
+- Otherwise find the matching spike in the `BACKLOG.md` "Spikes" section, by topic. Check `specs/_kit/sdd status` for an existing spec on it. If there is none, create one with `specs/_kit/sdd new spike "<title>"` and fill in the frontmatter (`phase: 0`, `depends_on` with the spec IDs of the spikes it depends on, if they exist, and `refs` with the BACKLOG and PLAN items), Why, and Goal questions (one checkbox per question from BACKLOG.md, numbered G1, G2, …).
 - Claim it: `specs/_kit/sdd claim <ID>`. Keep the claim for as long as the interview runs in this session. If another session holds it, do not interview: write any notes the user gave into the spike's Inbox (change only that section), tell the user who holds the spike, and stop. If the claim is shown as stale and the user confirms that session is gone, take it over with `specs/_kit/sdd release <ID> --force` and claim again.
 - If a spec in `depends_on` is not `done`, say so and ask whether to go ahead.
 - Any text after the ID is new information from the user: take it in (step 3) before anything else.

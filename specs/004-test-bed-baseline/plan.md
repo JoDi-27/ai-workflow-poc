@@ -8,7 +8,7 @@
 2. Plant the T04 and T02 situations in `sample-crm` code, on one branch with neutral commit messages, and record the design change in `sample-crm`'s plan as an ordinary deviation.
 3. Keep, in this repository, a script that checks the planted behaviors against a running baseline (AC-4, AC-8).
 4. Audit the branch by hand for R2, R5–R7, R9–R11, merge it, and verify `sample-crm`'s spec 001. Tag the verification commit `baseline`.
-5. Record the tag and SHA in `docs/test-bed.md`.
+5. Record the tag and SHA in `docs/test-bed/README.md`.
 
 T06 and T07 need no code change: the baseline already stores emails as sent, has no unique email, and has the company-delete test. Only the email format rule needs a small change, so that `" Ana@Example.com "` is accepted (AC-8).
 
@@ -37,7 +37,7 @@ Versions, from `sample-crm`'s `pom.xml` and current docs: Spring Boot 4.1.1 (Spr
 | --- | --- | --- |
 | Spec 001 amendment, its T9 (env database and CI service), its verification | `sample-crm` | `[001] …` |
 | Validation written out per operation, email format rule, contact page offset, page-2 test line removed, `sample-crm` plan deviations | `sample-crm`, branch `contact-list-and-validation` | Neutral, no IDs, for example "Write out request validation in each controller operation" |
-| Check script, `docs/test-bed.md`, this spec's records | this repository | `[004] Tn …` |
+| Check script, `docs/test-bed/README.md`, this spec's records | this repository | `[004] Tn …` |
 
 Every text written into `sample-crm` (code, comments, docs, plan rows, commit messages, branch and PR names) must pass the AC-11 search before it is pushed.
 
@@ -81,7 +81,7 @@ R7 is already met: `CompanyApiTest`, `ContactApiTest`, and `DealApiTest` run eve
 
 ### Check script in this repository (AC-4, AC-8)
 
-`docs/test-bed/baseline-checks.sh BASE_URL`: a `bash` script using `curl` and `jq` against a running baseline started with `./mvnw spring-boot:test-run`, whose database must be empty.
+`scripts/baseline-checks.sh BASE_URL`: a `bash` script using `curl` and `jq` against a running baseline started with `./mvnw spring-boot:test-run`, whose database must be empty.
 
 - AC-4: create five contacts, list page 1 and page 2 with size 2, and assert that page 2's first contact id equals page 1's second.
 - AC-8: create `" Ana@Example.com "` then `"ana@example.com"`, assert both answer 201, and read each back exactly as sent.
@@ -92,7 +92,7 @@ R7 is already met: `CompanyApiTest`, `ContactApiTest`, and `DealApiTest` run eve
 1. Merge the branch to `sample-crm`'s `main` through a pull request; CI runs on the PR and on `main`.
 2. Run `/sdd-verify 001` in `sample-crm` at that merge commit. Its evidence names the merge commit and its CI run. The verification commit changes only `specs/`, `PLAN.md`, and `BACKLOG.md`.
 3. Tag the verification commit `baseline` and push the tag. CI runs on that push too, giving AC-3 its run on the tagged SHA.
-4. `docs/test-bed.md` records the tag, its SHA, and that SHA as T01's base commit.
+4. `docs/test-bed/README.md` records the tag, its SHA, and that SHA as T01's base commit.
 
 ## Requirement coverage
 
@@ -109,7 +109,7 @@ R7 is already met: `CompanyApiTest`, `ContactApiTest`, and `DealApiTest` run eve
 | R9 | Existing test emails; audit in T6 |
 | R10 | Existing `ContactApiTest.deleteCompanyKeepsContacts` |
 | R11 | Neutral texts and commit messages; search in T6 and again at the tag |
-| R12 | `docs/test-bed.md` update |
+| R12 | `docs/test-bed/README.md` update |
 | R13 | Database switch: conditional container bean |
 
 ## Decisions
@@ -131,15 +131,15 @@ R7 is already met: `CompanyApiTest`, `ContactApiTest`, and `DealApiTest` run eve
 | AC-1 | Manual: at the tag, read `sample-crm`'s spec 001 status and evidence; `git diff --stat <evidence commit> baseline` lists only `specs/`, `PLAN.md`, `BACKLOG.md` |
 | AC-2 | Manual: one line per task T01 to T12 comparing it with `/v3/api-docs` and the code |
 | AC-3 | Manual: link to the passing CI run on the tagged SHA, with its test count |
-| AC-4 | Script: `docs/test-bed/baseline-checks.sh` page check against the running tag |
+| AC-4 | Script: `scripts/baseline-checks.sh` page check against the running tag |
 | AC-5 | Manual: `./mvnw -B verify` passes; `grep -n "page=[2-9]" src/test` shows no assertion on page contents |
 | AC-6 | Manual: list the six handlers and show the rules in each; `git grep -n -E "RequestValidator\|@NotBlank\|@Size\|@Email"` in `src/main` finds nothing outside paging |
 | AC-7 | Manual: per record type, make one rule in one handler accept bad input, run that type's API test, record the failing test, revert |
-| AC-8 | Script: `docs/test-bed/baseline-checks.sh` email check against the running tag |
+| AC-8 | Script: `scripts/baseline-checks.sh` email check against the running tag |
 | AC-9 | Manual: list every email literal and generator used to create contacts in `src/test`, and compare each test's set ignoring case and whitespace |
 | AC-10 | Manual: name `ContactApiTest.deleteCompanyKeepsContacts` and its passing run |
 | AC-11 | Manual: the search commands below, run on a fresh clone at the tag, with their empty output |
-| AC-12 | Manual: read `docs/test-bed.md`; `git rev-parse baseline^{commit}` in `sample-crm` matches |
+| AC-12 | Manual: read `docs/test-bed/README.md`; `git rev-parse baseline^{commit}` in `sample-crm` matches |
 | AC-13 | Manual: `./mvnw -B verify` with `DB_URL` pointing at a local PostgreSQL and the container runtime stopped; then without the variables and with Docker |
 
 AC-11 search, from a fresh clone of `sample-crm` with all branches and tags:

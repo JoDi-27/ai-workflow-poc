@@ -1,5 +1,5 @@
 """Spike 007: the "Tasks and their flaws" section shared by report.py and report2.py.
-Built from cases/Tnn-requirements.md, the flaw column of cases/README.md, and the variant table in docs/test-bed.md."""
+Built from cases/Tnn-requirements.md, the flaw column of cases/README.md, and the variant table in docs/test-bed/README.md."""
 import html, re
 from trial_common import TASKS, labels
 
@@ -12,9 +12,9 @@ def _md(t):  # inline Markdown code spans only
 def tasks_section():
     readme = open("cases/README.md").read().split("## Build")[0]
     flaw = {r[0].replace(" ", "-"): r[3] for r in _table_rows(readme, "T\\d\\d (good|flawed)")}
-    testbed = open("../../../docs/test-bed.md").read().split("## Laya's first cases")[1]
+    testbed = open("../../../docs/test-bed/README.md").read().split("## Laya's first cases")[1]
     variant = {r[0]: (r[1], r[2]) for r in _table_rows(testbed, "T\\d\\d")}
-    out = ["<h2>Tasks and their flaws</h2><p>Five tasks from the test bed (<code>docs/test-bed.md</code>), each written twice against the "
+    out = ["<h2>Tasks and their flaws</h2><p>Five tasks from the test bed (<code>docs/test-bed/README.md</code>), each written twice against the "
            "<code>sample-crm</code> baseline: a good variant and a flawed one that differs only in its planted flaw. Both variants of a "
            "task share one requirements doc. Every variant builds and passes its own tests, so a test run alone never shows the flaw.</p>"
            "<table><tr><th>Task</th><th>What was asked</th><th>Good variant</th><th>Flawed variant: the flaw</th><th>Your scores</th></tr>"]

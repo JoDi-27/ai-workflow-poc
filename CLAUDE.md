@@ -10,10 +10,11 @@ Phase 0, scaffolding not started: no product code, no build, no tests. `PLAN.md`
 
 | File | Read it for |
 | --- | --- |
-| `README.md` | What the project is, the stack, and the read-first table for `docs/` |
-| `WORKFLOW_ENGINE_INTENT.md` | Product intent and design guardrails (long; read the relevant section, not all of it) |
+| `README.md` | What the project is, the stack, and the read-first table |
+| `docs/README.md` | Index of the design documents: which one to read for a given task |
+| `docs/intent.md` | Product intent and design guardrails (long; read the relevant section, not all of it) |
 | `PLAN.md` | Phases, their checklists, and exit criteria |
-| `BACKLOG.md` | Happy path, MVP decisions, the checks carried over from the spikes, and post-MVP items |
+| `BACKLOG.md` | Happy path, MVP decisions, a summary of each spike, the checks carried over from the spikes, and post-MVP items |
 | `docs/concepts/glossary.md` | The terms used everywhere (run, subject, checkpoint, evidence, runner, DecisionEngine) |
 | `specs/constitution.md` | The rules every spec, plan, and piece of code must respect; read it before planning or coding |
 | `specs/README.md` | How the spec kit works: commands, shell helpers, claims, file layout, and the practices it enforces |
@@ -36,5 +37,6 @@ All work goes through the spec-driven kit in `specs/`.
 ## Conventions
 
 - Commit only when asked. Messages start with the spec and task ID, for example `[003] T2 Add run state table`. Use `[meta]` only for housekeeping that changes no behavior or requirements (hooks, settings, kit scripts, doc fixes); anything else needs a spec.
-- Docs are written in plain, short sentences, consistent with the existing Markdown files.
+- Docs are written in plain, short sentences, consistent with the existing Markdown files. Add each new document to `docs/README.md`.
+- Name spikes by their spec ID (spike 010), never by an older number.
 - Specs, plans, and tasks follow the practices in `specs/README.md` ("Good practices this kit enforces").

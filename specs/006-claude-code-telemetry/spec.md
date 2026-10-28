@@ -52,7 +52,7 @@ Prepared by the spike-researcher agent on 2026-10-19 from the repository and the
 - **G4:** activity recording is suggested as a post-tool-use hook that sends tool name and outcome, with no transcripts yet (BACKLOG MVP / Activity recording). Secrets and sensitive prompts are redacted "according to policy" (INTENT Observability); the policy does not exist yet.
 - **G5:** the kit is a one-step installable plugin (INTENT Claude Code driver kit). `telemetry` is a declarable driver capability (`docs/definitions/schema.md`, `required_capabilities`). How the host reaches the collector is spike 10's (BACKLOG spike 10, Networking).
 - **G6:** the MVP builds no driver-side evaluator subagent (BACKLOG Evaluator location). Reasoning steps run as headless Claude Code in runner sandboxes; `code_quality` has a council of 3. The intent wants tokens "including runner-side and driver-side evaluators". Sandbox egress is suggested to be only an in-cluster Maven proxy.
-- **G7:** milestone 6 is done when "a run's stages, tokens, and latency can be reconstructed without asking the driver agent; unavailable metrics are explicit" (INTENT milestone 6). Hidden acceptance tests are measured after the run (`docs/test-bed.md`).
+- **G7:** milestone 6 is done when "a run's stages, tokens, and latency can be reconstructed without asking the driver agent; unavailable metrics are explicit" (INTENT milestone 6). Hidden acceptance tests are measured after the run (`docs/test-bed/README.md`).
 
 ### Researched
 

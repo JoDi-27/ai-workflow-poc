@@ -1,6 +1,6 @@
 # Laya's first cases
 
-Ten hand-made cases for spike 007: a good and a flawed variant for five test-bed tasks (`docs/test-bed.md`, "Laya's first cases"). Claude drafted them in a session separate from any evaluation. No variant has been scored or evaluated.
+Ten hand-made cases for spike 007: a good and a flawed variant for five test-bed tasks (`docs/test-bed/README.md`, "Laya's first cases"). Claude drafted them in a session separate from any evaluation. No variant has been scored or evaluated.
 
 Each patch is `git diff baseline` in `sample-crm`, against the tag `baseline` (`0916dbf`), tests included. Apply one to a fresh checkout of `baseline` with `git apply`. Each task has one requirements doc, Laya's `requirements_doc` input, shared by both variants.
 
@@ -53,4 +53,4 @@ Laya's model has a 1024-token context. Patch sizes, for packing:
 | `T11-flawed.patch` | 7542 | 181 |
 | `T11-good.patch` | 8132 | 198 |
 
-No patch fits in 1024 tokens together with a rendered rubric and the labels: the smallest is about 3 KB, and T04's are 18 KB. A packet needs a trimmed diff or a summary, as `docs/test-bed.md` allows.
+No patch fits in 1024 tokens together with a rendered rubric and the labels: the smallest is about 3 KB, and T04's are 18 KB. A packet needs a trimmed diff or a summary, as `docs/test-bed/README.md` allows.

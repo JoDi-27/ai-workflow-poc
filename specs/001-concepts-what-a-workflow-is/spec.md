@@ -24,7 +24,7 @@ Progress counts the checkboxes in Goal questions, Questions for you, and Deliver
 
 ## Why
 
-Every later spike and the engine's data model need one precise vocabulary. This spike turns the Concepts list in `WORKFLOW_ENGINE_INTENT.md` into a domain model: what each concept is, how concepts relate, how their lifecycles move, and which ones the engine knows about versus which exist only in workflow definitions.
+Every later spike and the engine's data model need one precise vocabulary. This spike turns the Concepts list in `docs/intent.md` into a domain model: what each concept is, how concepts relate, how their lifecycles move, and which ones the engine knows about versus which exist only in workflow definitions.
 
 It settles no `BACKLOG.md` MVP item directly. Spikes 3 (definition model), 6 (Laya/Jev role), and 7 (target architecture) depend on it.
 
@@ -42,7 +42,7 @@ It settles no `BACKLOG.md` MVP item directly. Spikes 3 (definition model), 6 (La
 
 <!-- Prepared by the spike-researcher agent: what the repository and current docs already say, with sources. -->
 
-Prepared 2026-10-08. INTENT = `WORKFLOW_ENGINE_INTENT.md`.
+Prepared 2026-10-08. INTENT = `docs/intent.md`.
 
 ### G1 · Workflow, definition, version, run
 
@@ -206,7 +206,7 @@ Prepared 2026-10-08. INTENT = `WORKFLOW_ENGINE_INTENT.md`.
 - 2026-10-08 · note from the user · "I worded the stage as a loop, its does not need to be taken literally, I just want to keep the concept of it (self contained and validated task)". Renamed "stage loop" to *stage task* in the drafts; iterating (a goal loop) is how a driver kit typically does the work, not a model requirement. Limits, iterations as their unit, and exhaustion escalation (Q23–Q28) kept.
 - 2026-10-08 · note from the user · "drafts are fine, go ahead with the recommendation". Updated glossary and model accepted, including the stage task and the fixed toy workflow. G3, G4, G5 resolved.
 - 2026-10-08 · note from the user · "i agree". Recommendation and follow-ups agreed as drafted.
-- 2026-10-08 · verify · Closed with `/sdd-verify 001`. Follow-ups applied: `WORKFLOW_ENGINE_INTENT.md` (Concepts rewritten to match `docs/concepts/`; Execution rules, Transition protocol step 4, and Guardrails versioning reworded); `CLAUDE.md` glossary (run and subject); `specs/constitution.md` Art. 4 amended and logged; `BACKLOG.md` (new decided Stage tasks item, Runs and repositories wording, spike 1 ticked, inputs added to spikes 3, 4, 7, 8, two Next items, one On record item); `PLAN.md` spike 1 ticked. Remaining assumptions handed to spikes 7 and 8.
+- 2026-10-08 · verify · Closed with `/sdd-verify 001`. Follow-ups applied: `docs/intent.md` (Concepts rewritten to match `docs/concepts/`; Execution rules, Transition protocol step 4, and Guardrails versioning reworded); `CLAUDE.md` glossary (run and subject); `specs/constitution.md` Art. 4 amended and logged; `BACKLOG.md` (new decided Stage tasks item, Runs and repositories wording, spike 1 ticked, inputs added to spikes 3, 4, 7, 8, two Next items, one On record item); `PLAN.md` spike 1 ticked. Remaining assumptions handed to spikes 7 and 8.
 
 ## Findings
 
@@ -300,7 +300,7 @@ Agreed with the user on 2026-10-08.
 - [x] Entity-relationship sketch (Mermaid)
 - [x] Lifecycle diagrams (Mermaid state diagrams)
 - [x] Non-SDLC toy workflow sketch
-- [x] Concepts section of `WORKFLOW_ENGINE_INTENT.md` updated to match
+- [x] Concepts section of `docs/intent.md` updated to match
 - [x] BACKLOG.md items settled by this spike updated
 
 ## Follow-ups
@@ -309,7 +309,7 @@ Agreed with the user on 2026-10-08.
 
 Applied when the spike closes (`/sdd-verify 001`):
 
-- `WORKFLOW_ENGINE_INTENT.md`: update Concepts to match `docs/concepts/glossary.md` (including workflow, stage task, stage visit, subject); reword Guardrails "version independently" (Q14); reword Transition protocol step 4 so steps run strictly in order (Q5); "ending the run as failed" means a failure terminal stage (Q4).
+- `docs/intent.md`: update Concepts to match `docs/concepts/glossary.md` (including workflow, stage task, stage visit, subject); reword Guardrails "version independently" (Q14); reword Transition protocol step 4 so steps run strictly in order (Q5); "ending the run as failed" means a failure terminal stage (Q4).
 - `CLAUDE.md` glossary: replace "one run per branch" with "one active run per workflow and subject key; the SDLC kit uses repository + branch as the subject" (Q1).
 - `specs/constitution.md`: amend Art. 4 (Q26): continuing on its own inside a human-started session, up to the stage task's iteration limit, is not unattended model invocation. Record it in the amendments log.
 - `BACKLOG.md` MVP, Execution: add a stage task item (templated task, acceptance criteria, tests; neutral limits; kit enforces, engine records; exhaustion escalates to the owner). Amend "Runs and repositories" to the subject-key wording.
