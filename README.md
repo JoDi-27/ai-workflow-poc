@@ -4,25 +4,18 @@ A proof of concept of a governed workflow engine for coding-agent drivers. The e
 
 ## Status
 
-Phase 0: the twelve spikes are done (named by spec ID, 001 to 014) and scaffolding is next. There is no product code yet. `PLAN.md` has the phases, `BACKLOG.md` the decisions and the checks carried over from the spikes, and `specs/STATUS.md` the progress board.
+Phase 0: the spikes are done and scaffolding is next. There is no product code yet. `specs/STATUS.md` is the progress board.
 
 ## Read first
 
-| File | What it holds |
+| Path | What it holds |
 | --- | --- |
-| `docs/README.md` | Index of the design documents, and which one to read for a given task |
-| `docs/intent.md` | Product intent, concepts, and design guardrails |
+| `docs/` | The design: intent, concepts, architecture, driver API, engine, definitions, local setup, and test bed. Start at `docs/README.md` |
 | `PLAN.md` | Phases, checklists, and exit criteria |
 | `BACKLOG.md` | The happy path, MVP decisions, a summary of each spike, carried-over checks, and later work |
-| `docs/architecture/` | Components, engine modules, decisions, and sequences (spike 010) |
-| `docs/driver-api/` | The driver contract over HTTP and MCP (spike 011) |
-| `docs/engine/` | Engine low-level design and the draft schema (spike 013) |
-| `docs/definitions/` | The definition schema and the reference workflow (spike 003) |
-| `docs/local-setup/` | How the system runs on a local Kubernetes cluster (spike 014) |
-| `docs/test-bed/` | The `sample-crm` repository and task set used by runs (spike 002) |
-| `deploy/` | Draft Kubernetes manifests: `base/` and the `local` and `gke` overlays (spike 014) |
-| `scripts/` | Helper scripts, such as the test-bed baseline checks (spec 004) |
-| `specs/` | The spec-driven kit: one folder per work item; `specs/README.md` explains it |
+| `specs/` | The spec-driven kit: one folder per work item. Start at `specs/README.md` |
+| `deploy/` | Draft Kubernetes manifests: `base/` and the `local` and `gke` overlays |
+| `scripts/` | Helper scripts |
 | `CLAUDE.md` | Working rules for Claude Code sessions in this repository |
 
 ## Stack
