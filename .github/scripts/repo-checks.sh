@@ -21,11 +21,13 @@ check_inventory() {
 # R4: specs/STATUS.md matches the board, and the board has no warnings.
 # Writes the board, compares, and puts the committed file back, so a local run changes nothing.
 check_status() {
-  local saved warnings
+  local saved warnings rc=0
   saved=$(mktemp "${TMPDIR:-/tmp}/status.XXXXXX")
   cp specs/STATUS.md "$saved" 2>/dev/null || : > "$saved"
-  warnings=$(specs/_kit/sdd status --write 2>&1 >/dev/null)
-  if [ -n "$warnings" ]; then
+  warnings=$(specs/_kit/sdd status --write 2>&1 >/dev/null) || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    fail status "specs/_kit/sdd status --write exited $rc${warnings:+: $warnings}"
+  elif [ -n "$warnings" ]; then
     fail status "the spec board reports: $warnings"
   elif ! cmp -s "$saved" specs/STATUS.md; then
     fail status "specs/STATUS.md is out of date; run specs/_kit/sdd status --write"

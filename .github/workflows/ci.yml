@@ -2,6 +2,7 @@
 # Each job's name is a required status check in .github/rulesets/main.json.
 # To add a check, follow "Adding a CI check" in CONTRIBUTING.md. No path filters:
 # a required check skipped by a filter stays pending and blocks the merge.
+# Later check steps run even when an earlier one fails, so every result shows.
 name: CI
 
 on:
@@ -28,6 +29,8 @@ jobs:
       - name: Inventory is current
         run: .github/scripts/repo-checks.sh inventory
       - name: Spec board is current
+        if: ${{ !cancelled() }}
         run: .github/scripts/repo-checks.sh status
       - name: Shell scripts parse
+        if: ${{ !cancelled() }}
         run: .github/scripts/repo-checks.sh scripts

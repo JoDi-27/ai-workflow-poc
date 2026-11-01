@@ -42,7 +42,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 
 Each item below becomes a feature spec (`/sdd-specify`), split if it takes more than a few days. The checks the spikes handed to scaffolding are collected in `BACKLOG.md` "Carried-over checks"; the ones that can change the design (session ID injection, evaluator authentication behind the egress policy, clone token isolation, Job classification) go first, as the opening tasks of the runner stub and driver kit specs.
 
-- [ ] CI pipeline and branch protection (spec 015): every change reaches `main` through a pull request whose required checks pass, with no bypass. Starts with repository checks; the engine and UI skeleton specs add their build, test, coverage, and mutation checks to it. Goes first, so product code lands through it.
+- [x] CI pipeline and branch protection (spec 015): every change reaches `main` through a pull request whose required checks pass, with no bypass. Starts with repository checks; the engine and UI skeleton specs add their build, test, coverage, and mutation checks to it. Goes first, so product code lands through it.
 - [ ] Repository layout, for example: `engine/` (Java), `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/claude-code/`, `definitions/`, `deploy/`, `docs/` (spike 010).
 - [ ] Engine skeleton: builds, starts, connects to the database, exposes a health endpoint and a stub MCP `status` operation. Use the six Maven modules, the ArchUnit and `analyze-only` rules, the project Maven settings (Maven Central), and the JDK 25 pin from `docs/engine/design.md` section 1 and spike 013's `prototype/module-rules/`.
 - [ ] UI skeleton: separately deployed, logs in, and displays data from an engine endpoint.
