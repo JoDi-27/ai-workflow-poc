@@ -30,7 +30,7 @@ Personal settings go in `settings.local.json`, which git ignores; they are not l
 | `/sdd-plan` | `<spec ID>` | Approve a spec and write its technical plan (plan.md) and task list (tasks.md). Use when a feature spec in specs/ is ready to be planned; spikes are run with /sdd-spike instead. |
 | `/sdd-specify` | `<idea \| PLAN.md item \| spec ID>` | Create a new feature spec in specs/, or refine and clarify an existing one. Use when starting a new piece of work or picking up a PLAN.md item; spikes go to /sdd-spike. |
 | `/sdd-spike` | `<spike ID \| topic> [new information]` | Run a spike as an interview with the user. Prepares a briefing and questions with the spike-researcher agent, asks them in small batches, records answers and any information the user adds as it comes, and keeps going until the spike's goal questions are resolved. Use for any spike spec, any PLAN.md Phase 0 spike, or whenever the user adds information about an active spike. |
-| `/sdd-status` (edited by hand) | `[spec ID]` | Show the progress board of specs in specs/ and what to work on next, or the detailed state of one spec. Use when asked about progress, status, or what to do next. |
+| `/sdd-status` | `[spec ID]` | Show the progress board of specs in specs/ and what to work on next, or the detailed state of one spec. Use when asked about progress, status, or what to do next. |
 | `/sdd-verify` | `<spec ID>` | Verify a spec's acceptance criteria (or a spike's answers) with evidence, then close it and update PLAN.md and BACKLOG.md. Use when all of a spec's tasks are ticked. |
 
 ## Agents
