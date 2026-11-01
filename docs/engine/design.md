@@ -112,7 +112,7 @@ ArchUnit tests sit in `engine-app`, the only module that sees every class. ArchU
 Build rules the trial found:
 
 - `analyze-only` with `failOnWarning` cannot be used with Spring Boot starters or the `archunit-junit5` aggregator, which hold no classes. Modules declare the real artifacts (`spring-web`, `spring-context`, `spring-boot-autoconfigure`, `archunit`, `archunit-junit5-api`).
-- `engine-app` wires modules by component scan, so it sets `ignoredUnusedDeclaredDependencies` for its sibling modules (five with grouped adapters) and the ArchUnit JUnit engine. "Used undeclared" is still checked there.
+- `analyze-only` sets `ignoreNonCompile`: an unused declaration fails only in compile scope, so test and run time libraries need no ignore list. "Used undeclared" is still checked in every scope. `engine-app` wires modules by component scan, so it also ignores its sibling modules (`aiworkflow:*`) as unused (spec 017, plan Deviations T5).
 - One `engine-ports-out` module (Q14) and grouped adapters (Q17): ArchUnit catches an outbound adapter using another adapter's port or classes.
 - The repository carries its own Maven settings, pointing at Maven Central (Q16), and pins JDK 25 for the build, since a newer JDK may be the machine's default.
 

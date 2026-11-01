@@ -123,8 +123,8 @@
   </build>
 
   <profiles>
-    <!-- Mutation testing, on in CI: at least 70% per module (spec 017 R10). No module skips it (plan D11):
-         zero mutations means no mutable code, and code without tests scores 0%. -->
+    <!-- Mutation testing, on in CI: at least 70% per module (spec 017 R10). No module skips it (plan D11).
+         PIT skips a module with no tests, so scripts/every-module-tested.sh catches those (plan Deviations, T2). -->
     <profile>
       <id>mutation</id>
       <build>

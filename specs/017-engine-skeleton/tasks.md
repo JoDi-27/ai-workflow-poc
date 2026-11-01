@@ -14,27 +14,27 @@
 - [x] **T10** Update the documents: `CLAUDE.md` (current state, a Commands section), `engine/README.md` (commands run from `engine/`, modules, plants), `PLAN.md` (Engine skeleton item wording, new "MCP gateway skeleton" item), `docs/engine/design.md` section 1 (base package settled), and `.claude/skills/engine-change/SKILL.md` (no longer a draft; `status` as the worked example; steps the code proved wrong) · check: `grep -q 'MCP gateway skeleton' PLAN.md && grep -q 'stub .status. on the HTTP driver API' PLAN.md && grep -q 'mvnw' CLAUDE.md && grep -q 'mvnw' engine/README.md` → AC-12, AC-13
 - [x] **T13** Add a step to the `engine` CI job that starts the packaged jar against a PostgreSQL 18 service and requires health `UP` and `status` 200, through `engine/scripts/smoke-jar.sh` (plan Deviations: a test-scope declaration dropped a library from the jar while every test passed) · `engine/scripts/smoke-jar.sh`, `.github/workflows/ci.yml` · check: `cd engine && docker compose up -d --wait && ./mvnw -B -q -ntp -DskipTests package && scripts/smoke-jar.sh` → AC-5, AC-7, AC-12
 - [x] **T11** Run the manual checks: on a fresh clone, follow `engine/README.md`, then `curl` health and `status` (AC-12); with `JAVA_HOME` on another JDK and a `~/.m2/settings.xml` mirror to an unreachable host, run `./mvnw -B -Pmutation verify` and the run command, and confirm the JDK 25 toolchain in the log (AC-3) · check: manual: both checks pass, with the commands and output recorded in Evidence → AC-3, AC-12 · checked: Claude, 2026-11-01, on a copy of engine/ without target/: (AC-3) with Maven on JDK 26.0.1 (JAVA_HOME) and a throwaway ~/.m2 whose settings mirror everything to https://nexus.invalid with an empty local repository, ./mvnw -B -Pmutation verify passed (44 tests), every download came from central-direct and none from the mirror, compiler and surefire used the JDK 25.0.3 toolchain, and ./mvnw -pl engine-app -am spring-boot:run started the engine with .../openjdk@25/25.0.3/.../bin/java. (AC-12) Following engine/README.md: docker compose up -d, spring-boot:run, curl health gave UP with HTTP 200 and status?session_id=s1 gave 200 with the unbound Status. Not checked: which JVM PIT's forked minions use when Maven runs on another JDK (the tests pass either way). (2026-11-01)
-- [ ] **T12** Open the pull request (saying CI gets stricter) and record its CI run: every required check passes, including `engine` · check: manual: the pull request's checks page shows `repo-checks` and `engine` green → AC-11
+- [x] **T12** Open the pull request (saying CI gets stricter) and record its CI run: every required check passes, including `engine` · check: manual: the pull request's checks page shows `repo-checks` and `engine` green → AC-11 · checked: Claude, 2026-11-01: PR #24 run 41342043919 on e6e31fe, engine pass (3m31s) and repo-checks pass. The first run (41341523979) failed engine on two steps, fixed in e6e31fe (plan Deviations, T12). apply-ruleset.sh --verify: ruleset main (26310938) matches the file, engine required. (2026-11-01)
 
 ## Verification
 
-- [ ] **V1** Every acceptance criterion verified, with evidence below
-- [ ] **V2** PLAN.md and BACKLOG.md updated for this spec
+- [x] **V1** Every acceptance criterion verified, with evidence below
+- [x] **V2** PLAN.md and BACKLOG.md updated for this spec
 
 ## Evidence
 
 | Acceptance criterion | Result | Evidence (test, command output, manual check) |
 | --- | --- | --- |
-| AC-1 | | |
-| AC-2 | | |
-| AC-3 | | |
-| AC-4 | | |
-| AC-5 | | |
-| AC-6 | | |
-| AC-7 | | |
-| AC-8 | | |
-| AC-9 | | |
-| AC-10 | | |
-| AC-11 | | |
-| AC-12 | | |
-| AC-13 | | |
+| AC-1 | pass | `./mvnw -B -ntp -Pmutation verify` on merged `main` (77b5c32): BUILD SUCCESS, all six modules, 44 tests, 0 failures. CI builds a fresh checkout (PR #24 run 41342043919 green). Module edges: `ArchitectureTest` (17 rules, module-edge rules per port, core, and adapter group) and `analyze-only` with `failOnWarning` in every module. Since T5 `ignoreNonCompile` checks unused declarations in compile scope only |
+| AC-2 | pass | `architecture-plants/run.sh`: 11 plants for the 10 rows of design section 1, each caught at its tool (`adapter-to-adapter`, `banned-name`, `broker-in-core`, `core-call`, `core-uses-adapter`, `impure-rule`, `in-uses-core`, `jpa-in-port`, `out-uses-core`, `out-uses-other-port`, `transitive`), then "clean build passes". Runs in CI. Not planted separately: the member-name half of the banned-name rule and the cycle half of row 9 (reviewer findings; one plant per row, as the AC asks) |
+| AC-3 | pass | T11 manual check: Maven on JDK 26.0.1 with a `~/.m2` mirror to `https://nexus.invalid`, `./mvnw -B -Pmutation verify` passed with every download from `central-direct`, compiler and surefire on the JDK 25.0.3 toolchain, and `spring-boot:run` on JDK 25. Not checked: which JVM PIT's forked minions use when Maven runs on another JDK (CI uses Temurin 25) |
+| AC-4 | pass | `EngineIntegrationTest.appliesTheFirstMigrationToTheEngineSchema` (V1 recorded as successful in `engine.flyway_schema_history`) and `MigrationRestartIntegrationTest.aSecondStartAppliesNothing` (two starts on one container, history rows unchanged, `installed_on` included), on PostgreSQL 18 |
+| AC-5 | pass | `EngineIntegrationTest.healthIsUpWithTheDatabaseUp`: 200, `UP`, `components.db.status` `UP` over real HTTP; `scripts/smoke-jar.sh` does the same on the packaged jar in CI; T11 `curl` gave `UP` with 200 |
+| AC-6 | pass | `HealthDownIntegrationTest.healthIsDownWhenTheDatabaseIsUnreachable`: stops its own PostgreSQL container after start, then health is 503 with `DOWN` and db `DOWN` |
+| AC-7 | pass | `StatusControllerTest` (8 tests, every top-level Status field and nested name from `docs/driver-api/README.md`, nulls written, 422 `invalid_inputs` without `session_id`), `DenialsTest` (30, every `DenialCode`), `DriverOperationsServiceTest`, `EngineIntegrationTest.statusAnswersAnUnboundSessionOverHttp`, and `smoke-jar.sh` (200 from the jar) |
+| AC-8 | pass | `EngineIntegrationTest.runsOnPostgres18`: `show server_version` starts with `18.` (Testcontainers `postgres:18`) |
+| AC-9 | pass | Passing side: every module meets JaCoCo BUNDLE LINE 0.80 on `main`. Failing side, on a scratch copy of `engine/` with an untested 10-line method added to `DriverOperationsService`: `./mvnw -B -ntp -Pmutation -pl engine-ports-in,engine-core verify` → "Rule violated for bundle engine-core: lines covered ratio is 0.33, but expected minimum is 0.80", BUILD FAILURE. A module with code and no tests fails `scripts/every-module-tested.sh` (Deviation T2). Claude, 2026-11-01 |
+| AC-10 | pass | Passing side: PIT kills 100% of mutants in each module on `main`. Failing side, same scratch copy with `-Djacoco.skip=true`: "Mutation score of 4 is below threshold of 70", BUILD FAILURE (25 mutations, 1 killed). CI runs `-Pmutation`. Claude, 2026-11-01 |
+| AC-11 | pass | `.github/rulesets/main.json` lists `repo-checks` and `engine`; `apply-ruleset.sh --verify` (run by the owner): ruleset main (26310938) matches the file. PR #24 run 41342043919 on e6e31fe: `engine` and `repo-checks` pass; `gh pr view 24` shows both SUCCESS and the PR merged |
+| AC-12 | pass | `CLAUDE.md` Commands table and `engine/README.md`. T11: on a copy of `engine/` without `target/`, following `engine/README.md`, the build passed, `docker compose up -d` and `spring-boot:run` started the engine, health `UP` 200 and `status` 200. CI's fresh checkout plus `smoke-jar.sh` covers the clean-clone case |
+| AC-13 | pass | `PLAN.md` line 47: Engine skeleton item says "a stub `status` on the HTTP driver API"; line 48: "MCP gateway skeleton" item |

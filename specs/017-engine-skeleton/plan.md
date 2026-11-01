@@ -21,7 +21,7 @@ The module rules are proven by a planted-violation script carried over from the 
 | 9. Need no orchestrator | `status` is a pull operation; the engine pushes nothing. |
 | 10. Happy path first | Only `status`, health, and an empty schema. No JPA, no entities, no auth, no outbound ports' implementations: each arrives with the Phase 1 spec that needs it. |
 | 11. Tests prove acceptance criteria | Every AC maps to a test or a recorded check (Test strategy). |
-| 12. Small, traceable increments | Twelve tasks, one commit each. |
+| 12. Small, traceable increments | Thirteen tasks (T13 added during implementation), one commit each. |
 | 13. Specs are living | The design's placeholder base package is settled in `docs/engine/design.md`; the `engine-change` skill's draft steps are corrected from the worked example. |
 | 14. Decisions are written down | Decisions table below. |
 | 15. Verify current docs | Versions below were checked on 2026-11-01 (Versions). |
