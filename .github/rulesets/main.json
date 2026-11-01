@@ -5,7 +5,9 @@
   "bypass_actors": [],
   "conditions": {
     "ref_name": {
-      "include": ["~DEFAULT_BRANCH"],
+      "include": [
+        "~DEFAULT_BRANCH"
+      ],
       "exclude": []
     }
   },
@@ -14,7 +16,9 @@
       "type": "pull_request",
       "parameters": {
         "required_approving_review_count": 0,
-        "allowed_merge_methods": ["merge"],
+        "allowed_merge_methods": [
+          "merge"
+        ],
         "dismiss_stale_reviews_on_push": false,
         "require_code_owner_review": false,
         "require_last_push_approval": false,
@@ -27,11 +31,22 @@
         "strict_required_status_checks_policy": false,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
-          { "context": "repo-checks", "integration_id": 15368 }
+          {
+            "context": "repo-checks",
+            "integration_id": 15368
+          },
+          {
+            "context": "trial-extra",
+            "integration_id": 15368
+          }
         ]
       }
     },
-    { "type": "non_fast_forward" },
-    { "type": "deletion" }
+    {
+      "type": "non_fast_forward"
+    },
+    {
+      "type": "deletion"
+    }
   ]
 }
