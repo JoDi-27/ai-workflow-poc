@@ -17,6 +17,7 @@ Phase 0: the spikes are done and scaffolding is next. There is no product code y
 | `deploy/` | Draft Kubernetes manifests: `base/` and the `local` and `gke` overlays |
 | `scripts/` | Helper scripts |
 | `.claude/` | Claude Code skills, agents, hooks, and permissions. Start at `.claude/README.md` |
+| `CONTRIBUTING.md` | Setup, the spec-first rule, and the commit message format |
 | `CLAUDE.md` | Working rules for Claude Code sessions in this repository |
 
 ## Stack
@@ -36,4 +37,4 @@ specs/_kit/sdd status      # board and next up
 specs/_kit/sdd next        # what can be worked on now
 ```
 
-See `specs/README.md` for the commands and the rules every spec follows.
+See `specs/README.md` for the commands and the rules every spec follows, and `CONTRIBUTING.md` for the one-time setup and the commit message format.

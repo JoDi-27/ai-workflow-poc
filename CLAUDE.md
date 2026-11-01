@@ -31,7 +31,7 @@ All work goes through the spec-driven kit in `specs/`. The `/sdd-*` skills handl
 
 ## Conventions
 
-- Commit only when asked. Messages start with the spec and task ID, for example `[003] T2 Add run state table`. Use `[meta]` only for housekeeping that changes no behavior or requirements (hooks, settings, kit scripts, doc fixes); anything else needs a spec.
+- Commit only when asked. Messages start with the spec and task ID, for example `[003] T2 Add run state table`. Use `[meta]` only for housekeeping that changes no behavior or requirements (hooks, settings, kit scripts, doc fixes); anything else needs a spec. `CONTRIBUTING.md` has the full format.
 - Docs are written in plain, short sentences, consistent with the existing Markdown files. Add each new document to `docs/README.md`.
 - Name spikes by their spec ID (spike 010), never by an older number.
 - When you add a skill, agent, hook, or permission, follow "Adding something" in `.claude/README.md`. The inventory there regenerates itself; never edit it by hand.
