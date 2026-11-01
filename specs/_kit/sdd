@@ -30,6 +30,9 @@ Usage: specs/_kit/sdd <command>
   claim <ID> <Tn>               Claim one task
   release <ID> [Tn] [--done] [--force]
                                 Release a claim; --done keeps a task claim as finished
+  done <ID> <Tn> [--manual <note>]
+                                Run the task's check; only if it passes, tick the task
+                                and mark its claim done. A manual check needs --manual
   claims [--prune]              List claims; --prune drops the ones no longer needed
 
 Claims stop parallel sessions from picking the same work. They live in the git
@@ -413,6 +416,81 @@ cmd_release() {
   fi
 }
 
+# task_line <tasks.md> <Tn>: "<line number><TAB><line>" of the task, outside
+# HTML comments, or nothing.
+task_line() {
+  awk -v t="$2" '
+    incomment { if (index($0, "-->")) incomment = 0; next }
+    {
+      line = $0
+      while (index(line, "<!--")) {
+        rest = substr(line, index(line, "<!--") + 4)
+        if (index(rest, "-->")) line = substr(line, 1, index(line, "<!--") - 1) substr(rest, index(rest, "-->") + 3)
+        else { line = substr(line, 1, index(line, "<!--") - 1); incomment = 1 }
+      }
+      if (line ~ ("^[[:space:]]*- \\[[ xX]\\] \\*\\*" t "\\*\\*")) { print NR "\t" $0; exit }
+    }' "$1"
+}
+
+# check_of <task line>: the command in backticks after "check:", or nothing.
+# "check: manual: ..." has no backticks, so it gives nothing.
+check_of() {
+  printf '%s\n' "$1" | awk '{
+    i = index($0, "check:"); if (!i) exit
+    rest = substr($0, i + 6)
+    if (rest ~ /^[[:space:]]*manual:/) exit
+    if (match(rest, /`[^`]+`/)) print substr(rest, RSTART + 1, RLENGTH - 2)
+  }'
+}
+
+# done: the only way a task gets ticked. Runs the task's check from the
+# repository root and ticks the task only when the check exits 0.
+cmd_done() {
+  [ $# -ge 2 ] || { usage >&2; exit 1; }
+  local id dir f t row tab n line cmd note="" root rc tmp
+  id=$(norm_id "$1"); t=$(norm_task "$2"); shift 2
+  if [ "${1:-}" = --manual ]; then
+    note="${2:-}"
+    [ -n "$note" ] || { echo "--manual needs a note: who checked what" >&2; exit 1; }
+  elif [ $# -gt 0 ]; then
+    echo "unknown option '$1'" >&2; exit 1
+  fi
+  dir=$(spec_dir "$id"); f="$dir/tasks.md"
+  [ -f "$f" ] || { echo "$id has no tasks.md" >&2; exit 1; }
+  [ -d "$CLAIMS/$id-$t" ] && mine "$id-$t" \
+    || { echo "claim $id $t first: specs/_kit/sdd claim $id $t" >&2; exit 1; }
+  row=$(task_line "$f" "$t")
+  [ -n "$row" ] || { echo "$id has no task $t" >&2; exit 1; }
+  tab=$'\t'; n=${row%%"$tab"*}; line=${row#*"$tab"}
+  case $line in *"- [x]"*|*"- [X]"*) echo "$id $t is already ticked" >&2; exit 1 ;; esac
+  cmd=$(check_of "$line")
+
+  if [ -n "$cmd" ]; then
+    [ -z "$note" ] || { echo "$id $t has a check command; --manual is only for manual checks" >&2; exit 1; }
+    root=$(cd "$SPECS_DIR" && git rev-parse --show-toplevel 2>/dev/null || dirname "$SPECS_DIR")
+    echo "check: $cmd"
+    rc=0; (cd "$root" && bash -c "$cmd") || rc=$?
+    if [ $rc -ne 0 ]; then
+      echo "check failed (exit $rc); $id $t not ticked" >&2; exit 1
+    fi
+  elif [ -z "$note" ]; then
+    echo "$id $t has no check command in backticks after 'check:'." >&2
+    echo "For a manual check, run: specs/_kit/sdd done $id $t --manual \"<who checked what>\"" >&2
+    exit 1
+  fi
+
+  # Tick only that line; a manual check keeps its note on the task.
+  tmp="$f.tmp.$$"
+  NOTE="$note" DATE="$(date +%F)" awk -v n="$n" '
+    NR == n {
+      sub(/- \[ \]/, "- [x]")
+      if (ENVIRON["NOTE"] != "") $0 = $0 " · checked: " ENVIRON["NOTE"] " (" ENVIRON["DATE"] ")"
+    }
+    { print }' "$f" > "$tmp" && mv "$tmp" "$f"
+  touch "$CLAIMS/$id-$t/done"
+  if [ -n "$cmd" ]; then echo "check passed; ticked $id $t"; else echo "ticked $id $t (manual check recorded)"; fi
+}
+
 # list_claims [all]: active claims, or with "all" also done markers.
 list_claims() {
   local c name
@@ -495,6 +573,7 @@ case "${1:-}" in
   next) next_up ;;
   claim) shift; cmd_claim "$@" ;;
   release) shift; cmd_release "$@" ;;
+  done) shift; cmd_done "$@" ;;
   claims) shift; cmd_claims "$@" ;;
   -h|--help|help|"") usage ;;
   *) echo "unknown command '$1'" >&2; usage >&2; exit 1 ;;
