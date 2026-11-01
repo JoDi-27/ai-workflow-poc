@@ -7,7 +7,8 @@ cd "$(dirname "$0")/.."
 bad=""
 for pom in */pom.xml; do
   m="${pom%/pom.xml}"
-  classes=$(find "$m/target/classes" -name '*.class' ! -name 'package-info.class' 2>/dev/null | head -1)
+  # A module with no target/classes has nothing to check; `|| true` keeps pipefail from ending the script.
+  classes=$(find "$m/target/classes" -name '*.class' ! -name 'package-info.class' 2>/dev/null | head -1 || true)
   [ -z "$classes" ] && continue
   if ! ls "$m"/target/surefire-reports/TEST-*.xml >/dev/null 2>&1; then
     bad="$bad $m"

@@ -23,6 +23,8 @@ Thumbs.db
 target/
 build/
 out/
+# ...but not Java packages named out under a source tree, such as engine's port.out and adapter.out
+!**/src/**/out/
 .gradle/
 !gradle/wrapper/gradle-wrapper.jar
 *.class
