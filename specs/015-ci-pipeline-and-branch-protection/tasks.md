@@ -2,7 +2,7 @@
 
 ## Tasks
 
-- [ ] **T1** Make `sdd done` regenerate `specs/STATUS.md` after a tick, with a self-test in a scratch git repository that covers pass, fail, manual, and the regeneration · `specs/_kit/sdd`, `specs/_kit/test-sdd-done.sh` · check: `specs/_kit/test-sdd-done.sh` → AC-4
+- [x] **T1** Make `sdd done` regenerate `specs/STATUS.md` after a tick, with a self-test in a scratch git repository that covers pass, fail, manual, and the regeneration · `specs/_kit/sdd`, `specs/_kit/test-sdd-done.sh` · check: `specs/_kit/test-sdd-done.sh` → AC-4
 - [ ] **T2** Write the failing self-test for the repository checks. In a scratch copy it plants, one at a time, a hand edit to the generated part of `.claude/README.md`, a stale `specs/STATUS.md`, a spec with an unknown status, and a hook syntax error; it expects the matching check to fail and then pass once undone, and prints one `ok`/`FAIL` line per case · `.github/scripts/test-repo-checks.sh` · check: `test -x .github/scripts/test-repo-checks.sh && bash -n .github/scripts/test-repo-checks.sh && ! .github/scripts/test-repo-checks.sh` → AC-3, AC-4, AC-5
 - [ ] **T3** Write the checks `inventory`, `status`, and `scripts` · `.github/scripts/repo-checks.sh` · check: `.github/scripts/repo-checks.sh && .github/scripts/test-repo-checks.sh` → AC-3, AC-4, AC-5
 - [ ] **T4** Add the workflow: `pull_request` and `push` on `main`, `contents: read`, concurrency, job `repo-checks` with one step per check, `actions/checkout` pinned by SHA · `.github/workflows/ci.yml` · check: `grep -q 'contents: read' .github/workflows/ci.yml && grep -q '3d3c42e5aac5ba805825da76410c181273ba90b1' .github/workflows/ci.yml && ! grep -qiE 'secrets\.|anthropic|claude' .github/workflows/ci.yml` → AC-6

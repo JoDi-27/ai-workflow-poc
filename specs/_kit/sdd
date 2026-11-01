@@ -488,6 +488,8 @@ cmd_done() {
     }
     { print }' "$f" > "$tmp" && mv "$tmp" "$f"
   touch "$CLAIMS/$id-$t/done"
+  # The Edit hook that keeps STATUS.md current never sees this write.
+  cmd_status --write >/dev/null
   if [ -n "$cmd" ]; then echo "check passed; ticked $id $t"; else echo "ticked $id $t (manual check recorded)"; fi
 }
 
