@@ -39,5 +39,6 @@ If any AC fails, do not close the spec. Add a fix task for each failure to `task
 - Tick the Verification tasks (features) or Deliverables (spikes).
 - Tick the PLAN.md checkbox(es) for the items in the spec's `refs` that are now complete. Update BACKLOG.md items it settles, if not done already.
 - Set `status: done` and `updated` in the spec, and add a changelog line.
+- These changes reach `main` through a pull request like any other: on the spec's branch if its pull request is still open, or else a new branch from `main` and a small close-out pull request. Never push to `main`.
 - Release the spec and clear its leftover claims: `specs/_kit/sdd release <ID>`, then `specs/_kit/sdd claims --prune`. Run `specs/_kit/sdd status --write`.
 - Report briefly: the result per AC (or per question), the PLAN and BACKLOG items updated, and what `specs/_kit/sdd next` now shows.

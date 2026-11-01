@@ -24,7 +24,7 @@ Other sessions may be working on the same spec. Never pick a task by reading `ta
 2. Do exactly that task, following the plan. Test first where the task calls for it. For a task in `engine/`, load the `engine-change` skill first.
 3. Run the build and the relevant tests so the tree stays green.
 4. Run `specs/_kit/sdd done <ID> <Tn>`. It runs the task's check and, only when it passes, ticks the task and marks the claim done. Never tick a task by editing `tasks.md`. If the check fails, fix the work and run it again. For a `check: manual:` task, do the check (or ask the user to) and run `specs/_kit/sdd done <ID> <Tn> --manual "<who checked what>"`. If a task has no check at all, add one to its line in `tasks.md` and a row to the plan's Deviations.
-5. If the user has asked for commits, commit with a message starting `[<ID>] T<n>`; otherwise suggest that message.
+5. If the user has asked for commits, commit with a message starting `[<ID>] T<n>`; otherwise suggest that message. Commits go on the spec's branch and reach `main` through its pull request; never push to `main` (`CONTRIBUTING.md`, Pull requests).
 6. Continue from step 1 with `claim <ID> next`, unless a task ID was given.
 
 Stop and ask the user when: a check fails and the fix is not obvious, the plan turns out wrong, a task needs a decision the plan does not cover, or something requires a human action. If you stop with the task unfinished, keep the claim only if this session will resume it; otherwise release it with `specs/_kit/sdd release <ID> <Tn>`.
