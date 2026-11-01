@@ -6,6 +6,9 @@ case "$file" in
   */.claude/skills/*|*/.claude/agents/*|*/.claude/hooks/*|*/.claude/settings.json) ;;
   *) exit 0 ;;
 esac
-cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
+# The checkout that holds the edited file: in a worktree, $CLAUDE_PROJECT_DIR
+# is the main checkout, not the worktree.
+root=$(git -C "$(dirname "$file")" rev-parse --show-toplevel 2>/dev/null) || exit 0
+cd "$root" || exit 0
 python3 .claude/bom.py >/dev/null 2>&1 || echo ".claude/bom.py failed" >&2
 exit 0

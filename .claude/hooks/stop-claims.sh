@@ -3,7 +3,9 @@
 input=$(cat)
 sid=$(printf '%s' "$input" | jq -r '.session_id // empty')
 [ -n "$sid" ] || exit 0
-cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
+cwd=$(printf '%s' "$input" | jq -r '.cwd // empty')
+root=$(git -C "${cwd:-.}" rev-parse --show-toplevel 2>/dev/null) || root="${CLAUDE_PROJECT_DIR:-.}"
+cd "$root" || exit 0
 common=$(git rev-parse --git-common-dir 2>/dev/null) || exit 0
 dir="$(cd "$common" && pwd)/sdd-claims"
 [ -d "$dir" ] || exit 0
