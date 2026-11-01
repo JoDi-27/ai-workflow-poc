@@ -12,19 +12,19 @@
 
 ## Verification
 
-- [ ] **V1** Every acceptance criterion verified, with evidence below
-- [ ] **V2** PLAN.md and BACKLOG.md updated for this spec
+- [x] **V1** Every acceptance criterion verified, with evidence below
+- [x] **V2** PLAN.md and BACKLOG.md updated for this spec
 
 ## Evidence
 
 | Acceptance criterion | Result | Evidence (test, command output, manual check) |
 | --- | --- | --- |
-| AC-1 | | |
-| AC-2 | | |
-| AC-3 | | |
-| AC-4 | | |
-| AC-5 | | |
-| AC-6 | | |
-| AC-7 | | T5: PR #23, run 41313787752, `repo-checks` pass in 7s; steps Inventory, Spec board, Shell scripts, Layout is documented all `success`; log: `Layout is documented ... ok   layout` |
-| AC-8 | | |
-| AC-9 | | |
+| AC-1 | pass | T1 check exit 0; `test -d` on `engine/ mcp-gateway/ analysis/ ui/ runner/ driver-kits/ driver-kits/claude-code/ definitions/ deploy/ docs/` all present; `deploy/` and `docs/` in place (`deploy/` gained only its README). Reviewer confirmed |
+| AC-2 | pass | T1 check exit 0: each new README names at least one `docs/` path, every path exists, every `Filled by:` item is in `PLAN.md` (nine items: Engine skeleton, UI skeleton, Runner stub, Claude Code driver kit skeleton, OTel Collector, Kubernetes manifests, Definition model, Driver API, Quality view). Reviewer checked by hand that each item sits under the named phase and section |
+| AC-3 | pass | `driver-kits/claude-code/collector/README.md` line 3: "This folder is the one place for it"; T2 check: `docs/architecture/README.md` and `docs/local-setup/README.md` each name `driver-kits/claude-code/collector/` |
+| AC-4 | pass | `.github/scripts/repo-checks.sh layout` prints `ok layout` on the real tree; self-test cases show it fails on a mismatch (AC-8) |
+| AC-5 | pass | T2 check exit 0: `CLAUDE.md` Current state names all seven folders; `PLAN.md` line 46 lists the folders and no longer says "for example" |
+| AC-6 | pass | `find engine mcp-gateway analysis ui runner driver-kits definitions -type f` lists only the nine `README.md` files |
+| AC-7 | pass | PR #23 head 83fd4e0 (T6): run 41314145184, `repo-checks` pass; earlier run 41313787752 (T4) had all four steps `success`, log `Layout is documented ... ok   layout` |
+| AC-8 | pass | `.github/scripts/test-repo-checks.sh`: "all cases pass", including folder without README fails, without row fails, passes once documented, row for missing folder fails, empty table fails; and in a git work tree (T6): clean passes, ignored `build/` passes, undocumented folder fails |
+| AC-9 | pass | `ci.yml` line 39: step `Layout is documented` in job `repo-checks`; `apply-ruleset.sh --verify`: `ok ruleset 'main' (26310938) matches` and `ok merge settings`; `main.json` requires `repo-checks` (integration 15368), no bypass |

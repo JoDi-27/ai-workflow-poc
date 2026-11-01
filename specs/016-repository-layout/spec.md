@@ -2,7 +2,7 @@
 id: 016
 title: "Repository layout"
 type: feature
-status: in-progress
+status: done
 phase: 0
 depends_on: [015]
 refs: ["PLAN Phase 0 / Scaffolding / Repository layout"]
@@ -93,3 +93,4 @@ Someone new to the repository wants to know what each top-level folder is for.
 - 2026-11-01 Plan review: R4, R8, and AC-4 cover top-level folders whose name does not start with a dot; tooling folders such as `.github/` are described in `CONTRIBUTING.md`. AC-5 asks `CLAUDE.md` and `PLAN.md` to name each folder.
 - 2026-11-01 Planned: `plan.md` and `tasks.md` (5 tasks).
 - 2026-11-01 Implementation started (`/sdd-implement`).
+- 2026-11-01 Verified and closed (`/sdd-verify`): all 9 ACs pass. T6 added from the verify review.
