@@ -1,0 +1,23 @@
+# The engine's configuration (spec 017). Connection settings come from the environment; the defaults
+# match engine/compose.yaml, a local-only database.
+spring:
+  application:
+    name: engine
+  datasource:
+    url: ${AWF_DB_URL:jdbc:postgresql://localhost:5432/awf}
+    username: ${AWF_DB_USER:engine}
+    password: ${AWF_DB_PASSWORD:engine-local}
+  flyway:
+    # Flyway creates the schema and keeps its history table there (docs/engine/design.md section 4).
+    schemas: engine
+    locations: classpath:db/migration/engine
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      # Local only until the manifests and login exist (spec 017, plan D13).
+      show-details: always
