@@ -2,7 +2,7 @@
 id: 014
 title: "Local setup"
 type: spike
-status: done
+status: bogus
 phase: 0
 depends_on: [010, 012, 013]
 refs: ["PLAN Phase 0 / Spikes / 10. Local setup", "BACKLOG Spikes / Wave 5 / 10. Local setup", "BACKLOG MVP / Local cluster", "BACKLOG MVP / Sandbox technology"]
