@@ -55,6 +55,8 @@ For engine work (`engine/`, design in `docs/engine/design.md`):
 
 For any component: unreachable dependencies fail closed (article 5), and drivers and the UI never touch storage (article 1).
 
+For changes to what CI enforces: any change under `.github/` (the workflow, its scripts, the ruleset in `.github/rulesets/main.json`), or to the code the checks call (`.claude/bom.py`, `specs/_kit/sdd`, `.githooks/`), is a finding of its own, even when it looks harmless. Say what gets stricter or looser: a removed or renamed job or step, a lowered threshold, a new path filter, a check that can no longer fail, a required check dropped from the ruleset, or a bypass added.
+
 ## Output
 
 Return only this Markdown:
