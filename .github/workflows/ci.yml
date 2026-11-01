@@ -37,3 +37,46 @@ jobs:
       - name: Layout is documented
         if: ${{ !cancelled() }}
         run: .github/scripts/repo-checks.sh layout
+
+  # The engine (spec 017): build, tests with module rules and PostgreSQL in Testcontainers,
+  # 80% line coverage and 70% mutation score per module, and the planted-violation proof.
+  engine:
+    name: engine
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: engine
+    # For the packaged-jar smoke test; the same database as engine/compose.yaml. The tests use Testcontainers.
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: awf
+          POSTGRES_USER: engine
+          POSTGRES_PASSWORD: engine-local
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U engine -d awf"
+          --health-interval 2s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - name: Build, test, coverage, and mutation gates
+        run: ./mvnw -B -ntp -Pmutation verify
+      - name: Packaged engine starts
+        if: ${{ !cancelled() }}
+        run: scripts/smoke-jar.sh
+      - name: Every module with code has tests
+        if: ${{ !cancelled() }}
+        run: scripts/every-module-tested.sh
+      - name: Module rules fail when broken
+        if: ${{ !cancelled() }}
+        run: architecture-plants/run.sh
