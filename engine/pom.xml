@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <!-- The engine: one deployable from six modules (docs/engine/design.md section 1, spec 017). -->
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.2</version>
+    <relativePath/>
+  </parent>
+  <groupId>aiworkflow</groupId>
+  <artifactId>engine</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>engine-ports-in</module>
+    <module>engine-ports-out</module>
+    <module>engine-core</module>
+    <module>adapters-in</module>
+    <module>adapters-out</module>
+    <module>engine-app</module>
+  </modules>
+
+  <properties>
+    <java.version>25</java.version>
+    <archunit.version>1.5.1</archunit.version>
+    <jacoco.version>0.8.16</jacoco.version>
+    <pitest.version>1.30.1</pitest.version>
+    <pitest-junit5.version>1.2.3</pitest-junit5.version>
+    <!-- Only engine-app runs: ./mvnw -pl engine-app -am spring-boot:run -->
+    <spring-boot.run.skip>true</spring-boot.run.skip>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency><groupId>aiworkflow</groupId><artifactId>engine-ports-in</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>aiworkflow</groupId><artifactId>engine-ports-out</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>aiworkflow</groupId><artifactId>engine-core</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>aiworkflow</groupId><artifactId>adapters-in</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>aiworkflow</groupId><artifactId>adapters-out</artifactId><version>${project.version}</version></dependency>
+      <dependency><groupId>com.tngtech.archunit</groupId><artifactId>archunit</artifactId><version>${archunit.version}</version></dependency>
+      <dependency><groupId>com.tngtech.archunit</groupId><artifactId>archunit-junit5-api</artifactId><version>${archunit.version}</version></dependency>
+      <dependency><groupId>com.tngtech.archunit</groupId><artifactId>archunit-junit5-engine</artifactId><version>${archunit.version}</version></dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <plugins>
+      <!-- Build and test with JDK 25, whatever JDK runs Maven (plan D2). Finds installed JDKs; no toolchains.xml needed. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <goals><goal>select-jdk-toolchain</goal></goals>
+            <configuration>
+              <version>[25,26)</version>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Every module: declared dependencies must equal used ones (docs/engine/design.md section 1). -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.11.0</version>
+        <executions>
+          <execution>
+            <id>analyze</id>
+            <goals><goal>analyze-only</goal></goals>
+            <configuration>
+              <failOnWarning>true</failOnWarning>
+              <!-- Unused declarations are checked for compile scope only: test and runtime libraries
+                   (test engines, MockMvc's Hamcrest and Servlet API, auto-configuration modules) are needed
+                   without bytecode references. Used-undeclared is still checked in every scope. -->
+              <ignoreNonCompile>true</ignoreNonCompile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Every module with code: at least 80% line coverage from its own tests (spec 017 R9, plan D7). -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <configuration>
+          <excludes>
+            <exclude>aiworkflow/engine/app/EngineApplication.class</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals><goal>prepare-agent</goal></goals>
+          </execution>
+          <execution>
+            <id>check</id>
+            <goals><goal>check</goal></goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.80</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- Mutation testing, on in CI: at least 70% per module (spec 017 R10). No module skips it (plan D11):
+         zero mutations means no mutable code, and code without tests scores 0%. -->
+    <profile>
+      <id>mutation</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>${pitest.version}</version>
+            <dependencies>
+              <dependency>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-junit5-plugin</artifactId>
+                <version>${pitest-junit5.version}</version>
+              </dependency>
+            </dependencies>
+            <configuration>
+              <targetClasses><param>aiworkflow.engine.*</param></targetClasses>
+              <targetTests><param>aiworkflow.engine.*</param></targetTests>
+              <excludedClasses><param>aiworkflow.engine.app.EngineApplication</param></excludedClasses>
+              <excludedTestClasses><param>aiworkflow.engine.*IntegrationTest</param></excludedTestClasses>
+              <mutationThreshold>70</mutationThreshold>
+              <failWhenNoMutations>false</failWhenNoMutations>
+              <timestampedReports>false</timestampedReports>
+            </configuration>
+            <executions>
+              <execution>
+                <id>mutation</id>
+                <phase>verify</phase>
+                <goals><goal>mutationCoverage</goal></goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

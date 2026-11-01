@@ -73,7 +73,7 @@ Boxes inside `adapters-in` and `adapters-out` are packages, not Maven modules.
 
 This refines spike 012's "Maven modules per core, port, and adapter" (Q17). Grouping keeps the property that matters, a core that cannot see adapters or their libraries, with four modules instead of ten. What it gives up: the compiler no longer stops one adapter from using another adapter's classes or libraries inside the same group, so ArchUnit checks that.
 
-The base Java package is a placeholder, `aiworkflow.engine`, to settle at scaffolding. Packages follow modules: `aiworkflow.engine.core.runs`, `aiworkflow.engine.port.in`, `aiworkflow.engine.adapter.in.driverapi`, `aiworkflow.engine.adapter.out.brokerclient`, and so on.
+The base Java package is `aiworkflow.engine` and the Maven groupId `aiworkflow`, settled by the engine skeleton (spec 017, D1). Packages follow modules: `aiworkflow.engine.core.runs`, `aiworkflow.engine.port.in`, `aiworkflow.engine.adapter.in.driverapi`, `aiworkflow.engine.adapter.out.brokerclient`, and so on.
 
 ### Inside the core
 

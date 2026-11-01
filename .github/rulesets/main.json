@@ -27,7 +27,8 @@
         "strict_required_status_checks_policy": false,
         "do_not_enforce_on_create": false,
         "required_status_checks": [
-          { "context": "repo-checks", "integration_id": 15368 }
+          { "context": "repo-checks", "integration_id": 15368 },
+          { "context": "engine", "integration_id": 15368 }
         ]
       }
     },
