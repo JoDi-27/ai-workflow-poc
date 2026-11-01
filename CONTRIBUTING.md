@@ -28,6 +28,14 @@ The first line starts with the ID of the spec the commit belongs to:
 
 Anything that is not housekeeping needs a spec, so `[meta]` is not a way around one.
 
+Keep messages concise:
+
+- The first line is at most 72 characters, prefix included, and says what the commit does in the imperative: `[003] T2 Add run state table`, not `[003] T2 Added the table for run state and its migration`. No full stop at the end.
+- Add a body only when the reason is not obvious from the first line and the diff. Leave a blank line after the first line, and keep the body to a few short lines about why, not a list of every file.
+- One commit is about one task, so if the first line needs "and", it is probably two commits.
+
+The hooks below reject a first line over 72 characters.
+
 Two hooks check the format:
 
 - `.githooks/commit-msg` checks every commit made in a clone that ran the setup command. It lets through the messages git writes itself (`Merge …`, `Revert "…"`) and `fixup!`, `squash!`, and `amend!` commits.
