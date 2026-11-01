@@ -6,7 +6,7 @@ Each checklist item is delivered through a spec in `specs/` (see `specs/README.m
 
 | Phase | Goal | Status |
 | --- | --- | --- |
-| 0. Spikes and scaffolding | Answer the unknowns, confirm the MVP decisions, and stand up empty but connected components | In progress: spikes done (2026-10-27); decisions and scaffolding open |
+| 0. Spikes and scaffolding | Answer the unknowns, confirm the MVP decisions, and stand up empty but connected components | In progress: spikes done (2026-10-27); decisions done (2026-11-01); scaffolding open |
 | 1. Execution | Happy path steps 1–7: Claude Code builds and ships code through the engine, with Jev in shadow mode | Not started |
 | 2. Observability and quality monitoring | Happy path steps 8–10 | Not started |
 | 3. Feedback loop | Happy path steps 11–14 | Not started |
@@ -36,7 +36,7 @@ Each spike is a spike spec in `specs/`, whose findings and recommendation are it
 
 ### Decisions
 
-- [ ] Confirm or replace each suggested default in the `BACKLOG.md` MVP section, using the spike results. Record each decision and its rationale in place.
+- [x] Confirm or replace each suggested default in the `BACKLOG.md` MVP section, using the spike results. Record each decision and its rationale in place.
 
 ### Scaffolding
 
@@ -72,6 +72,7 @@ Milestones 1–5 from the intent doc, happy path versions only.
 - [ ] Claude Code driver kit: instructions (including pushing before a transition request), session binding, activity hook, protected-action hook for the merge.
 - [ ] UI: run list, run detail with score breakdown, human step inbox, UI login for human decisions.
 - [ ] Jev: DecisionEngine interface, one adapter over `/v1/systemone`, and the `code_quality` decision tree (`code_quality_band`, then `has_defect`) in shadow mode, walked by the core `typed-decisions` module with its input from a runner input packet job (spike 007, spike 010 Q26–Q28). A truncated input records *not evaluated*.
+- [ ] Test-bed fixes: apply the three fixes decided under "Test-bed fixes from spike 005" in `BACKLOG.md` to `sample-crm` before the exit run on it.
 
 **Exit criteria:** happy path steps 1–7 work on a real repository. A run ends with a merged branch and a score whose breakdown includes the runner check, the Claude evaluator in the runner, Jev in shadow, and the human.
 
@@ -98,6 +99,7 @@ Milestone 8, happy path version only.
 
 ## Phase 4: MVP validation
 
+- [ ] Task records: draft each seed task's expected result and hidden acceptance tests under `docs/`, in a session separate from any run, for the user's review (spike 002, Q10; `BACKLOG.md` "Task records").
 - [ ] Run the reference workflow on a handful of small, real tasks.
 - [ ] Complete at least one full feedback cycle on the results.
 - [ ] Write down what worked, what broke, and what to reprioritize in `BACKLOG.md`.
