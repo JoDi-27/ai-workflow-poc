@@ -4,7 +4,20 @@ Working rules for Claude Code sessions in this repository. What the project is, 
 
 ## Current state
 
-Phase 0, scaffolding in progress: no product code, no build, no tests yet. The component folders exist and each holds only a README saying what goes there: `engine/`, `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/` (with `driver-kits/claude-code/` and its `collector/`), and `definitions/`. `PLAN.md` has the phase table and `specs/STATUS.md` the board. When scaffolding lands, add the build, test, and run commands to this file.
+Phase 0, scaffolding in progress. The engine skeleton exists in `engine/` (spec 017): six Maven modules, a stub `status` on the HTTP driver API, a health endpoint, and the `engine` schema in PostgreSQL. The other component folders hold only a README saying what goes there: `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/` (with `driver-kits/claude-code/` and its `collector/`), and `definitions/`. `PLAN.md` has the phase table and `specs/STATUS.md` the board. When a component's scaffolding lands, add its commands below.
+
+## Commands
+
+The engine needs a JDK 25 installed (the build finds it, whatever `java` is) and Docker for its tests. Run every Maven command from `engine/`, since the project settings path is relative (`engine/README.md`).
+
+| Do | Command, from `engine/` |
+| --- | --- |
+| Build and test | `./mvnw -B verify` |
+| Build with every CI gate | `./mvnw -B -Pmutation verify && scripts/every-module-tested.sh && architecture-plants/run.sh` |
+| Start the local database | `docker compose up -d` |
+| Run the engine | `./mvnw -pl engine-app -am spring-boot:run` (health at `http://localhost:8080/actuator/health`) |
+
+For engine work, load the `engine-change` skill.
 
 ## Where things live
 

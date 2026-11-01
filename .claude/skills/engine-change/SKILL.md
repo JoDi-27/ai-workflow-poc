@@ -10,7 +10,16 @@ Change: $ARGUMENTS
 
 The engine is hexagonal: inbound adapters → inbound ports → core → outbound ports → outbound adapters. Maven modules and ArchUnit enforce the boundaries, so this skill does not repeat them; a wrong dependency fails the build. This skill holds what the build cannot tell you: the order of the steps, where each piece goes, and the calls that need judgment. The facts live in `docs/engine/design.md` (here "design §N"); read the section a step names before doing it.
 
-> Draft, written from the design before any engine code exists. The engine skeleton spec adds its `status` operation as the worked example, and fixes any step the code proves wrong.
+**Worked example:** the stub `status` (spec 017) went through every layer of an inbound operation. Copy its shape:
+
+| Step | File |
+| --- | --- |
+| Port records and method | `engine/engine-ports-in/src/main/java/aiworkflow/engine/port/in/` (`StatusQuery`, `StatusView`, `DriverOperations`) |
+| Use case | `engine/engine-core/src/main/java/aiworkflow/engine/core/usecases/DriverOperationsService.java` |
+| Adapter and denial mapping | `engine/adapters-in/src/main/java/aiworkflow/engine/adapter/in/driverapi/` (`StatusController`, `StatusResponse`, `Denials`) |
+| Tests | each module's `src/test/`, and `engine/engine-app/src/test/.../EngineIntegrationTest.java` |
+
+Commands, gates, and the plants are in `engine/README.md`. Run Maven from `engine/`.
 
 ## Before you start
 
@@ -25,10 +34,10 @@ For a driver, UI, telemetry, or event-feed operation. Design §2 (ports), §6 (u
 2. **Port method** on the inbound port (`DriverOperations`, `HumanOperations`, …). It returns `Outcome<T>`, takes `Caller` and, if it changes state, `Idempotency`.
 3. **Use case** in the core's `usecases` package, in the frame from design §6: authenticate → idempotency (mutating calls only) → lock the run → load and check → write state and events → commit. A broken rule returns `Outcome.Denied` with a `DenialCode`; never throw for it.
 4. **Module service** in the core module that owns the rule (design §1 lists who may call whom). Put a rule that needs no state in a `rules` subpackage (below).
-5. **Inbound adapter** package in `adapters-in`: the hand-written contract record, the mapping to and from the port records, and the denial-to-HTTP mapping from `docs/driver-api/README.md`. No authorization logic here; the core authenticates.
-6. **Contract and MCP mirror:** update `docs/driver-api/` (operation, schema, denials) and the matching MCP tool in the gateway.
+5. **Inbound adapter** package in `adapters-in`: the hand-written contract record with snake_case names (`@JsonProperty`), the mapping to and from the port records, and `Outcome.Denied` through `driverapi.Denials`, which already maps every `DenialCode` to the contract's status and problem body. A malformed request is an `invalid_inputs` denial. No authorization logic here; the core authenticates.
+6. **Contract and MCP mirror:** update `docs/driver-api/` (operation, schema, denials) and the matching MCP tool in the gateway (`mcp-gateway/`, once the MCP gateway skeleton lands).
 7. **Events:** if the use case changes run state, append the event and make sure its payload has what replay needs (design §4, event payload table).
-8. **Tests:** a core use-case test through the port, with fakes; a MockMvc adapter test validated against the JSON Schema; if it changes run state, a scenario step and the replay check (design §9).
+8. **Tests:** a core use-case test through the port, with fakes (plain JUnit while the use case touches no state); a standalone MockMvc adapter test with a fake port, validated against the JSON Schema once the contract files exist; an `engine-app` test over real HTTP named `*IntegrationTest`, which PIT leaves out; if it changes run state, a scenario step and the replay check (design §9).
 
 ## Add an outbound port and its adapter
 
@@ -50,7 +59,7 @@ For a new external system the core needs. Design §2, §6 ("External calls: thre
 
 Design §4.
 
-- Flyway SQL in `engine-app` (`db/migration/engine`), forward-only, no Java migrations. Startup validates the schema (`ddl-auto=validate`).
+- Flyway SQL in `engine-app` (`src/main/resources/db/migration/engine`), forward-only, no Java migrations. Flyway owns the `engine` schema and its history table. Once JPA arrives with the first entity, startup also validates the schema (`ddl-auto=validate`).
 - Update `schema-draft.sql` or the design first, then write the migration.
 - A changed lifecycle column ships with its enum change.
 
@@ -64,6 +73,12 @@ Design §1 ("Pure rule code stays pure"), §9.
 ## Pick the test layer
 
 Use the table in design §9: pure rules → plain JUnit; core use cases → Spring context with Testcontainers PostgreSQL and fakes; inbound adapters → MockMvc against the contract schemas; outbound adapters → WireMock or an emulator; scenarios → scripted port calls plus the replay check. Each acceptance criterion maps to one of these (article 11).
+
+## Dependencies
+
+- Declare real artifacts, not starters: `analyze-only` fails on a used but undeclared dependency in any scope, and on an unused compile-scope one (design §1).
+- A library the app needs at run time stays run time scope even when only a test uses it. A direct test-scope declaration wins over the transitive one and drops it from the jar, while every test still passes. The CI smoke step on the packaged jar catches that.
+- A new module rule in `ArchitectureTest` gets a plant in `engine/architecture-plants/` that proves it fails.
 
 ## Judgment calls the build cannot check
 
