@@ -2,7 +2,7 @@
 id: 017
 title: "Engine skeleton"
 type: feature
-status: in-progress
+status: done
 phase: 0
 depends_on: [015, 016]
 refs: ["PLAN Phase 0 / Scaffolding / Engine skeleton", "BACKLOG Engine framework", "BACKLOG Database"]
@@ -118,3 +118,4 @@ A change adds engine code with no tests, so coverage or the mutation score drops
 - 2026-11-01 Approved (`/sdd-plan`).
 - 2026-11-01 Planned: `plan.md` and `tasks.md` (12 tasks).
 - 2026-11-01 Implementation started (`/sdd-implement`).
+- 2026-11-01 Verified (`/sdd-verify`): AC-1 to AC-13 pass, evidence in `tasks.md`. Done.
