@@ -85,5 +85,14 @@ sed -i.bak '/^## Read first/,/^## Stack/{/^| `/d;}' README.md && rm -f README.md
 run_check "empty Read first table fails"  layout 1
 undo README.md; run_check "  passes once undone" layout 0
 
+# R8 inside a git work tree, the path CI runs: untracked folders count, ignored ones do not.
+git init -q . && git add -A
+run_check "git tree: clean passes layout" layout 0
+mkdir build && echo x > build/out.txt
+run_check "git tree: ignored folder passes" layout 0
+mkdir newpart && echo x > newpart/file.txt
+run_check "git tree: undocumented folder fails" layout 1
+rm -rf newpart build
+
 [ "$failures" -eq 0 ] && echo "all cases pass" || echo "$failures case(s) failed"
 [ "$failures" -eq 0 ]

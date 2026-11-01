@@ -8,6 +8,8 @@
 - [x] **T4** Add the `Layout is documented` step to the `repo-checks` job, with `if: ${{ !cancelled() }}`; add the line on repository checks to `CONTRIBUTING.md` "Adding a CI check" · `.github/workflows/ci.yml`, `CONTRIBUTING.md` · check: `grep -q 'repo-checks.sh layout' .github/workflows/ci.yml && grep -q 'repo-checks.sh' CONTRIBUTING.md && .github/scripts/apply-ruleset.sh --verify` → AC-9
 - [x] **T5** Push the branch, open the pull request (saying CI gets stricter), confirm every required check passes, and record the run log lines showing the layout step in Evidence · PR · check: `gh pr checks --watch --required` → AC-7, AC-8, AC-9
 
+- [x] **T6** Add self-test cases for the layout check inside a git work tree (clean passes, an ignored folder passes, an undocumented folder fails), from the verify review · `.github/scripts/test-repo-checks.sh` · check: `.github/scripts/test-repo-checks.sh` → AC-8
+
 ## Verification
 
 - [ ] **V1** Every acceptance criterion verified, with evidence below

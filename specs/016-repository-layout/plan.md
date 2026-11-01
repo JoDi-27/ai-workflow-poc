@@ -118,3 +118,4 @@ The self-test adds `layout` to its clean-copy loop and gets five cases: a new fo
 | Date | Task | Change | Why |
 | --- | --- | --- | --- |
 | 2026-11-01 | T3 | `top_folders` falls back to listing every folder when not inside a git work tree | The self-test runs in a scratch copy with no `.git`, where `git ls-files` fails. The copy holds only files that are not ignored, so the fallback sees the same folders |
+| 2026-11-01 | T6 (new) | Self-test cases for the layout check inside a git work tree | Verify review: the self-test only exercised the fallback, not the `git ls-files` path CI runs |
