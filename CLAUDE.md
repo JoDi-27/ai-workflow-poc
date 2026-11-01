@@ -22,16 +22,12 @@ Phase 0, scaffolding not started: no product code, no build, no tests. `PLAN.md`
 
 ## How work is done
 
-All work goes through the spec-driven kit in `specs/`.
+All work goes through the spec-driven kit in `specs/`. The `/sdd-*` skills handle claims, status upkeep, library checks, and the `BACKLOG.md` and `PLAN.md` updates; `specs/README.md` explains the kit. These rules hold even when no skill is running:
 
 - Do not implement anything that has no spec in `specs/`. Create one with `/sdd-specify` first, even for small items; a short feature spec is fine.
-- Features follow `/sdd-specify` → `/sdd-plan` → `/sdd-implement` → `/sdd-verify`. Stop at the end of each step for the user's review; running the next command is the approval.
-- Spikes follow `/sdd-spike` → `/sdd-verify`. Whenever the user shares information about an active spike, even outside the command, record it in that spike's Log and Findings.
-- Claim a spec or task with `specs/_kit/sdd claim` before working on it, and never pick work by reading the files. The skills do this.
-- Keep the spec's status, its task checkboxes, and `specs/STATUS.md` up to date whenever work moves (`specs/_kit/sdd status --write`).
+- Features follow `/sdd-specify` → `/sdd-plan` → `/sdd-implement` → `/sdd-verify`, and spikes follow `/sdd-spike` → `/sdd-verify`. Stop at the end of each step for the user's review; running the next command is the approval.
+- Whenever the user shares information about an active spike, even outside the command, record it in that spike's Log and Findings.
 - When code and spec disagree, update the spec or plan first, then the code (constitution, article 13).
-- When a spec settles a `BACKLOG.md` item or finishes a `PLAN.md` checklist item, update those files in place.
-- Check the current documentation of any library, SDK, or tool before using it, and record the version in the plan (article 15).
 
 ## Conventions
 

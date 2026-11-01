@@ -8,7 +8,7 @@ argument-hint: <spike ID | topic> [new information]
 
 Input: $ARGUMENTS
 
-A spike is resolved together with the user. You and the spike-researcher agent find everything that can be looked up; the user supplies what only they know or decide. Keep the loop going across turns until the spike is resolved or the user stops. The spike file is the single record: anything learned that is not in it is lost.
+A spike is resolved together with the user. You and the spike-researcher agent find everything that can be looked up; the user supplies what only they know or decide. Keep the loop going across turns until the spike is resolved or the user stops. The spike file is the single record: anything learned that is not in it is lost. This holds even when the user shares information about an active spike outside this command: record it in the spike's Log and Findings (step 3).
 
 ## 1. Open the spike
 
