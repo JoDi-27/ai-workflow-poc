@@ -2,7 +2,7 @@
 id: 018
 title: "Architecture plant gaps"
 type: feature
-status: in-progress
+status: done
 phase: 0
 depends_on: [017]
 refs: ["PLAN Phase 0 / Scaffolding / Engine skeleton"]
@@ -80,3 +80,4 @@ A later spec edits the module rules and, by mistake, stops the member-name check
 - 2026-11-01 Approved (`/sdd-plan`; Q2).
 - 2026-11-01 Planned: `plan.md` and `tasks.md` (5 tasks).
 - 2026-11-01 Implementation started (`/sdd-implement`).
+- 2026-11-01 Verified (`/sdd-verify`): AC-1 to AC-6 pass, AC-4 by a recorded manual check. Done.

@@ -11,8 +11,8 @@
 
 ## Verification
 
-- [ ] **V1** Every acceptance criterion verified, with evidence below
-- [ ] **V2** PLAN.md and BACKLOG.md updated for this spec
+- [x] **V1** Every acceptance criterion verified, with evidence below
+- [x] **V2** PLAN.md and BACKLOG.md updated for this spec (BACKLOG "Next": Unnamed core packages; the PLAN Engine skeleton item stays with spec 017)
 
 ## Evidence
 
@@ -21,6 +21,6 @@
 | AC-1 | pass | `architecture-plants/run.sh` (T5 run, 2026-11-01): `ok   banned-member: caught (authorizeMerge()> has the word 'merge' in its name)`. Its log names only `ArchitectureTest.no_banned_names_in_core_or_port_members`. The plant's class `Planted` and package `core.usecases` have no banned word |
 | AC-2 | pass | Same run: `ok   core-cycle: caught (Cycle detected: Slice plantedalpha)`. Its log names only `ArchitectureTest.core_packages_are_free_of_cycles` |
 | AC-3 | pass | T5 check `./mvnw -B -Pmutation verify && scripts/every-module-tested.sh && architecture-plants/run.sh`: BUILD SUCCESS (44 tests, every mutation killed), `ok every-module-tested`, all 13 plants caught, `ok   clean build passes`, `ok architecture-plants`. A first attempt failed in `EngineIntegrationTest` on a Testcontainers connection timeout (surefire, not PIT); the rerun passed unchanged |
-| AC-4 | pass (manual) | Claude, 2026-11-01. Maven on a copy of JDK 25.0.3 at another path, toolchain on the installed JDK 25.0.3, so the two differ: `cp -R <jdk25 home> $S/mavenjdk`; a toolchains file `$S/toolchains.xml` with one `jdk` 25 toolchain at the installed home; then from `engine/`: `JAVA_HOME=$S/mavenjdk ./mvnw -B -ntp -t $S/toolchains.xml -Pmutation -pl engine-ports-in -am verify -Djacoco.skip=true -Dtoolchain.jdk.mode=Never -Dtoolchain.jdk.discover=false -DjvmArgs=-XshowSettings:properties`. Before the change: surefire used the installed JDK, PIT `javaExecutable='null'` and minion `java.home = $S/mavenjdk` (Maven's JDK). After: `PIT test JVM: <installed home>/bin/java` and minion `java.home = <installed home>`. Fail-closed branch: with the script's version temporarily set to expect 24, `./mvnw -Pmutation -pl engine-ports-in initialize` failed with "No JDK 25 toolchain selected and Maven runs on JDK 25; PIT would test on it". Not checked on a real non-25 JDK (none installed) |
+| AC-4 | pass (manual) | Claude, 2026-11-01. Maven on a copy of JDK 25.0.3 at another path, toolchain on the installed JDK 25.0.3, so the two differ: `cp -R <jdk25 home> $S/mavenjdk`; a toolchains file `$S/toolchains.xml` with one `jdk` 25 toolchain at the installed home; then from `engine/`: `JAVA_HOME=$S/mavenjdk ./mvnw -B -ntp -t $S/toolchains.xml -Pmutation -pl engine-ports-in -am verify -Djacoco.skip=true -Dtoolchain.jdk.mode=Never -Dtoolchain.jdk.discover=false -DjvmArgs=-XshowSettings:properties`. Before the change: surefire used the installed JDK, PIT `javaExecutable='null'` and minion `java.home = $S/mavenjdk` (Maven's JDK). After: `PIT test JVM: <installed home>/bin/java` and minion `java.home = <installed home>`. Fail-closed branch: with the script's version temporarily set to expect 24, `./mvnw -Pmutation -pl engine-ports-in initialize` failed with "No JDK 25 toolchain selected and Maven runs on JDK 25; PIT would test on it". T6 guard: with the fallback path temporarily pointed at `bin/nojava`, the same command failed with "No java found in the JDK 25 toolchain: …/bin/nojava". Not checked on a real non-25 JDK (none installed) |
 | AC-5 | pass | `docs/engine/design.md` section 1, "Build rules the trial found": the bullet beginning "PIT ignores Maven toolchains" (T4 check greps it inside section 1) |
 | AC-6 | pass | `engine/README.md`, Gates: plant table with `banned-member` and `core-cycle` and the rule each proves (T4 check) |
