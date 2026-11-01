@@ -50,6 +50,12 @@ specs/_kit/sdd status --write >/dev/null 2>&1
 run_check "unknown spec status fails"     status 1
 undo "$f"; undo specs/STATUS.md; run_check "  passes once undone" status 0
 
+# R4 (fail closed): sdd fails without a word and leaves STATUS.md as it was.
+f=specs/_kit/sdd; plant "$f"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$f"
+run_check "silently failing sdd fails"    status 1
+undo "$f"; run_check "  passes once undone" status 0
+
 # R5: a syntax error in a hook script.
 f=.claude/hooks/stop-claims.sh; plant "$f"
 printf 'if then fi\n' >> "$f"
