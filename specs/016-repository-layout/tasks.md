@@ -6,7 +6,7 @@
 - [x] **T2** Update the root `README.md` "Read first" table, `CLAUDE.md` (Current state names every new folder; Where things live), `PLAN.md` (Repository layout item), and the collector sentences in `docs/architecture/README.md` and `docs/local-setup/README.md` · those five files · check: `for d in engine mcp-gateway analysis ui runner driver-kits definitions; do grep -q "| .$d/. |" README.md && grep -q "$d/" CLAUDE.md || { echo "$d missing"; exit 1; }; done && grep -q 'Repository layout' PLAN.md && ! grep 'Repository layout' PLAN.md | grep -q 'for example' && grep -q 'driver-kits/claude-code/collector/' docs/architecture/README.md && grep -q 'driver-kits/claude-code/collector/' docs/local-setup/README.md` → AC-3, AC-4, AC-5
 - [x] **T3** Add `layout` to the self-test's clean-copy loop and the five layout cases (failing first), then add the `layout` check to `repo-checks.sh`, its no-argument run, and its usage comment and message · `.github/scripts/repo-checks.sh`, `.github/scripts/test-repo-checks.sh` · check: `.github/scripts/test-repo-checks.sh && .github/scripts/repo-checks.sh` → AC-4, AC-8
 - [x] **T4** Add the `Layout is documented` step to the `repo-checks` job, with `if: ${{ !cancelled() }}`; add the line on repository checks to `CONTRIBUTING.md` "Adding a CI check" · `.github/workflows/ci.yml`, `CONTRIBUTING.md` · check: `grep -q 'repo-checks.sh layout' .github/workflows/ci.yml && grep -q 'repo-checks.sh' CONTRIBUTING.md && .github/scripts/apply-ruleset.sh --verify` → AC-9
-- [ ] **T5** Push the branch, open the pull request (saying CI gets stricter), confirm every required check passes, and record the run log lines showing the layout step in Evidence · PR · check: `gh pr checks --watch --required` → AC-7, AC-8, AC-9
+- [x] **T5** Push the branch, open the pull request (saying CI gets stricter), confirm every required check passes, and record the run log lines showing the layout step in Evidence · PR · check: `gh pr checks --watch --required` → AC-7, AC-8, AC-9
 
 ## Verification
 
@@ -23,6 +23,6 @@
 | AC-4 | | |
 | AC-5 | | |
 | AC-6 | | |
-| AC-7 | | |
+| AC-7 | | T5: PR #23, run 41313787752, `repo-checks` pass in 7s; steps Inventory, Spec board, Shell scripts, Layout is documented all `success`; log: `Layout is documented ... ok   layout` |
 | AC-8 | | |
 | AC-9 | | |
