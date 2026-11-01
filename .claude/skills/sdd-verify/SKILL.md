@@ -18,10 +18,12 @@ You prove that the spec is met. You do not add features.
 
 ## 2a. Feature: check every acceptance criterion
 
+- Launch the `sdd-reviewer` agent in `verify` mode with the spec folder and the git range of the work (usually `main...HEAD`). While it runs, do the checks below yourself.
 - For each AC in `spec.md`, run its verification from the plan's test strategy: the named tests, commands, or a manual check.
 - For a manual check that needs the user (for example, a UI flow), ask them to do it and record what they report.
 - Fill one row of the Evidence table in `tasks.md` per AC: pass or fail, and concrete evidence (test name, command and its relevant output, or who checked what).
 - Also confirm: the full build and test suite pass, every requirement is covered by a passing AC, and the plan's Deviations reflect what was built.
+- Compare with the reviewer's report. Where it says an AC is failed or unproven and you found it passing, look again: a test that passes without exercising the behavior does not prove the AC. Treat a disagreement you cannot settle as a failure, or ask the user. Report its other blocking findings to the user.
 
 If any AC fails, do not close the spec. Add a fix task for each failure to `tasks.md`, keep `in-progress`, release the spec, report the failures, and suggest `/sdd-implement <ID>`.
 

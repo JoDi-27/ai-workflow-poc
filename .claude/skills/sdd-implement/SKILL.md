@@ -21,9 +21,9 @@ Arguments: $ARGUMENTS (spec ID, then an optional task ID)
 Other sessions may be working on the same spec. Never pick a task by reading `tasks.md`; claim it, and work only on a task you hold.
 
 1. Claim the task: `specs/_kit/sdd claim <ID> <Tn>` for a given task, or else `specs/_kit/sdd claim <ID> next`, which prints the task it claimed (or the one this session already holds). If the claim fails, stop and report its message: who holds which task, or what the free tasks wait on.
-2. Do exactly that task, following the plan. Test first where the task calls for it.
-3. Run the task's check. Then run the build and the relevant tests so the tree stays green.
-4. Only when the check passes, tick the task `- [x]` (change only that line of `tasks.md`), then run `specs/_kit/sdd release <ID> <Tn> --done`.
+2. Do exactly that task, following the plan. Test first where the task calls for it. For a task in `engine/`, load the `engine-change` skill first.
+3. Run the build and the relevant tests so the tree stays green.
+4. Run `specs/_kit/sdd done <ID> <Tn>`. It runs the task's check and, only when it passes, ticks the task and marks the claim done. Never tick a task by editing `tasks.md`. If the check fails, fix the work and run it again. For a `check: manual:` task, do the check (or ask the user to) and run `specs/_kit/sdd done <ID> <Tn> --manual "<who checked what>"`. If a task has no check at all, add one to its line in `tasks.md` and a row to the plan's Deviations.
 5. If the user has asked for commits, commit with a message starting `[<ID>] T<n>`; otherwise suggest that message.
 6. Continue from step 1 with `claim <ID> next`, unless a task ID was given.
 

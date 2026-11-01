@@ -1,6 +1,6 @@
 # Specs: how work gets done here
 
-A lightweight spec-driven development (SDD) kit. Every piece of work, spike or feature, starts as a spec in this folder, moves through a few reviewed steps, and is tracked here until it is done. The kit is plain Markdown, one shell script, six Claude Code skills, and one subagent.
+A lightweight spec-driven development (SDD) kit. Every piece of work, spike or feature, starts as a spec in this folder, moves through a few reviewed steps, and is tracked here until it is done. The kit is plain Markdown, one shell script, six Claude Code skills, and two subagents.
 
 ## Where things live
 
@@ -117,6 +117,7 @@ specs/_kit/sdd status                          # board + next up
 specs/_kit/sdd status --write                  # also regenerates specs/STATUS.md
 specs/_kit/sdd next                            # only what can be worked on now
 specs/_kit/sdd claim 003 next                  # claim the next free task of 003; prints its ID
+specs/_kit/sdd done 003 T4                     # run T4's check; only if it passes, tick T4 and mark it done
 specs/_kit/sdd release 003 T4 --done           # release a task claim, keeping it marked done
 specs/_kit/sdd claims --prune                  # list claims, dropping the ones no longer needed
 ```
@@ -130,6 +131,8 @@ Progress is computed from the files: checkboxes in `tasks.md` (for a spike, the 
 - **Testable requirements.** Requirements use EARS ("When …, the engine shall …"). Every requirement is covered by an acceptance criterion, and every acceptance criterion by a test or a recorded manual check.
 - **Traceability.** IDs link everything: R1 → AC-1 → T3 → commit `[003] T3 …` → evidence row.
 - **Small tasks.** Half a day at most, each leaving the build green, test first where it fits.
+- **Checks that run.** Each task's check is a command in backticks, and `sdd done` ticks the task only when that command exits 0. A check no command can prove is written `check: manual: …`, and `sdd done --manual "<who checked what>"` records the note on the task.
+- **Fresh-eyes review.** `/sdd-plan` and `/sdd-verify` ask the `sdd-reviewer` agent, which never saw the session that wrote the work, for a second opinion on the plan and on each acceptance criterion.
 - **Living documents.** When reality disagrees with the spec or plan, the document changes first and the change is logged (spec changelog, plan Deviations).
 - **Decisions on record.** Every real choice gets a row with alternatives and rationale; settled BACKLOG items are updated in place.
 - **Constitution check.** Every plan states how it respects the articles it touches.
