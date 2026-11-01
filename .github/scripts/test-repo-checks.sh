@@ -29,7 +29,7 @@ run_check() {
 plant() { cp "$1" "$1.orig"; }
 undo() { mv "$1.orig" "$1"; }
 
-for c in inventory status scripts; do run_check "clean copy passes $c" "$c" 0; done
+for c in inventory status scripts layout; do run_check "clean copy passes $c" "$c" 0; done
 
 # R3: a hand edit inside the generated part of .claude/README.md.
 f=.claude/README.md; plant "$f"
@@ -61,6 +61,38 @@ f=.claude/hooks/stop-claims.sh; plant "$f"
 printf 'if then fi\n' >> "$f"
 run_check "hook syntax error fails"       scripts 1
 undo "$f"; run_check "  passes once undone" scripts 0
+
+# R8: a top-level folder with no README, then a README but no "Read first" row, then the row.
+mkdir newpart && echo x > newpart/file.txt; plant README.md
+run_check "folder without README fails"   layout 1
+echo "# newpart" > newpart/README.md
+run_check "folder without row fails"      layout 1
+sed -i.bak 's/^| `docs\/` |/| `newpart\/` | Test folder |\
+| `docs\/` |/' README.md && rm -f README.md.bak
+run_check "  passes once documented"      layout 0
+undo README.md; rm -rf newpart
+
+# R8: a "Read first" row for a folder that does not exist.
+plant README.md
+sed -i.bak 's/^| `docs\/` |/| `missing\/` | Gone |\
+| `docs\/` |/' README.md && rm -f README.md.bak
+run_check "row for missing folder fails"  layout 1
+undo README.md; run_check "  passes once undone" layout 0
+
+# R8 (fail closed): a "Read first" section with no rows.
+plant README.md
+sed -i.bak '/^## Read first/,/^## Stack/{/^| `/d;}' README.md && rm -f README.md.bak
+run_check "empty Read first table fails"  layout 1
+undo README.md; run_check "  passes once undone" layout 0
+
+# R8 inside a git work tree, the path CI runs: untracked folders count, ignored ones do not.
+git init -q . && git add -A
+run_check "git tree: clean passes layout" layout 0
+mkdir build && echo x > build/out.txt
+run_check "git tree: ignored folder passes" layout 0
+mkdir newpart && echo x > newpart/file.txt
+run_check "git tree: undocumented folder fails" layout 1
+rm -rf newpart build
 
 [ "$failures" -eq 0 ] && echo "all cases pass" || echo "$failures case(s) failed"
 [ "$failures" -eq 0 ]

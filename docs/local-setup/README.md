@@ -11,7 +11,7 @@ Draft from spike 014 (`specs/014-local-setup/`). It describes how the whole syst
 | Namespace `awf-sandbox` | runner Jobs only: default-deny egress, at most 4 at once |
 | The Mac | Claude Code with the driver kit, the browser, Maven builds and Testcontainers; while developing, also the engine and the UI |
 
-The laptop reaches everything through one origin, `http://localhost`: `/` UI, `/mcp` MCP gateway, `/v1` engine (hooks and UI API), `/analysis` analysis API. The collector listens on `http://localhost:4318`.
+The laptop reaches everything through one origin, `http://localhost`: `/` UI, `/mcp` MCP gateway, `/v1` engine (hooks and UI API), `/analysis` analysis API. The collector listens on `http://localhost:4318`. Its pipeline configuration belongs in `driver-kits/claude-code/collector/` (spec 016); the draft still sits inline in `deploy/base/collector.yaml` until the OTel Collector item moves it.
 
 ## Prerequisites
 

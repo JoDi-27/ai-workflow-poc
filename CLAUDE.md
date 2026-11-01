@@ -4,13 +4,13 @@ Working rules for Claude Code sessions in this repository. What the project is, 
 
 ## Current state
 
-Phase 0, scaffolding not started: no product code, no build, no tests. `PLAN.md` has the phase table and `specs/STATUS.md` the board. When scaffolding lands, add the build, test, and run commands to this file.
+Phase 0, scaffolding in progress: no product code, no build, no tests yet. The component folders exist and each holds only a README saying what goes there: `engine/`, `mcp-gateway/`, `analysis/`, `ui/`, `runner/`, `driver-kits/` (with `driver-kits/claude-code/` and its `collector/`), and `definitions/`. `PLAN.md` has the phase table and `specs/STATUS.md` the board. When scaffolding lands, add the build, test, and run commands to this file.
 
 ## Where things live
 
 | File | Read it for |
 | --- | --- |
-| `README.md` | What the project is, the stack, and the read-first table |
+| `README.md` | What the project is, the stack, and the read-first table, which lists every top-level folder (CI checks it) |
 | `docs/README.md` | Index of the design documents: which one to read for a given task |
 | `docs/intent.md` | Product intent and design guardrails (long; read the relevant section, not all of it) |
 | `PLAN.md` | Phases, their checklists, and exit criteria |

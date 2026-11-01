@@ -64,6 +64,8 @@ CI is `.github/workflows/ci.yml`. Each job's `name` is a status check, and the r
 3. In the same pull request, add `{ "context": "<job name>", "integration_id": 15368 }` to `required_status_checks` in `.github/rulesets/main.json`. 15368 is GitHub Actions, so only the Actions job can satisfy the check.
 4. After the pull request merges, the owner runs `.github/scripts/apply-ruleset.sh`, then `.github/scripts/apply-ruleset.sh --verify`, which compares GitHub's live rules with the file.
 
+A small repository check can instead be a new subcommand of `.github/scripts/repo-checks.sh`, with a case in `.github/scripts/test-repo-checks.sh` and a step in the `repo-checks` job. That job is already required, so the ruleset does not change.
+
 Changes to `.github/`, `.claude/bom.py`, `specs/_kit/sdd`, or `.githooks/` change what CI enforces. Say in the pull request what gets stricter or looser; `sdd-reviewer` flags them too.
 
 ## Documentation

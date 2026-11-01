@@ -14,6 +14,13 @@ Phase 0: the spikes are done and scaffolding is next. There is no product code y
 | `PLAN.md` | Phases, checklists, and exit criteria |
 | `BACKLOG.md` | The happy path, MVP decisions, a summary of each spike, carried-over checks, and later work |
 | `specs/` | The spec-driven kit: one folder per work item. Start at `specs/README.md` |
+| `engine/` | The engine. Empty until the engine skeleton; see its README |
+| `mcp-gateway/` | The MCP gateway in front of the engine's driver API. Empty for now; see its README |
+| `analysis/` | The analysis service behind the quality view. Empty for now; see its README |
+| `ui/` | The UI. Empty until the UI skeleton; see its README |
+| `runner/` | The runner and its sandbox Jobs. Empty until the runner stub; see its README |
+| `driver-kits/` | Driver kits and their local plugin marketplace: `claude-code/`, with the OTel Collector configuration in `claude-code/collector/`. Empty for now; see its README |
+| `definitions/` | Workflow definitions and their JSON Schema. Empty until Phase 1; see its README |
 | `deploy/` | Draft Kubernetes manifests: `base/` and the `local` and `gke` overlays |
 | `scripts/` | Helper scripts |
 | `.claude/` | Claude Code skills, agents, hooks, and permissions. Start at `.claude/README.md` |

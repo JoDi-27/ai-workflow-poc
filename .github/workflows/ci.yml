@@ -34,3 +34,6 @@ jobs:
       - name: Shell scripts parse
         if: ${{ !cancelled() }}
         run: .github/scripts/repo-checks.sh scripts
+      - name: Layout is documented
+        if: ${{ !cancelled() }}
+        run: .github/scripts/repo-checks.sh layout

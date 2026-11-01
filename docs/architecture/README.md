@@ -128,7 +128,7 @@ Each box inside the cluster is its own workload, deployed and scaled on its own.
 | Check sandbox | Runs a `command` step's image and argv at the revision, with service sidecars | Nothing beyond the job's literal `env` | Egress beyond the Maven proxy |
 | Evaluator sandbox | Runs headless Claude Code with read-only tools on the rendered task | The `setup-token` (accepted risk, Q10) | Egress beyond Anthropic's API hosts; write tools |
 | Jev | Hosted typed decisions over `/v1/systemone` (spec 007); the only DecisionEngine provider in the MVP (Q27) | | Seeing a subject other than `sample-crm` |
-| OTel Collector | Receives OTLP/HTTP from the laptop, deletes and redacts attributes, maps Claude Code names to neutral names, forwards to the engine and a raw file (spec 006, Q9) | | A route from sandboxes |
+| OTel Collector | Receives OTLP/HTTP from the laptop, deletes and redacts attributes, maps Claude Code names to neutral names, forwards to the engine and a raw file (spec 006, Q9). Its pipeline configuration is kit-owned and lives in `driver-kits/claude-code/collector/` (spec 016) | | A route from sandboxes |
 | Driver kit | MCP config, hooks (one script), skills, instructions; maps tool calls to protected action names (Q3) | The driver token (`userConfig`, sensitive) | Workflow-specific steps (Art. 9) |
 
 The laptop reaches three endpoints, all with the driver token: the MCP gateway, the engine's HTTP driver API (hooks), and the collector. The browser reaches the UI, the engine's UI API, and the analysis API with a human session.
