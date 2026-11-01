@@ -72,6 +72,10 @@ A claim is a directory created with `mkdir`, which is atomic, under `.git/sdd-cl
 
 A session that ends without releasing leaves its claim behind. Claims older than 8 hours (`SDD_STALE_HOURS`) are shown as stale; free one with `sdd release <ID> [Tn] --force` once you know that session is gone. Claims only coordinate sessions on one machine.
 
+## Landing work
+
+Work reaches `main` only through a pull request whose required checks pass; `main` refuses direct pushes (spec 015). A spec's commits go on its branch, usually in one pull request, merged with a merge commit so each `[NNN] Tn` commit stays on `main`. Work left after that pull request merges, such as `/sdd-verify`, goes in a second, small one. `CONTRIBUTING.md` has the steps and how to add a CI check.
+
 ## Automation
 
 Claude Code hooks keep the kit honest: they print the board and the claims at session start, regenerate `specs/STATUS.md` when a spec or task list changes, block commit messages without a spec ID or `[meta]`, and warn at the end of a session that still holds claims. The full list of hooks, skills, agents, and permissions is in `.claude/README.md`.

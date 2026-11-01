@@ -1,0 +1,33 @@
+# CI for every pull request to main and every push to main (spec 015).
+# Each job's name is a required status check in .github/rulesets/main.json.
+# To add a check, follow "Adding a CI check" in CONTRIBUTING.md. No path filters:
+# a required check skipped by a filter stays pending and blocks the merge.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  repo-checks:
+    name: repo-checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Inventory is current
+        run: .github/scripts/repo-checks.sh inventory
+      - name: Spec board is current
+        run: .github/scripts/repo-checks.sh status
+      - name: Shell scripts parse
+        run: .github/scripts/repo-checks.sh scripts
