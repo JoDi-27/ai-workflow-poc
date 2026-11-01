@@ -198,6 +198,7 @@ Listed once so they are not re-read as open: Kubedock, Docker-in-Docker, and gVi
 - [ ] **Observed driver capabilities:** compare a session's declared capabilities with what it does, for example `enforcement` declared but no gate calls, and flag or refuse the mismatch. The MVP only records declarations and checks them at bind (spike 011, Q9).
 - [ ] **Evaluation tasks and runner jobs:** retries when an evaluator never submits or a runner job hangs. The MVP bound is decided (spike 010, Q6): a runner default timeout for evaluator jobs plus an engine deadline that records *not evaluated*.
 - [ ] **Runner performs protected actions:** the engine has the runner do the merge with write credentials the laptop never holds, making protection authoritative instead of hook-based.
+- [ ] **Unnamed core packages:** the engine's allowed-calls rule covers only the nine named core packages, so a tenth core package escapes it (only the cycle rule sees it). Decide whether ArchUnit should require every core class to sit in a named package (spec 018).
 - [ ] **GKE Sandbox for sandbox pods:** run runner sandboxes under the gVisor RuntimeClass on GKE, with limits on every container and the metadata server blocked (spike 010, Q25).
 - [ ] **Cloud Run Jobs runner adapter:** an optional second sandbox backend behind the runner interface, if GKE Jobs fall short (spike 010, Q25).
 - [ ] **GCP deployment:** run the same manifests on GKE, and choose the GCP pieces: cluster mode (Standard or Autopilot), managed database, secrets, and ingress.
