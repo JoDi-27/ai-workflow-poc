@@ -219,12 +219,15 @@ task_rows() {
 # A task can start once every task before it is finished (ticked or claimed done),
 # except the tasks in its own run of consecutive [P] tasks.
 pick_task() {
+  # Read every row: an early exit would break task_rows' pipe, and bash 5
+  # (as on CI runners, where SIGPIPE is ignored) prints write errors.
   task_rows "$1" "$2" | awk '
+    found { next }
     {
       fin = ($2 == 1 || $4 == "done")
       if ($3 == 1 && !prevpar) rungate = pending
       gate = ($3 == 1) ? rungate : pending
-      if (!fin && $4 == "free" && !gate) { print $1; exit }
+      if (!fin && $4 == "free" && !gate) { print $1; found = 1; next }
       if (!fin) pending = 1
       prevpar = ($3 == 1)
     }'
@@ -276,7 +279,7 @@ claim_task() {
   fi
   if [ "$3" = next ]; then
     # Resume a task this session already holds.
-    t=$(task_rows "$id" "$f" | awk '$2 == 0 && $4 == "mine" { print $1; exit }')
+    t=$(task_rows "$id" "$f" | awk '!found && $2 == 0 && $4 == "mine" { print $1; found = 1 }')
     if [ -n "$t" ]; then echo "$t"; echo "($id $t is already claimed by you)" >&2; return; fi
     # If another session takes the pick first, mkdir fails and the next pick skips it.
     while t=$(pick_task "$id" "$f") && [ -n "$t" ]; do

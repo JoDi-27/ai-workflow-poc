@@ -209,3 +209,7 @@ Versions, checked 2026-11-01: `actions/checkout` v7.0.1 (`3d3c42e5aac5ba805825da
 - **Sessions can still change the live rules.** With no bypass, nobody can push around the rules, but the owner's credentials can still edit or delete the ruleset through `gh api` or by running `apply-ruleset.sh` on an edited file, and sessions hold those credentials (Q1's own reason). Such a change leaves no diff for `sdd-reviewer` to catch. This spec does not close the gap; `/sdd-verify` proposes it as a BACKLOG item, for example a permission rule that asks before ruleset API calls, or a scheduled `--verify`.
 
 ## Deviations
+
+| Date | Task | Change | Why |
+| --- | --- | --- | --- |
+| 2026-11-01 | T5 | Fixed `sdd`: `pick_task` and the resume pick in `claim_task` no longer exit `awk` early; they read every row of `task_rows` | The first CI run failed the status check on `echo: write error: Broken pipe` from `task_rows`. On the runner SIGPIPE is ignored, so bash 5.2 reports the write after `awk` has exited; macOS bash 3.2 does not. Timing-dependent, so it did not reproduce locally or in an Ubuntu container. Not the rendering difference the Risks section expected: the board renders byte-identically on Ubuntu (mawk, bash 5.2) and macOS |
