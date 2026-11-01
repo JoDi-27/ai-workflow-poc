@@ -212,6 +212,7 @@ Listed once so they are not re-read as open: Kubedock, Docker-in-Docker, and gVi
 - [ ] **Non-SDLC toy workflow**, to catch SDLC assumptions in the engine. A paper sketch (article publication) is in `docs/concepts/model.md`; write it in the draft schema from spike 003 (`docs/definitions/schema.md`) including a runner `command` check, to check that no SDLC or Kubernetes term leaks into the schema.
 - [ ] **Reuse of step results** across checkpoint attempts when their input revisions are unchanged (spike 001, Q7).
 - [ ] **Maximum attempts per checkpoint**, ending the run when reached (spike 001, Q4).
+- [ ] **Guard the live merge rules:** the owner's credentials, which Claude Code sessions use, can still edit or delete the `main` ruleset through `gh api` or `apply-ruleset.sh` with an edited file, leaving no diff for review. Options: a Claude Code permission rule that asks before ruleset and repository-settings API calls, or a scheduled `apply-ruleset.sh --verify`. Also: the scripts check finds scripts by shebang only, so a future `.sh` file without one is skipped (spec 015, plan Risks and verify review).
 
 ## On record: not a priority
 

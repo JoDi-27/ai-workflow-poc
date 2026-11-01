@@ -2,7 +2,7 @@
 id: 015
 title: "CI pipeline and branch protection"
 type: feature
-status: in-progress
+status: done
 phase: 0
 depends_on: []
 refs: ["PLAN Phase 0 / Scaffolding / CI pipeline and branch protection", "BACKLOG Hooks to engine (GitHub branch protection stays the real gate)"]
@@ -129,3 +129,4 @@ Ways of working:
 - 2026-11-01 R5 also covers `.github/scripts/`, where planning put the CI scripts (plan review).
 - 2026-11-01 Planned: `plan.md` and `tasks.md` (15 tasks).
 - 2026-11-01 Implementation started (`/sdd-implement`).
+- 2026-11-01 Verified and closed (`/sdd-verify`): all 13 ACs pass. T16 and T17 added from the verify review. Follow-up: BACKLOG "Guard the live merge rules".
