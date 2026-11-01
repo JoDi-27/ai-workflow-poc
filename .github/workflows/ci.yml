@@ -31,3 +31,9 @@ jobs:
         run: .github/scripts/repo-checks.sh status
       - name: Shell scripts parse
         run: .github/scripts/repo-checks.sh scripts
+
+  trial-extra:
+    name: trial-extra
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "trial check for spec 015 T13"
