@@ -56,7 +56,9 @@ def generate():
         for g in groups:
             for h in g.get("hooks", []):
                 cmd = h.get("command", "")
-                m = re.search(r"\.claude/(hooks/[^\"' ]+)", cmd)
+                # The last hook path: dispatch.sh names the real script after itself.
+                found = list(re.finditer(r"\.claude/(hooks/[^\"' ]+)", cmd))
+                m = found[-1] if found else None
                 script = m.group(1) if m else cmd
                 hooks.append([f"`{event}`", g.get("matcher", "all"), f"`{script}`",
                               hook_summary(ROOT / script) if m else ""])

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse on Bash: block `git commit` whose message does not start with `[NNN]`, `[NNN] Tn`, or `[meta]`.
+# PreToolUse on Bash: block `git commit` whose message does not start with `[NNN]`, `[NNN] Tn`, or `[meta]`, or whose first line is over 72 characters.
 # Exit 2 blocks the call and sends stderr to Claude.
 input=$(cat)
 cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty')
@@ -46,6 +46,14 @@ for line in value.splitlines():
 
 # No message found (editor, -F, -C): let git handle it.
 [ -n "$msg" ] || exit 0
-if printf '%s' "$msg" | grep -Eq '^(\[meta\]|\[[0-9]{3}\]( T[0-9]+)?)( |$)'; then exit 0; fi
-echo "Commit message must start with the spec ID, e.g. '[003] T2 Add run state table', '[003] Close spike', or '[meta] Fix hook' for housekeeping with no spec. Got: $msg" >&2
-exit 2
+if ! printf '%s' "$msg" | grep -Eq '^(\[meta\]|\[[0-9]{3}\]( T[0-9]+)?)( |$)'; then
+  echo "Commit message must start with the spec ID, e.g. '[003] T2 Add run state table', '[003] Close spike', or '[meta] Fix hook' for housekeeping with no spec. Got: $msg" >&2
+  exit 2
+fi
+# Keep the first line concise (CONTRIBUTING.md); characters, not bytes.
+n=$(printf '%s' "$msg" | python3 -c 'import sys; print(len(sys.stdin.read()))')
+if [ "$n" -gt 72 ]; then
+  echo "Commit message first line is $n characters; keep it to 72 or fewer and put any detail in the body (CONTRIBUTING.md). Got: $msg" >&2
+  exit 2
+fi
+exit 0

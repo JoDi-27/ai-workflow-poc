@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
-# Git commit-msg hook: reject a message whose first line does not start with `[NNN]`, `[NNN] Tn`, or `[meta]`.
+# Git commit-msg hook: reject a message whose first line does not start with `[NNN]`, `[NNN] Tn`, or `[meta]`,
+# or is over 72 characters.
 # Same rule as .claude/hooks/pre-commit-message.sh, but for every commit, not only Claude's.
 # Enable once per clone: git config core.hooksPath .githooks
 msg=$(grep -v '^#' "$1" | grep -m1 -v '^[[:space:]]*$')
 
 # Commits git writes itself, and fixups that a rebase will squash away.
 if printf '%s' "$msg" | grep -Eq '^(Merge |Revert "|fixup! |squash! |amend! )'; then exit 0; fi
-if printf '%s' "$msg" | grep -Eq '^(\[meta\]|\[[0-9]{3}\]( T[0-9]+)?)( |$)'; then exit 0; fi
+if printf '%s' "$msg" | grep -Eq '^(\[meta\]|\[[0-9]{3}\]( T[0-9]+)?)( |$)'; then
+  # Keep the first line concise; characters, not bytes, where python3 is available.
+  n=$(printf '%s' "$msg" | python3 -c 'import sys; print(len(sys.stdin.read()))' 2>/dev/null) || n=${#msg}
+  [ "$n" -le 72 ] && exit 0
+  echo "Commit message first line is $n characters; keep it to 72 or fewer and put any detail in the body. See CONTRIBUTING.md. Got: $msg" >&2
+  exit 1
+fi
 
 echo "Commit message must start with the spec ID, e.g. '[003] T2 Add run state table', '[003] Close spike', or '[meta] Fix hook' for housekeeping with no spec. See CONTRIBUTING.md. Got: $msg" >&2
 exit 1

@@ -14,7 +14,7 @@ A hook (`hooks/post-edit-bom.sh`) reruns the script whenever Claude edits a file
 
 - **Skill:** `skills/<name>/SKILL.md` with `name`, `description`, and `argument-hint` in its frontmatter.
 - **Agent:** `agents/<name>.md` with `name`, `description`, and `tools` in its frontmatter.
-- **Hook:** a script in `hooks/` whose line 2 is the header comment above, registered in `settings.json` like the existing ones, as `"$(git rev-parse --show-toplevel 2>/dev/null || echo "$CLAUDE_PROJECT_DIR")"/.claude/hooks/<script>`. In a worktree, `$CLAUDE_PROJECT_DIR` is the main checkout, so this runs the worktree's own scripts, and a script that works on files finds its checkout from the edited file's path or the hook input's `cwd`, never from `$CLAUDE_PROJECT_DIR`. The hooks need `jq` and `python3`.
+- **Hook:** a script in `hooks/` whose line 2 is the header comment above, registered in `settings.json` like the existing ones, as `"$CLAUDE_PROJECT_DIR"/.claude/hooks/dispatch.sh .claude/hooks/<script>`. Claude Code runs hook commands from the main checkout even for a session in a worktree; `dispatch.sh` reads the session's `cwd` from the hook input and runs that checkout's copy of the script, so a branch's hook changes apply to its own sessions. A script that works on files should still find its checkout from the edited file's path or the input's `cwd`, never from `$CLAUDE_PROJECT_DIR`. The hooks need `jq` and `python3`.
 - **Permission:** an entry in the `allow` list of `settings.json`.
 
 Personal settings go in `settings.local.json`, which git ignores; they are not listed here.
@@ -45,7 +45,7 @@ Personal settings go in `settings.local.json`, which git ignores; they are not l
 | Event | Matcher | Script | Does |
 | --- | --- | --- | --- |
 | `SessionStart` | all | `hooks/session-start.sh` | Print the spec board, the claims, and any stale .claude/README.md warning into context (stdout is added as context). |
-| `PreToolUse` | Bash | `hooks/pre-commit-message.sh` | Block `git commit` whose message does not start with `[NNN]`, `[NNN] Tn`, or `[meta]`. |
+| `PreToolUse` | Bash | `hooks/pre-commit-message.sh` | Block `git commit` whose message does not start with `[NNN]`, `[NNN] Tn`, or `[meta]`, or whose first line is over 72 characters. |
 | `PostToolUse` | Edit\|Write | `hooks/post-edit-status.sh` | Regenerate specs/STATUS.md when a spec.md or tasks.md changed. |
 | `PostToolUse` | Edit\|Write | `hooks/post-edit-bom.sh` | Regenerate the inventory in .claude/README.md when a skill, agent, hook, or settings.json changed. |
 | `Stop` | all | `hooks/stop-claims.sh` | Warn (never block) when this session still holds sdd claims. |
