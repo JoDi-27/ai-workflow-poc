@@ -115,6 +115,7 @@ Build rules the trial found:
 - `engine-app` wires modules by component scan, so it sets `ignoredUnusedDeclaredDependencies` for its sibling modules (five with grouped adapters) and the ArchUnit JUnit engine. "Used undeclared" is still checked there.
 - One `engine-ports-out` module (Q14) and grouped adapters (Q17): ArchUnit catches an outbound adapter using another adapter's port or classes.
 - The repository carries its own Maven settings, pointing at Maven Central (Q16), and pins JDK 25 for the build, since a newer JDK may be the machine's default.
+- PIT ignores Maven toolchains: its test JVMs start from the JDK that runs Maven, so on another JDK the mutation score came from that JDK (spec 018). In the `mutation` profile a GMavenPlus script passes PIT's `jvm` the `java` of the JDK 25 toolchain that `select-jdk-toolchain` chose, or Maven's own `java` when Maven already runs on JDK 25, and fails the build otherwise. CI runs Maven on JDK 25, so it always takes the second path.
 
 ## 2. Ports
 

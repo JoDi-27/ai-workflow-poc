@@ -30,6 +30,8 @@
     <jacoco.version>0.8.16</jacoco.version>
     <pitest.version>1.30.1</pitest.version>
     <pitest-junit5.version>1.2.3</pitest-junit5.version>
+    <gmavenplus.version>5.1.0</gmavenplus.version>
+    <groovy.version>5.1.3</groovy.version>
     <!-- Only engine-app runs: ./mvnw -pl engine-app -am spring-boot:run -->
     <spring-boot.run.skip>true</spring-boot.run.skip>
   </properties>
@@ -129,6 +131,47 @@
       <id>mutation</id>
       <build>
         <plugins>
+          <!-- PIT ignores Maven toolchains and starts its test JVMs from the JDK running Maven (spec 018).
+               Hand it the selected JDK 25 toolchain's java, or Maven's own when that JDK already matched.
+               PIT's jvm comes from this script, so run PIT through the lifecycle (verify), not pitest:mutationCoverage alone. -->
+          <plugin>
+            <groupId>org.codehaus.gmavenplus</groupId>
+            <artifactId>gmavenplus-plugin</artifactId>
+            <version>${gmavenplus.version}</version>
+            <dependencies>
+              <dependency>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy</artifactId>
+                <version>${groovy.version}</version>
+                <scope>runtime</scope>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>pit-jvm-from-toolchain</id>
+                <phase>initialize</phase>
+                <goals><goal>execute</goal></goals>
+                <configuration>
+                  <scripts>
+                    <script><![CDATA[
+                      def jdk = session.container.lookup(org.apache.maven.toolchain.ToolchainManager)
+                          .getToolchainFromBuildContext('jdk', session)
+                      if (!jdk && System.getProperty('java.specification.version') != '25') {
+                          throw new IllegalStateException('No JDK 25 toolchain selected and Maven runs on JDK '
+                              + System.getProperty('java.specification.version') + '; PIT would test on it')
+                      }
+                      def java = jdk ? jdk.findTool('java') : System.getProperty('java.home') + '/bin/java'
+                      if (!java || !new File(java).canExecute()) {
+                          throw new IllegalStateException('No java found in the JDK 25 toolchain: ' + java)
+                      }
+                      project.properties.setProperty('pit.jvm', java)
+                      log.info('PIT test JVM: ' + java)
+                    ]]></script>
+                  </scripts>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
           <plugin>
             <groupId>org.pitest</groupId>
             <artifactId>pitest-maven</artifactId>
@@ -145,6 +188,7 @@
               <targetTests><param>aiworkflow.engine.*</param></targetTests>
               <excludedClasses><param>aiworkflow.engine.app.EngineApplication</param></excludedClasses>
               <excludedTestClasses><param>aiworkflow.engine.*IntegrationTest</param></excludedTestClasses>
+              <jvm>${pit.jvm}</jvm>
               <mutationThreshold>70</mutationThreshold>
               <failWhenNoMutations>false</failWhenNoMutations>
               <timestampedReports>false</timestampedReports>
