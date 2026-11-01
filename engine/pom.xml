@@ -132,7 +132,8 @@
       <build>
         <plugins>
           <!-- PIT ignores Maven toolchains and starts its test JVMs from the JDK running Maven (spec 018).
-               Hand it the selected JDK 25 toolchain's java, or Maven's own when that JDK already matched. -->
+               Hand it the selected JDK 25 toolchain's java, or Maven's own when that JDK already matched.
+               PIT's jvm comes from this script, so run PIT through the lifecycle (verify), not pitest:mutationCoverage alone. -->
           <plugin>
             <groupId>org.codehaus.gmavenplus</groupId>
             <artifactId>gmavenplus-plugin</artifactId>
@@ -160,6 +161,9 @@
                               + System.getProperty('java.specification.version') + '; PIT would test on it')
                       }
                       def java = jdk ? jdk.findTool('java') : System.getProperty('java.home') + '/bin/java'
+                      if (!java || !new File(java).canExecute()) {
+                          throw new IllegalStateException('No java found in the JDK 25 toolchain: ' + java)
+                      }
                       project.properties.setProperty('pit.jvm', java)
                       log.info('PIT test JVM: ' + java)
                     ]]></script>

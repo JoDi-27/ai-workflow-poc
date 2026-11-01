@@ -84,3 +84,8 @@ Run on a copy of JDK 25 at another path (as `JAVA_HOME`), with a toolchains file
 - `getToolchainFromBuildContext` is Maven 3 API; Maven 4 may change it. The wrapper pins Maven 3.10.0.
 
 ## Deviations
+
+| Date | Change | Why |
+| --- | --- | --- |
+| 2026-11-01 | The script throws an exception instead of calling `fail()`, which GMavenPlus scripts do not have (found when testing the fail-closed branch) | `fail()` only failed the build by accident, with a confusing message |
+| 2026-11-01 | T6: the script also fails when the toolchain has no executable `java` | Verify review: `pit.jvm` would be null and PIT would quietly use Maven's JDK (article 5) |
