@@ -8,27 +8,39 @@ printf '%s' "$cmd" | grep -Eq '(^|[;&|(])[[:space:]]*git[[:space:]]+(-[^[:space:
 # Amend without a new message keeps the old one.
 if printf '%s' "$cmd" | grep -Eq -- '--no-edit'; then exit 0; fi
 
-# First line of the message: a heredoc body, else -m / -am / --message.
+# First line of the message, from the -m / -am / --message argument of the `git commit` itself.
+# Only that command is read, so a heredoc or -m elsewhere in the same Bash call does not count.
+# A `-m "$(cat <<'EOF' ... EOF)"` value is a heredoc: its body is the message.
 msg=$(printf '%s' "$cmd" | python3 -c '
 import re, shlex, sys
 cmd = sys.stdin.read()
-m = re.search(r"<<-?\s*[\x27\"]?(\w+)[\x27\"]?\n(.*?)\n\s*\1", cmd, re.S)
-if m:
-    for line in m.group(2).splitlines():
-        if line.strip():
-            print(line.strip())
-            break
+m = re.search(r"(^|[;&|(])\s*git\s+(-\S+\s+)*commit(\s|$)", cmd, re.M)
+if not m:
     sys.exit(0)
+lex = shlex.shlex(cmd[m.end(1):], posix=True, punctuation_chars=";&|")
+lex.whitespace_split = True
 try:
-    t = shlex.split(cmd)
+    t = list(lex)
 except ValueError:
     sys.exit(0)
+value = None
 for i, a in enumerate(t):
+    if a in (";", "&", "&&", "|", "||"):
+        break
     if a.startswith("--message="):
-        print(a[10:].splitlines()[0] if a[10:] else "")
+        value = a[10:]
         break
     if (a == "--message" or re.fullmatch(r"-[a-zA-Z]*m", a)) and i + 1 < len(t):
-        print(t[i + 1].splitlines()[0] if t[i + 1] else "")
+        value = t[i + 1]
+        break
+if value is None:
+    sys.exit(0)
+h = re.search(r"<<-?\s*[\x27\"]?(\w+)[\x27\"]?[^\n]*\n(.*?)\n\s*\1(\s|$)", value, re.S)
+if h:
+    value = h.group(2)
+for line in value.splitlines():
+    if line.strip():
+        print(line.strip())
         break
 ')
 
