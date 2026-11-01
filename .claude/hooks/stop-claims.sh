@@ -21,4 +21,3 @@ done
 msg="This session still holds sdd claims:$held. Release with: specs/_kit/sdd release <ID> [Tn] [--done]"
 jq -n --arg m "$msg" '{systemMessage: $m}'
 exit 0
-if then fi
